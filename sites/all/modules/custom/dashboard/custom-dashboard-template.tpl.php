@@ -9,11 +9,12 @@ global $user, $user_role,$base_path,$base_root;
          <div class="col-md-9">
          <h4 class="title-lg">Welcome to e-Allotment of Rental Housing Estate</h4><br>
          <!--<h4 class="mt-4">Welcome  <?= $output['user_info']['applicantName'] ?></h4> -->
-         <h6>Designation: <?= $output['user_info']['applicantDesignation'] ?></h6>
-         <h6>Mobile Number: <?= $output['user_info']['mobileNo'] ?></h6>
+         <h6>Designation: <?= !empty($output['user_info']['applicantDesignation']) ? $output['user_info']['applicantDesignation'] : 'Data not found'; ?></h6>  
+         <h6>Office: <?= !empty($output['user_info']['officeName']) ? $output['user_info']['officeName'] : 'Data not found'; ?></h6>
+         <h6>Mobile Number: <?= !empty($output['user_info']['mobileNo']) ? $output['user_info']['mobileNo'] : 'Mobile No. not found'; ?></h6>
          <h6>Email: <?= $output['user_info']['email'] ?></h6>
          <?php if(isset($output['user_status']) && $output['user_status'] == 'offer_letter_cancel'){ ?>
-                  <p style="color:red;">** Your offer letter has been cancelled due to non-acceptance within the 15-day timeline. Please contact your sub-divisonal Exec. Engineer within 5 days to request for offer letter extension; otherwise, your application will be considered cancelled. </p> <!-- Done by Subham 09-12-2024 -->
+                  <p style="color:red;">** Your offer letter has been marked as inactive by the system due to non-acceptance within the 15-day timeline. Please contact your Sub-Divisional Asst. Engineer within 5 days to request an offer letter extension. Otherwise, Your application will be cancelled 15 days after the offer letter becomes inactive. </p> <!-- Done by Subham 09-12-2024 -->
          <?php };
       
             if(isset($output['user_status']) && $output['user_status'] == 'license_cancel'){ ?>
@@ -37,6 +38,7 @@ global $user, $user_role,$base_path,$base_root;
          $output['all-license'] = isset($output['all-license']) ? $output['all-license'] : 0;
          $output['all-exsting-occupant'] = isset($output['all-exsting-occupant']) ? $output['all-exsting-occupant'] : 0;
          $output['auto-cancellation'] = isset($output['auto-cancellation']) ? $output['auto-cancellation'] : 0;
+         $output['special-recommendation-list-data'] = isset($output['special-recommendation-list-data']) ? $output['special-recommendation-list-data'] : 0;
 
    if($user_role == 11){ 
        // For DDO 
@@ -174,19 +176,28 @@ global $user, $user_role,$base_path,$base_root;
    </div>
    <?php } ?>
    <?php if($user_role == 7){ // For Sub-divison ?> 
-   <!-- </Done by Subham bt. 30-12-2024> -->
+   <!-- </Done by Subham dt. 30-12-2024> -->
    <div class="col-md-12">
       <div class="row">
-         <div class="col-md-6 ">
+         <div class="col-md-4 ">
             <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1 w-100">
                <span class="counter"><?php echo $output['all-exsting-occupant']; ?></span>
-               <p>Existing Occupant</p>
+               <p>Existing Occupant (with HRMS)</p>
                <a href="<?php echo $base_root.$base_path.'view-occupant-list/'?>" class="badge rounded-pill text-bg-success">View Details</a>
                <img src="<?php echo $base_root.$base_path?>sites/all/themes/housingtheme/images/icon-allotment.png"
                   class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
             </div>
          </div>
-         <div class="col-md-6 ">
+         <div class="col-md-4 ">
+            <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1 w-100">
+               <span class="counter"><?php echo $output['existing_occupant_data']; ?></span>
+               <p>Existing Occupant (without HRMS)</p>
+               <a href="<?php echo $base_root.$base_path.'rhewise_occupant_draft_list/'?>" class="badge rounded-pill text-bg-success">View Details</a>
+               <img src="<?php echo $base_root.$base_path?>sites/all/themes/housingtheme/images/icon-allotment.png"
+                  class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
+            </div>
+         </div>
+         <div class="col-md-4 ">
             <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box2 w-100">
                <span class="counter"><?php echo $output['auto-cancellation']; ?></span>
                <p>Auto Cancelled Offer Letters / Licenses</p>
@@ -199,7 +210,7 @@ global $user, $user_role,$base_path,$base_root;
    </div>
    <?php } ?>
    <?php if($user_role == 8){ // For Divison ?> 
-   <!-- </Done by Subham bt. 31-12-2024> -->
+   <!-- </Done by Subham dt. 31-12-2024> -->
    <div class="col-md-12">
       <div class="row">
          <div class="col-md-6 ">
@@ -285,18 +296,21 @@ global $user, $user_role,$base_path,$base_root;
    <div class="col-md-12">
       <div class="row">
          <div class="col-md-4">
-            <div class="row">
+
+            <!-- <TURNED OFF BY Subham dt.19-05-2025 AS THIS SECTION IS FOR HoD LOGIN> -->
+            <!-- <div class="row">
                <div class="col-md-12">
-                  <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1">
+                  <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1"> -->
                      <!-- <i class="fa fa-group"></i> -->
-                     <span class="counter"><?php echo $output['all-applications']?></span>
+                     <!-- <span class="counter"><?php //echo $output['all-applications']?></span>
                      <p>All Pending Application</p>
-                     <a href="<?php echo $base_root.$base_path.'allotment_list_approve/'?>" class="badge rounded-pill text-bg-success">View Details</a>
-                     <img src="<?php echo $base_root.$base_path?>sites/all/themes/housingtheme//images/icon-allotment.png"
+                     <a href="<?php //echo $base_root.$base_path.'allotment_list_approve/'?>" class="badge rounded-pill text-bg-success">View Details</a>
+                     <img src="<?php //echo $base_root.$base_path?>sites/all/themes/housingtheme//images/icon-allotment.png"
                      class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
                   </div>
                </div>
-            </div>
+            </div> -->
+
             <div class="row">
                <div class="col-md-12">
                   <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box4">
@@ -352,6 +366,31 @@ global $user, $user_role,$base_path,$base_root;
                      </tbody>
                </table>
                </div>
+            </div>
+         </div>
+      </div>
+   </div>
+   <?php } ?>
+   <!-- </Done by Subham dt. 19-05-2025> -->
+   <?php if($user_role == 17 ){ //For Head of the Department ?>
+   <div class="col-md-12">
+      <div class="row">
+         <div class="col-md-6 ">
+            <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1 w-100">
+               <span class="counter"><?php echo $output['all-applications']?></span>
+               <p>All Pending Applications for Approval</p>
+               <a href="<?php echo $base_root.$base_path.'allotment_list_approve/'?>" class="badge rounded-pill text-bg-success">View Details</a>
+               <img src="<?php echo $base_root.$base_path?>sites/all/themes/housingtheme/images/icon-allotment.png"
+                  class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
+            </div>
+         </div>
+         <div class="col-md-6 ">
+            <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box2 w-100">
+               <span class="counter"><?php echo  $output['special-recommendation-list-data']; ?></span>
+               <p>Special Recommendation</p>
+               <a href="<?php echo $base_root.$base_path.'special-recommended-list/'?>" class="badge rounded-pill text-bg-success">View Details</a>
+               <img src="<?php echo $base_root.$base_path?>sites/all/themes/housingtheme//images/icon-floor.png"
+                  class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
             </div>
          </div>
       </div>

@@ -124,7 +124,7 @@ function dashboard_content() {
     //print_r($output);die;
     ////end////
 
-  }else if($user_role == 6 || $user_role == 7 || $user_role == 8 || $user_role == 10 || $user_role == 11 || $user_role == 13){   //user role 13 added by debaleena 04-09-2024
+  }else if($user_role == 6 || $user_role == 7 || $user_role == 8 || $user_role == 10 || $user_role == 11 || $user_role == 13 || $user_role == 17){   //user role 13 added by debaleena 04-09-2024
 
     $roleArr = $user->roles; 
 
@@ -170,9 +170,15 @@ function dashboard_content() {
     else if ($user_role == 7){
       $output['all-exsting-occupant'] = occupant_list_fetch()->rowCount();
       $output['auto-cancellation'] = auto_cancellation_applicant_list_fetch()->rowCount();
+      // added by moumita 08-05-2025
+      $output['existing_occupant_data'] = fetch_withouthrms_data_count();
     }
     else if ($user_role == 8){
       $output['all-exsting-occupant'] = occupant_list_fetch()->rowCount();
+    }
+    else if ($user_role == 17){ // Done by Subham dt.19-05-2025
+      $output['all-applications'] = pending_app_list_fetch_secy('allotted')->rowCount();
+      $output['special-recommendation-list-data'] = fetch_special_recommendation_list_data()->rowCount();
     }
     ////end////
   }
@@ -358,7 +364,24 @@ function auto_cancellation_applicant_list_fetch(){
   return $results;
 }
 
+function fetch_withouthrms_data_count(){
+    $query = db_query("select count(housing_existing_occupant_draft_id) as data_count from housing_existing_occupant_draft");
+    $result = $query->fetchObject();
+    if(!empty($result)){
+      return $result->data_count;
+    }else{
+      return 0;
+    }
+    
+}
 
+// Done by Subham dt.19-05-2025
+function fetch_special_recommendation_list_data() {
+    $query = db_select('housing_special_recommended', 'hsr');
+
+    $results = $query->execute();
+    return $results;
+}
 
 
 // function fetch_latest_applicant($uid)
