@@ -1,0 +1,260 @@
+<?php
+function fetch_applicant_occupant_list_menu(){
+    $items = array();
+
+    $items['existing-occupant-list'] = array(
+        'title' => 'List for Existing Occupants',
+        'page callback' => 'fetch_existing_occupant_list',
+        'page arguments' => array(),
+        'access arguments' => array('administer_existing_occupant_applicant_list')
+    );
+
+    $items['existing-occupant-details/%'] = array(
+        'title' => 'Existing Occupant Details',
+        'page callback' => 'existing_occupant_detailed_view_form',
+        'page arguments' => array(1),
+        'file' => 'exisiting_occupant_detailed_view.inc',
+        'access arguments' => array('administer_existing_occupant_applicant_list')
+    );
+    
+    $items['physical-applicant-list'] = array(
+        'title' => 'List of Physical Applications',
+        'page callback' => 'fetch_physical_applicant_list',
+        'page arguments' => array(),
+        'access arguments' => array('administer_existing_occupant_applicant_list')
+    );
+
+    $items['physical-applicant-details/%'] = array(
+        'title' => 'Physical Applicant Details',
+        'page callback' => 'physical_applicant_detailed_view_form',
+        'page arguments' => array(1),
+        'file' => 'physical_applicant_detailed_view.inc',
+        'access arguments' => array('administer_existing_occupant_applicant_list')
+    );
+    return $items;
+}
+
+function fetch_applicant_occupant_list_permission() {
+    return array(
+      'administer_existing_occupant_applicant_list' => array(
+        'title' => t('administer Existing Occupant applicant list'),
+        'description' => t('Perform administer Existing Occupant applicant list'),
+      ),
+      
+    );
+}
+
+function fetch_existing_occupant_list() {
+    global $base_root, $base_path;
+    $output1 = '';
+    $query = "SELECT hoa.application_no, ha.applicant_name, haod.applicant_designation
+              FROM housing_online_application hoa
+              INNER JOIN housing_applicant_official_detail haod ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id
+              INNER JOIN housing_applicant ha ON ha.housing_applicant_id = haod.housing_applicant_id
+              WHERE hoa.application_no LIKE 'EO%';";
+    $result = db_query($query);
+
+     ///////////////////debaleena 23-09-2024////////////////////////
+     $header['application_no'] = array('data' => 'Application No');
+     $header['applicant_name'] = array('data' => 'Applicant Name');
+     $header['applicant_designation'] = array('data' => 'Designation');
+     $header['view'] = array('data' => 'View');
+     
+         
+ 
+         
+    $rows =array();
+    $output = '';
+    
+    while($data = $result->fetchObject()) {
+        $fields = array();
+
+        $fields[] = $data->application_no;
+        $fields[] = $data->applicant_name;
+        $fields[] = $data->applicant_designation;
+
+        $fields[] = l(
+                '<span class="btn bg-success btn-sm fa fa-eye text-white rounded" style="font-size:12px" ></span>' ,
+                'existing-occupant-details/'.encrypt_url($data->application_no).'/', 
+                array('html'=>TRUE,'attributes'=> array('target' => '_blank'))
+    
+            );
+       
+        $rows[] = $fields;
+    }
+ 
+         
+ 
+         $variables = array(
+             'attributes' => array('class'=>array('table table-list table-striped')),
+             'header' => $header,
+             'rows' => $rows,
+             'sticky' => true,
+             'empty' => t("No data found!") // The message to be displayed if table is empty
+           );
+           //end
+         //sd turned off 21-06-2024
+         if(count($rows) > 0) {
+             // Render using Drupal's render API.
+             $build['datatable'] = array(
+               '#theme' => 'datatable',
+               '#header' => $header,
+               '#rows' => $rows,
+               '#attributes' => array(),
+             );
+             
+             // Or, render using a theme function.
+             $variables = array(
+               'attributes' => array('class'=>array('table table-list table-striped')),
+               'header' => $header,
+               'rows' => $rows,
+             );
+             
+             $output = theme('datatable', $variables);
+         }
+         else {
+             $output = '<div>
+                             <table class="datatable_no_data_found table table-list">
+                                 <tr class="tr_no_data_found">
+                                     <th class="th_no_data_found"></th>
+                                 </tr>
+                                 <tr class="tr_no_data_found">
+                                     <td class="td_no_data_found">No data found!</td>
+                                 </tr>
+                             </table>
+                         </div>';
+         }
+     
+    return $output;
+   
+/////////////////////////////subham///////////////////////////////
+//  $output = $result->fetchAll();
+
+//     if (count($output) > 0) {
+//         $output1 .= '<table class="table table-list">';
+//         $output1 .= '<tr><th>Serial No</th><th>Application No</th><th>&emsp;Applicant Name</th><th>Designation</th><th>&emsp;&emsp;&emsp;View</th>';
+//         $serialNumber = 1;
+//         foreach ($output as $data) {
+//             $output1 .= '<tr>';
+//             $output1 .= '<td>&emsp;'.$serialNumber.'</td>';
+//             $output1 .= '<td>'.$data->application_no.'</td>';
+//             $output1 .= '<td>'.$data->applicant_name.'</td>';
+//             $output1 .= '<td>'.$data->applicant_designation.'</td>';
+//             $output1 .= '<td>' . l(t('View Details'), $base_root.$base_path.'existing-occupant-details/'. encrypt_url($data->application_no), array('html' => true, 'attributes' => array('class' => array('btn', 'bg-success', 'btn-sm', 'px-3', 'rounded-pill', 'text-white', 'fw-bolder')))) . '</td>';
+//             $output1 .= '</tr>';
+//             $serialNumber++;
+//         }
+//         $output1 .= '</table>';
+//     } else {
+//         $output1 .= '<p>No data found!</p>';
+//     }
+//     return $output1;
+}
+
+function fetch_physical_applicant_list() {
+    global $base_root, $base_path;
+    $output1 = '';
+    $query = "SELECT hoa.application_no, ha.applicant_name, haod.applicant_designation
+              FROM housing_online_application hoa
+              INNER JOIN housing_applicant_official_detail haod ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id
+              INNER JOIN housing_applicant ha ON ha.uid = haod.uid
+              WHERE hoa.application_no LIKE 'PA%'";
+    $result = db_query($query);
+
+
+    ///////////////////debaleena 23-09-2024////////////////////////
+    $header['application_no'] = array('data' => 'Application No');
+    $header['applicant_name'] = array('data' => 'Applicant Name');
+    $header['applicant_designation'] = array('data' => 'Designation');
+    $header['view'] = array('data' => 'View');
+    
+        
+
+        
+   $rows =array();
+   $output = '';
+   
+   while($data = $result->fetchObject()) {
+       $fields = array();
+
+       $fields[] = $data->application_no;
+       $fields[] = $data->applicant_name;
+       $fields[] = $data->applicant_designation;
+
+       $fields[] = l(
+               '<span class="btn bg-success btn-sm fa fa-eye text-white rounded" style="font-size:12px" ></span>' ,
+               'physical-applicant-details/'.encrypt_url($data->application_no).'/', 
+               array('html'=>TRUE,'attributes'=> array('target' => '_blank'))
+   
+           );
+      
+       $rows[] = $fields;
+   }
+
+        
+
+        $variables = array(
+            'attributes' => array('class'=>array('table table-list table-striped')),
+            'header' => $header,
+            'rows' => $rows,
+            'sticky' => true,
+            'empty' => t("No data found!") // The message to be displayed if table is empty
+            );
+            //end
+        //sd turned off 21-06-2024
+        if(count($rows) > 0) {
+            // Render using Drupal's render API.
+            $build['datatable'] = array(
+                '#theme' => 'datatable',
+                '#header' => $header,
+                '#rows' => $rows,
+                '#attributes' => array(),
+            );
+            
+            // Or, render using a theme function.
+            $variables = array(
+                'attributes' => array('class'=>array('table table-list table-striped')),
+                'header' => $header,
+                'rows' => $rows,
+            );
+            
+            $output = theme('datatable', $variables);
+        }
+        else {
+            $output = '<div>
+                            <table class="datatable_no_data_found table table-list">
+                                <tr class="tr_no_data_found">
+                                    <th class="th_no_data_found"></th>
+                                </tr>
+                                <tr class="tr_no_data_found">
+                                    <td class="td_no_data_found">No data found!</td>
+                                </tr>
+                            </table>
+                        </div>';
+        }
+
+   return $output;
+
+////////////////////subham////////////////////////////
+    // $output = $result->fetchAll();
+
+    // if (count($output) > 0) {
+    //     $output1 .= '<table class="table table-list">';
+    //     $output1 .= '<tr><th>Serial No</th><th>Application No</th><th>&emsp;Applicant Name</th><th>Designation</th><th>&emsp;&emsp;&emsp;View</th>';
+    //     $serialNumber = 1;
+    //     foreach ($output as $data) {
+    //         $output1 .= '<tr>';
+    //         $output1 .= '<td>&emsp;'.$serialNumber.'</td>';
+    //         $output1 .= '<td>'.$data->application_no.'</td>';
+    //         $output1 .= '<td>'.$data->applicant_name.'</td>';
+    //         $output1 .= '<td>'.$data->applicant_designation.'</td>';
+    //         $output1 .= '<td>' . l(t('View Details'), $base_root.$base_path.'physical-applicant-details/'. encrypt_url($data->application_no), array('html' => true, 'attributes' => array('class' => array('btn', 'bg-success', 'btn-sm', 'px-3', 'rounded-pill', 'text-white', 'fw-bolder')))) . '</td>';
+    //         $output1 .= '</tr>';
+    //         $serialNumber++;
+    //     }
+    //     $output1 .= '</table>';
+    // } else {
+    //     $output1 .= '<p>No data found!</p>';
+    // }
+    // return $output1;
+}

@@ -1,0 +1,5 @@
+name = Application Status Check 
+description = Form for checking application status of individual
+core = 7.x
+package = Centralized Application Checking
+dependencies[] = system

@@ -1,0 +1,171 @@
+<?php
+
+	function unauthorized_occupants_init() {
+		
+	}
+	
+	function unauthorized_occupants_menu() {
+		$items = array();
+		
+		$items['unauthorized_occupants'] = array(
+			'title' => 'View Unauthorized Occupants List',
+			'page callback' => 'view_unauthorized_occupants_page',
+			'file' => 'include/view_unauthorized_occupants_page.inc',
+			'access arguments' => array('administer Unauthorized Occupants'),
+		);
+		
+		$items['unauthorized_occupants_list_pdf/%']=array(
+			'title' => 'List of Unauthorized Occupants PDF',
+			'page callback' => 'unauthorized_occupants_list_page_pdf',
+			'page arguments' => array(1),
+			'file' => 'include/unauthorized_occupants_list_page_pdf.inc',
+			'access arguments' => array('administer Unauthorized Occupants'),
+		);
+		
+		$items['flat_detail/%'] = array(
+			'title' => 'Unauthorized Occupants Flat Details',
+			'page callback' => 'view_flat_detail_page',
+			'page arguments' => array(1),
+			//'file' => 'include/view_flat_detail_page.inc',
+			'access arguments' => array('administer Unauthorized Occupants Flat Details'),
+		);
+		
+		$items['occupied_flat_details_pdf/%/%'] = array(
+		  'title' => 'Unauthorized Occupants Flat Details PDF',	
+		  'page callback' => 'occupied_flat_details_page_pdf',
+		  'page arguments' => array(1,2),
+		  'file' => 'include/occupied_flat_details_page_pdf.inc',
+		  'access arguments' => array('administer Unauthorized Occupants Flat Details'),
+		);
+
+		// Done by Subham 19-12-2024
+		$items['transferred-ddo-list'] = array(
+			'title' => 'Transferred DDO List',
+			'page callback'=>'drupal_get_form',	
+			'page arguments' => array('transferred_ddo_list_form'),
+			'file' => 'include/transferred_ddo_list_page.inc',
+			'access arguments' => array('administer Transfer DDO List Details'),
+		);
+		// End
+		
+		return $items;
+		
+	}
+	
+	function unauthorized_occupants_permission() {
+		return array(
+			'administer Unauthorized Occupants' => array(
+				'title' => t('administer Unauthorized Occupants'),
+      			'description' => t('Perform administer Unauthorized Occupants.'),
+			),
+			
+			'administer Unauthorized Occupants Flat Details' => array(
+				'title' => t('administer Unauthorized Occupants Flat Details'),
+      			'description' => t('Perform administer Unauthorized Occupants Flat Details.'),
+			),
+
+			'administer Transfer DDO List Details' => array(
+				'title' => t('administer Transferred DDO List Details'),
+      			'description' => t('Perform administer to See Transferred DDO List Details.'),
+			),
+		);
+	}
+	
+	function view_flat_detail_page($flat_id = '') {
+		$flat_id = decrypt_url($flat_id);
+		
+		if(is_numeric($flat_id) && $flat_id > 0) {
+			$flat_details = fetch_u_o_flat_detail($flat_id);
+			$output = array();
+			
+			/*if ($flat_id !== '' && (!is_numeric($flat_id) || $flat_id <= 0)) {
+				$output[] = false;
+			}
+			else*/ 
+			
+			if($flat_details->rowCount() == 0){
+				$output[] = false;
+			}
+			else{	
+				$output[] = true;
+				$output[] = $flat_details->fetchObject();
+			}
+		}
+		
+		return theme('view_flat_detail_template', array('output' => $output));
+	}
+	
+	function unauthorized_occupants_theme() {
+	
+		return array(
+			'view_flat_detail_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be custom-page.tpl.php
+				'template' => 'view_flat_detail',
+			),		
+		);
+	}
+	
+	function fetch_unauthorized_occupants() {
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa', 
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_license_application', 'hla', 
+		'hla.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_occupant_license', 'hol', 
+		'hol.license_application_id = hla.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 
+		'hfo.flat_occupant_id = hol.flat_occupant_id');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'application_no');
+		$query->addField('haod', 'uid');
+		$query->addField('haod', 'date_of_retirement');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'date_of_verified');
+		$query->addField('hfo', 'flat_id');
+		$query->addField('hol', 'license_no');
+		$query->condition('hoa.status', 'issued', '=');
+		//echo $query; die();
+		return $query->execute();
+	}
+	
+	function fetch_u_o_flat_detail($flat_id = '') {
+		
+		$query = db_select('housing_flat', 'hf');
+		$query->innerJoin('housing_estate', 'he', 
+		'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 
+		'hf.flat_type_id = hft.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 
+		'he.district_code = hd.district_code');
+		$query->innerJoin('housing_block', 'hb', 
+		'hb.block_id = hf.block_id');
+		$query->addField('hf', 'flat_id');
+		$query->addField('hf', 'flat_no');
+		$query->addField('hft', 'flat_type');
+		$query->addField('he', 'estate_name');
+		$query->addField('he', 'estate_address');
+		$query->addField('hd', 'district_name');
+		$query->addField('hb', 'block_name');
+		$query->condition('hf.flat_id', $flat_id, '=');
+		
+		return $query->execute();
+		
+	}
+
+//---------------------------- Transferred DDO Section dt. 19-12-2024 -----------------------------------------------//
+
+function fetch_ddo_transfer_date() {
+	$ddo_transfer_date = array('' => 'Select Date');
+	$query = db_select('housing_applicant_ddo_transfer', 'hadt');
+	$query->addField('hadt', 'created_datetime');
+	$query->orderBy('hadt.created_datetime', 'ASC');
+	$result = $query->execute();
+
+	foreach($result as $val) {
+        $ddo_transfer_date[$val->created_datetime] = date('d/m/Y', strtotime($val->created_datetime));
+	}
+
+	return $ddo_transfer_date;
+}

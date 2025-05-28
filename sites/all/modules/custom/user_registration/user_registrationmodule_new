@@ -1,0 +1,215 @@
+<?php
+ 
+	function user_registration_init() {
+	 
+		drupal_add_library('system','ui.datepicker');
+		/*drupal_add_js('
+			jQuery(document).ready(function() {
+				jQuery("#date").datepicker({
+					dateFormat: "dd/mm/yy",
+					changeMonth: true,
+					changeYear: true,
+					yearRange: "-70:+0",
+					autoSize: true
+				});
+			});
+		', 'inline'
+		);*/
+	  //drupal_add_js('js/user_registration.js');
+		/*drupal_add_js('
+						function numbersonly(e) {
+							var unicode=e.charCode? e.charCode : e.keyCode
+							if (unicode!=8){ 
+								if (unicode<48||unicode>57)
+									return false
+							}
+						}   
+					','inline'
+		);*/
+ 	}
+ 
+	function user_registration_menu() {
+		$items['user_registration'] = array(
+			'title' => 'Applicant Registration',	
+			//'page callback' => 'new_application_page',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('form_example_wizard'),
+			'access callback' => TRUE,
+			'file' => 'user_registration_form.inc',
+			'access arguments' => array('Administer Applicant Registration'),
+		);
+		
+		$items['application_registration/%'] = array(
+			'title' => 'Application of Registration',	
+			'page callback' => 'application_registration',
+			'page arguments' => array(1),
+			//'file' => 'application_registration.inc',
+			'access arguments' => array('Administer Applicant Registration'),
+		);
+		
+		$items['application_of_registration_pdf/%/%'] = array(
+			'title' => 'Application of Registration PDF',	
+			'page callback' => 'application_registration_pdf',
+			'page arguments' => array(1, 2),
+			'file' => 'application_registration_pdf.inc',
+			'access arguments' => array('Administer Applicant Registration'),
+		);
+		
+		
+		/*Update user password*/
+		/*$items['update_password'] = array(
+			'title' => 'Update Password',	
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('update_password_form'),
+			'file' => 'update_password_form.inc',
+			'access arguments' => array('Administer Applicant Registration'),
+		);*/
+		
+		//applicant registration form upload
+		/*$items['applicant_regform_upload'] = array(
+			'title' => 'Upload Applicant Registration Form',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('applicant_regform_upload'),
+			'file' => 'applicant_regform_upload_page.inc',
+			'access arguments' => array('Administer Applicant Registration'),
+		);*/
+		
+		return $items;
+	}
+	
+	function application_registration($usrid = '') {
+		
+		$uid = decrypt_url($usrid);
+		
+		$output = array();
+		if($uid !== '' && (!is_numeric($uid) || $uid <= 0)) {
+			$output[] = false;
+		}
+		else{	
+			$output[] = true;
+			
+			$output[] = $usrid;
+			
+			$query = db_select('users', 'u');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'u.uid = haod.uid');
+			$query->addField('u', 'mail');
+			$query->addField('ha', 'applicant_name');
+			$query->addField('ha', 'gender');
+			$query->addField('ha', 'mobile_no');
+			$query->addField('ha', 'date_of_birth');
+			$query->addField('haod', 'applicant_designation');
+			$query->addField('haod', 'office_name');
+			$query->addField('haod', 'hrms_id');
+			$query->condition('u.uid', $uid, '=');
+			$result = $query->execute();
+			
+			$output[] = $result->fetchObject();
+		}
+		return theme('application_registration_template', array('output' => $output));
+		
+	}
+	
+	function user_registration_theme() {
+		
+		return array(
+			'application_registration_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be custom-page.tpl.php
+				'template' => 'application_registration',
+			),
+		);
+	}
+	
+  
+	function user_registration_permission() {
+		return array(
+			'Administer Applicant Registration' => array(
+			  'title' => t('Administer Applicant Registration'),
+			  'description' => t('Perform Administer Applicant Registration.'),
+			),
+		);
+	}
+	
+	
+	
+	
+	function element_validate_username($element, &$form_state){
+		$value = trim($element['#value']);
+		if(substr($value, 0, 1) == '_' or substr($value, 0, 1) == '.' or substr($value, -1) == '_' or substr($value, -1) == '.') {
+			form_error($element, t('" %name " doesnot begin or end with "_" or "."', array('%name' => $element['#title'])));
+		}
+		else {
+			if($value !== '' && !preg_match('/^[a-zA-Z0-9_.]{5,20}$/', $value)) {
+				form_error($element, t('" %name " must be 5-20 characters and username only contains "a-z" or "A-Z" or "0-9" or "_" or "."', array('%name' => $element['#title'])));
+				$form_state['rebuild'] = TRUE;
+			}
+		}
+	}
+ 	
+	function validateAge($birthday, $age = 18)
+	{
+		// $birthday can be UNIX_TIMESTAMP or just a string-date.
+		if(is_string($birthday)) {
+			$birthday = strtotime($birthday);
+		}
+	
+		// check
+		// 31536000 is the number of seconds in a 365 days year.
+		if(time() - $birthday < $age * 31536000)  {
+			return false;
+		}
+	
+		return true;
+	}
+	
+	
+	function sendmail_registration($receiver_email, $email_subject, $ack_email_msg){
+		
+		$to = $receiver_email;
+		$subject = $email_subject;
+		$message = $ack_email_msg;
+		
+		//$bcc = 'subhabrata.mukherjee@ymail.com';
+		
+	//code for drupal_mail()
+		//Sample drupal_mail() //drupal_mail('testmail', 'testing', $to, language_default(), $params, $from, TRUE);
+		
+		/*$from = 'subhabrata.mukherjee31@gmail.com';
+		
+		$params = array(
+			'subject' => $subject,
+			'message' => $message,
+			'headers' => array(
+				//'Cc' => $header_cc,
+				//'Bcc' => $bcc,
+				'MIME-Version' => "1.0",
+				'Content-Type' => "text/html; charset=UTF-8; format=flowed",
+			)
+		);
+		
+		drupal_mail('common_application', 'registration_approve', $to, language_default(), $params, $from, TRUE);*/
+		
+	//code for mail()
+		$headers = "MIME-Version: 1.0" . "\r\n";
+		$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+		$headers .= "From: eallotment-rhe@rhe.wbhousing.gov.in\r\n";
+		//$headers .= "From: subhabrata.mukherjee31@gmail.com\r\n";
+		//$headers .= "Bcc: ".$bcc."\r\n";
+		
+		mail($to, $subject, $message, $headers);
+		
+	}
+	
+//code needed if drupal_mail() used
+	/*function application_of_registration_list_mail($key, &$message, $params) {
+  
+		switch($key) {
+			
+			case 'registration_approve':
+				$message['subject'] = $params['subject']; 
+				$message['body'][] = $params['message'];
+				$message['headers'] += $params['headers'];
+			break;
+		}
+	}*/

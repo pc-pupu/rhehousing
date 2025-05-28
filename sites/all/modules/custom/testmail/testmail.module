@@ -1,0 +1,108 @@
+<?php
+
+function testmail_menu() { 
+$items = array();
+	$items['sendmail'] = array(
+	'title' => 'Send a mail',
+	'page callback' => 'drupal_get_form',
+	'page arguments' => array('sendmail_form'),
+	'access arguments' => array('administer test mail module'),
+	);
+return $items;
+}
+
+function sendmail_form($form, &$form_state){
+	
+
+$form['to'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email ID :'),
+	'#size' => 40,
+	'#required' => TRUE,
+	'#attributes' => array('placeholder' => 'Enter email')
+  );
+
+$form['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject :'),
+	'#size' => 40,
+	'#required' => TRUE,
+	'#attributes' => array('placeholder' => 'Enter subject')
+  );  
+
+$form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message :'),
+	'#required' => TRUE,
+	'#attributes' => array('placeholder' => 'Enter message')
+
+  ); 
+  
+$form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Send'),
+  );  
+   
+  
+ return $form; 
+}
+
+
+function sendmail_form_submit($form, &$form_state){
+	
+$to = $form_state['values']['to'];
+$subject = $form_state['values']['subject'];
+$message = $form_state['values']['message'];
+testmail_send($to, $subject, $message);
+drupal_set_message('Mail has been sent!');
+	
+}
+
+
+function testmail_send($to = '', $subject = '', $message = '') {
+	//$from = 'subhabrata.mukherjee31@gmail.com';
+	/*$from = 'eallotment-rhe@rhe.wbhousing.gov.in';
+	$params = array('subject' => $subject, 'message' => $message);
+	drupal_mail('testmail', 'key', $to, language_default(), $params, $from, TRUE);*/
+	
+	//$headers = 'From: subhabrata.mukherjee31@gmail.com';
+	$headers = 'From: eallotment-rhe@rhe.wbhousing.gov.in\r\n';
+	
+	mail($to, $subject, $message, $headers);
+}
+
+
+function testmail_mail($key, &$message, $params) {
+/* $attachment = array(
+  'filecontent' => file_get_contents(DRUPAL_ROOT . '/sample.jpg'),
+   'filename' => 'sample.jpg',
+  'filemime' => 'image/jpeg',
+  );*/
+  
+	switch($key) {
+
+		case 'testmail_email':
+			$message['subject'] = t('Test subject'); 
+			$message['body'][] = t('Test content');
+			//$message['attachment'][] = $attachment;
+		break;
+		
+		case 'key':
+		
+		
+			$message['subject'] = $params['subject']; 
+			$message['body'][] = $params['message'];
+		break;
+	}
+}
+
+
+function testmail_permission() {
+  return array(	
+    'administer test mail module' => array(
+      'title' => t('Administer test mail module'), 
+      'description' => t('Perform administration tasks for test mail module.'),
+    ),
+	);
+	
+}

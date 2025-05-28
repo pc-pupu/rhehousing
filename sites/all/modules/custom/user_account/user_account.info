@@ -1,0 +1,5 @@
+name = User Account
+decsription = User Account Module
+core = 7.x
+package = eallotment User Module
+stylesheets[all][] = css/user_account.css

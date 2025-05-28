@@ -1,0 +1,4 @@
+name = NICAPTCHA
+description = NICAPTCHA MODULE
+core = 7.x
+scripts[] = js/reset.js

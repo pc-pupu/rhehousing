@@ -1,0 +1,93 @@
+<?php
+
+ function generate_allotment_letter_menu() {
+
+	$items['generate_allotment_letter'] = array(
+	  'title' => 'Generate Allotment Letter',
+	  'page callback' => 'drupal_get_form',
+      'page arguments' => array('generate_allotment_letter_form'),
+	  'file' => 'generate_allotment_letter_page.inc',
+	  'access arguments' => array('Generate Allotment Letter List'),
+    );
+	$items['generate_letter/%'] = array(
+	  'title' => 'Generate Allotment Letter',
+	  'page callback' => 'generate_letter',
+	  'page arguments' => array(1),
+	  'access arguments' => array('Generate Allotment Letter List'),
+    );
+	 return $items;
+  }
+    function generate_allotment_letter_form($form, &$form_state) {
+
+	 
+	   $flat_type_val =  !empty($form_state['values']['flat_type']) ? $form_state['values']['flat_type'] : 0;
+	 
+	   $form['flat_type'] = array(
+		'#title' => t('RHE Flat Type'),
+		'#type' => 'select',
+		'#options' => rhe_flat_type(),
+		'#required' => TRUE,
+		 '#prefix' => '<div class="four ">',
+ 		'#suffix' => '</div>',
+		'#weight' =>2
+	  );
+	  $form['search'] = array(
+		'#value' => t('Search'),
+		'#type' => 'submit',
+		 '#prefix' => '<div class="four " style="margin-top:43px;height: 30px;">',
+ 		'#suffix' => '</div>',
+		'#weight' =>3
+	  );
+	
+	  if($flat_type_val != 0) {
+		  
+		 $output = generate_allotment_letter_page(trim($flat_type_val));
+		 $form['breadcrumb'] = array(
+		   '#type' => 'markup',
+		   '#markup' => $output,
+			'#weight' => 5
+		);
+		 // $form['pager'] = array('#markup' => theme('pager'));
+
+	  }
+	  
+	  	  return $form;
+  }
+  
+function generate_letter($url = NULL) {
+	$c_arr = (array)json_decode($url);
+    $query = db_insert('housing_allotment_letter')->fields($c_arr);
+	$query->execute();
+	drupal_set_message(t('Successfully Generated!!!'));
+	drupal_goto('generate_allotment_letter');
+} 
+
+  function generate_allotment_letter_form_submit($form, &$form_state) {
+
+	if($form_state['input']['op'] == 'Generate'){
+	 $vacant_arr = array();
+	 $vacant_arr['flat_type_id'] =  trim($form_state['values']['flat_type']);
+	 $vacant_arr['notice_date'] =  trim($form_state['values']['notice_date']);
+	 $vacant_arr['estate_list'] 	=  from_array($form_state['values']['table']);
+	   
+	  $query = db_insert('housing_vacancy_list')->fields($vacant_arr);
+	
+  	  $query->execute();
+	    drupal_set_message(t('Successfully Generated!!!'));
+		
+	}else{
+			$form_state['rebuild'] = TRUE;
+	}
+
+  }
+  
+ 
+ function generate_allotment_letter_permission() {
+  return array(
+    'Generate Allotment Letter List' => array(
+      'title' => t('Generate Allotment Letter List'),
+      'description' => t('Perform Generate Allotment Letter List.'),
+    ),
+  );
+}
+require_once('generate_allotment_letter_fetch_data.inc');

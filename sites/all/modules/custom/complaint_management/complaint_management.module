@@ -1,0 +1,344 @@
+<?php
+	
+	function complaint_management_init() {
+		//drupal_add_library('system','ui.datepicker');
+		
+	}
+	
+	function complaint_management_menu() {
+		$items = array();
+		
+		//for applicant and occupant
+		
+		$items['complaint_form'] = array(
+			'title' => 'Please complete the form below for your complaint',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('new_complaint_form'),
+			'file' => 'include/new_complaint_form.inc',
+			'access arguments' => array('administer complaint management applicant'),
+			//'access callback'=>TRUE
+		);
+		
+		$items['complaint_list'] = array(
+			'title' => 'Your Complaint List',	
+			'page callback' => 'complaint_list_page',
+			'file' => 'include/complaint_list_page.inc',
+			'access arguments' => array('administer complaint management applicant'),
+		);
+		
+		$items['view_action_report/%ctools_js/%']=array(
+			'title'=>'Action Report Details',
+			'page callback'=>'occupant_action_report_view_page',
+			'page arguments'=>array(1, 2),
+			'file' => 'include/occupant_action_report_view_page.inc',
+			'access arguments' => array('administer complaint management applicant'),
+		);	
+		
+		//for division and sub-division
+		
+		$items['action_report/%'] = array(
+			'title' => 'Submit the Action Report for this complaint',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('action_report_form', 1),
+			'file' => 'include/action_report_form.inc',
+			'access arguments' => array('administer complaint management div subdiv'),
+		);
+		
+		$items['rhewise_complaint_list'] = array(
+			'title' => 'RHE Wise Complaint List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhewise_complaint_list_form'),
+			'file' => 'include/rhewise_complaint_list_page.inc',
+			'access arguments' => array('administer complaint management div subdiv'),
+		);
+		
+		$items['view_action_report_divn_subdivn/%ctools_js/%']=array(
+			'title'=>'Action Report Details',
+			'page callback'=>'view_action_report_divn_subdivn_page',
+			'page arguments'=>array(1, 2),
+			'file' => 'include/view_action_report_divn_subdivn_page.inc',
+			'access arguments' => array('administer complaint management div subdiv'),
+		);	
+		
+		//for housing official
+		
+		$items['subdivn_rhewise_complaint_list'] = array(
+			'title' => 'Sub Division and RHE Wise Complaint List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('subdivn_rhewise_complaint_list_form'),
+			'file' => 'include/subdivn_rhewise_complaint_list_page.inc',
+			'access arguments' => array('administer complaint management housing'),
+		);
+		
+		$items['view_action_report_housing/%ctools_js/%']=array(
+			'title'=>'Action Report Details',
+			'page callback'=>'view_action_report_housing_page',
+			'page arguments'=>array(1, 2),
+			'file' => 'include/view_action_report_housing_page.inc',
+			'access arguments' => array('administer complaint management housing'),
+		);
+		
+		$items['subdivnwise_no_of_complaint'] = array(
+			'title' => 'Sub-Division Wise No. of Complaints',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('subdivnwise_no_of_complaint_form'),
+			'file' => 'include/subdivnwise_no_of_complaint_page.inc',
+			'access arguments' => array('administer complaint management housing'),
+		);
+		
+		$items['all_subdivn_no_of_complaint/%'] = array(
+			'title' => 'All Sub-Divisions No. of Complaints',
+			'page callback' => 'all_subdivn_no_of_complaint_pdf',
+			'page arguments' => array(1),
+			'file' => 'include/all_subdivn_no_of_complaint_pdf.inc',
+			'access arguments' => array('administer complaint management housing'),
+		);
+		
+		return $items;	
+		
+	}
+	
+	function complaint_management_permission() {
+		return array(
+			'administer complaint management applicant' => array(
+				'title' => t('Complaint Management for Applicant'),
+				'description' => t('Perform permission task of Complaint Management for Applicant and Occupant'),
+			),
+			
+			'administer complaint management div subdiv' => array(
+				'title' => t('Complaint Management for Div Subdiv'),
+				'description' => t('Perform permission task of Complaint Management for Division and Sub-division'),
+			),
+			
+			'administer complaint management housing' => array(
+				'title' => t('Complaint Management for Housing Official'),
+				'description' => t('Perform permission task of Complaint Management for Housing Official'),
+			),
+		);	
+	}
+	
+	
+	function fetch_flat_occupant_list() {
+	
+		global $user;
+		
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_occupant_license', 'hol', 'hol.license_application_id = hla.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.flat_occupant_id = hol.flat_occupant_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->leftJoin('file_managed', 'fm_signed_licence', 'fm_signed_licence.fid = hol.uploaded_licence');
+		
+		$query->addField('hfo', 'flat_id', 'occupant_flat_id');
+		$query->addField('hfo', 'flat_occupant_id');
+		$query->addField('he', 'estate_id');
+		$query->addField('he', 'estate_name');
+		$query->addField('hf', 'flat_no');
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.status', 'issued', '=');
+		$db_and->condition('haod.uid', $user->uid, '=');
+		$db_and->condition('hf.flat_status_id', 2, '=');
+		$db_and->condition('hol.uploaded_licence', NULL, 'IS NOT');
+		$query->condition($db_and);	
+		return $query->execute();
+		
+	}
+	
+	function fetch_complaint_list($uid = '') {
+		$query = db_select('housing_online_complaint', 'hoc');
+		$query->fields('hoc', array());
+		$query->condition('uid', $uid, '=');
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();	
+		
+	}
+	
+	function fetch_rhewise_complaint_list($rhe_name) {
+		$query = db_select('housing_online_complaint', 'hoc');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hoc.occupant_flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->fields('hoc', array());
+		$query->condition('he.estate_id', $rhe_name, '=');
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();	
+		
+	}
+	
+	function check_subdivn_action_report($online_complaint_id = '') {
+		global $user;
+		
+		$query = db_select('housing_complaint_action', 'hca');
+		$query->fields('hca', array());
+		$db_and = db_and();
+		$db_and->condition('online_complaint_id', $online_complaint_id, '=');
+		$query->condition('subdivn_uid', $user->uid, '=');
+		$query->condition($db_and);	
+		
+		return $query->execute();
+	}
+	
+	
+	function check_divn_action_report($online_complaint_id = '') {
+		global $user;
+		
+		$query = db_select('housing_complaint_action', 'hca');
+		$query->fields('hca', array());
+		$db_and = db_and();
+		$db_and->condition('online_complaint_id', $online_complaint_id, '=');
+		$query->condition('divn_uid', $user->uid, '=');
+		$query->condition($db_and);	
+		
+		return $query->execute();
+	}
+	
+	
+	function subdiv_list() {
+		$all_subdiv = array("" => "- Select -");
+		$query = db_select('housing_subdivision', 'hsd');
+		$query->fields('hsd');
+		$query->orderBy('subdiv_name', 'ASC');
+		$result = $query->execute();
+		if($result->rowCount() > 0) {
+			foreach($result as $subdiv) {
+				$all_subdiv[$subdiv->subdiv_id] = $subdiv->subdiv_name;
+			}    
+		}
+		return $all_subdiv;	
+	}
+	
+	
+	function subdivn_wise_rhe_list($subdiv = '') {
+		$all_rhe = array("" => "- Select -");
+		
+		$query = db_select('housing_estate', 'he');
+		$query->fields('he');
+		$query->condition('he.subdiv_id', $subdiv, '=');
+		$query->orderBy('estate_name','ASC');
+		$result = $query->execute();
+		
+		foreach($result as $val) {
+			$str = $val->estate_name;
+			if($val->estate_address != null){
+				$str = $str.' | '.$val->estate_address;
+			}
+			$all_rhe[$val->estate_id] = $str;
+		}
+		
+		return $all_rhe;	
+		
+	}
+	
+	
+	function fetch_subdivn_rhe_wise_complaint_list($subdiv = '', $rhe_name = '') {
+		$query = db_select('housing_online_complaint', 'hoc');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hoc.occupant_flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_subdivision', 'hsd', 'hsd.subdiv_id = he.subdiv_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->fields('hoc', array());
+		$db_and = db_and();
+		$db_and->condition('hsd.subdiv_id', $subdiv, '=');
+		$db_and->condition('he.estate_id', $rhe_name, '=');
+		$query->condition($db_and);
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();	
+		
+	}
+	
+	
+	function fetch_action_report($online_complaint_id = '') {
+		
+		$query = db_select('housing_complaint_action', 'hca');
+		$query->innerJoin('housing_online_complaint', 'hoc', 'hoc.online_complaint_id = hca.online_complaint_id');
+		$query->fields('hca', array());
+		$query->fields('hoc', array());
+		$query->condition('hoc.online_complaint_id', $online_complaint_id, '=');	
+		
+		return $query->execute();
+	}
+	
+	
+	function fetch_subdivn_wise_no_of_complaint($subdiv) {
+		$query = db_select('housing_online_complaint', 'hoc');
+		//$query->innerJoin('housing_complaint_action', 'hca', 'hca.online_complaint_id = hoc.online_complaint_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hoc.occupant_flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_subdivision', 'hsd', 'hsd.subdiv_id = he.subdiv_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->fields('hoc', array());
+		$query->fields('hsd', array());
+		
+		if($subdiv != '') {
+			$db_and = db_and();
+			$db_and->condition('hsd.subdiv_id', $subdiv, '=');
+			$query->condition($db_and);
+		}
+			
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();		
+	}
+	
+	
+	function fetch_subdivn_wise_no_of_pending_complaint($subdiv) {
+		$query = db_select('housing_online_complaint', 'hoc');
+		//$query->innerJoin('housing_complaint_action', 'hca', 'hca.online_complaint_id = hoc.online_complaint_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hoc.occupant_flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_subdivision', 'hsd', 'hsd.subdiv_id = he.subdiv_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->fields('hoc', array());
+		$query->fields('hsd', array());
+		
+		$db_and = db_and();
+		
+		if($subdiv != '') {
+			$db_and->condition('hsd.subdiv_id', $subdiv, '=');
+		}
+		$db_and->condition('hoc.complaint_status', 'Submitted', '=');
+		$query->condition($db_and);
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();		
+	}
+	
+	
+	function fetch_subdivn_wise_no_of_action_complaint($subdiv) {
+		$query = db_select('housing_online_complaint', 'hoc');
+		$query->innerJoin('housing_complaint_action', 'hca', 'hca.online_complaint_id = hoc.online_complaint_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hoc.occupant_flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_subdivision', 'hsd', 'hsd.subdiv_id = he.subdiv_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->fields('hoc', array());
+		$query->fields('hsd', array());
+		
+		$db_and = db_and();
+		
+		if($subdiv != '') {
+			$db_and->condition('hsd.subdiv_id', $subdiv, '=');
+		}
+		$db_and->condition('hoc.complaint_status', 'Action Taken', '=');
+		$db_and->condition('hca.action_report_to_occupant', NULL, '!=');
+		$query->condition($db_and);
+		$query->orderBy('online_complaint_id', 'desc');	
+		return $query->execute();		
+	}
+	
+	
+	function fetch_all_subdivn_no_of_complaint() {
+		$query = db_query('select count(*) as tot_no_of_complaints, hsd.subdiv_id as subdiv_id, subdiv_name from housing_online_complaint hoc
+							inner join housing_flat hf on hf.flat_id = hoc.occupant_flat_id
+							inner join housing_estate he on he.estate_id = hf.estate_id
+							inner join housing_subdivision hsd on hsd.subdiv_id = he.subdiv_id
+							inner join housing_block hb on hb.block_id = hf.block_id
+							group by hsd.subdiv_id
+							order by hsd.subdiv_id');
+							
+		return 	$query;
+		
+	}

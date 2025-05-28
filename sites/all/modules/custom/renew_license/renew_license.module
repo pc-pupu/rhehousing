@@ -1,0 +1,205 @@
+<?php
+	function renew_license_init() {
+		//global $custom_url;
+		if($_SERVER['REQUEST_URI'] == '/renew_license'){
+			//$result = fetch_flat_occupant_detail();
+			//$row_count = $result->rowCount();
+			/*if($row_count == 0) {
+				drupal_goto('application-status/not-applied');
+			}else{*/		
+				$result = fetch_renew_license_app_status(array('draft'));
+				$row_count = $result->rowCount();
+				if($row_count > 0) {
+					$data = $result->fetchObject();
+					drupal_goto('view-application/'.encrypt_url($data->online_application_id));
+				}
+			//}
+		}
+	}
+	
+	function renew_license_menu() {
+		$items['renew_license'] = array(
+		  'title' => 'Application for Licence Renewal',	
+		  //'page callback' => 'new_application_page',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('application_form'),
+		  'access arguments' => array('Administer application for License Renewal'),
+		);
+		return $items;
+	}
+  
+  
+	function renew_license_form_application_form_alter(&$form, &$form_state, $form_id) {
+		//global $custom_url;
+	  
+	  //$chk_extra_doc = isset($form_state['values']['chk_extra_doc'][1]) && !empty($form_state['values']['chk_extra_doc'][1]) ? $form_state['values']['chk_extra_doc'][1] : 0;
+		if($form['#action'] == '/renew_license'){
+	  		
+			$form['prrsonal_info']['online_renew_license_id'] = array(
+				'#type' => 'hidden',
+				'#default_value' => '0',
+				//'#validated' => TRUE,
+			);
+			
+			// RHE information
+			$form['RHE_info'] = array(
+				'#type' => 'fieldset',
+				'#title' => t('RHE Information'),
+				'#collapsible' => TRUE, // Added
+				'#collapsed' => TRUE,  // Added
+			);
+			$form['RHE_info']['rhe_name'] = array(
+				'#title' => t('RHE Name'),
+				'#type' => 'textfield',
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#attributes' => array('readonly' => 'readonly'),
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+				'#weight' => -10
+			);
+			
+			$form['RHE_info']['block_no'] = array(
+				'#title' => t('Block No'),
+				'#type' => 'textfield',
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#attributes' => array('readonly' => 'readonly'),
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+			);
+			
+			$form['RHE_info']['flat_no'] = array(
+				'#title' => t('Flat No'),
+				'#type' => 'textfield',
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#attributes' => array('readonly' => 'readonly'),
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+			);
+		  
+		  
+		   // Allotment information
+			$form['allotment_info'] = array(
+				'#type' => 'fieldset',
+				'#title' => t('Allotment Information'),
+				'#collapsible' => TRUE, // Added
+				'#collapsed' => TRUE,  // Added
+			);
+		  	$form['allotment_info']['allotment_no'] = array(
+				'#title' => t('Allotment No'),
+				'#type' => 'textfield',
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#attributes' => array('readonly' => 'readonly'),
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+				'#weight' => -10
+		  	);
+		  
+		  	$form['allotment_info']['allotment_date'] = array(
+				'#title' => t('Allotment Date'),
+				'#type' => 'textfield',
+				'#attributes' => array('readonly' => 'readonly'),
+				//'#attributes' => array('id' => 'al_date'),
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+				'#element_validate' => array('element_validate_date'),
+		  	);
+		  
+		  
+		   // Existing License Information
+			$form['license_info'] = array(
+				'#type' => 'fieldset',
+				'#title' => t('Existing Licence Information'),
+				'#collapsible' => TRUE, // Added
+				'#collapsed' => TRUE,  // Added
+			);
+			$form['license_info']['license_no'] = array(
+				'#title' => t('Licence No'),
+				'#type' => 'textfield',
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#attributes' => array('readonly' => 'readonly'),
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+				'#weight' => -10
+			);
+			  
+			$form['license_info']['license_date'] = array(
+				'#title' => t('Licence Date'),
+				'#type' => 'textfield',
+				'#attributes' => array('readonly' => 'readonly'),
+				//'#attributes' => array('id' => 'li_date'),
+				'#default_value' => '',
+				'#required' => TRUE,
+				'#prefix' => '<div class="two">',
+				'#suffix' => '</div>',
+				'#element_validate' => array('element_validate_date'),
+			);
+			
+			$form['#attributes'] = array('onsubmit' => 'return validate_renew_licence_form()');
+			$form['#validate']= array('renew_license_validate');
+			$form['#submit']= array('renew_license_submit');
+		
+			renew_fetch_allotment_detail($form);
+	  }
+  }
+  
+  	function renew_license_validate(&$form, &$form_state) {
+		if($form_state['values']['pay_band'] == '') {
+  			form_set_error('district', t('Please select payband.'));
+		}
+		if($form_state['values']['district'] == '') {
+  			form_set_error('district', t('Please select district.'));
+		}
+		if($form_state['values']['designation'] == '') {
+  			form_set_error('designation', t('Please select ddo designation.'));
+		}
+	}
+	
+	function renew_license_submit($form, &$form_state) {
+		$action = 'draft';
+		if($form_state['input']['op'] == 'Apply'){
+			$action = 'applied';
+		}
+		
+		$online_application_id = trim($form_state['values']['online_renew_licence_id']);
+		
+		//die($online_application_id);
+		
+		$a_no = trim($form_state['values']['allotment_no']);
+		if($a_no != '') {
+			if($online_application_id == 0) {
+				//die('for new'); 
+				$online_application_id = add_online_application($action,'NL',$form,$form_state);
+				add_new_license_application($form,$form_state,$online_application_id);
+			}
+			else {
+				//die('for existing');
+				update_online_application($action,$form,$form_state,$online_application_id);
+				update_new_license_application($form,$form_state,$online_application_id);
+				
+			}
+		}
+		else {
+			drupal_set_message(t('Your allotment under process. Please apply for new license after getting allotment!!!'), 'error');
+		}
+	
+   }
+  
+	function renew_license_permission() {
+	  return array(
+		'Administer application for License Renewal' => array(
+		  'title' => t('Administer application for License Renewal'),
+		  'description' => t('Perform Administer application for License Renewal.'),
+		),
+	  );
+	}
+	
+	require_once('renew_license_schema.inc');
+	require_once('renew_license_fetch_data.form.inc');
+	require_once('renew_license_add_update_data.form.inc');

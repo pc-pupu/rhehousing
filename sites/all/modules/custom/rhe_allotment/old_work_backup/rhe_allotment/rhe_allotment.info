@@ -1,0 +1,6 @@
+name = RHE Allotment
+decsription = RHE Allotment Module
+core = 7.x
+package = eallotment RHE Allotment Module
+stylesheets[all][] = css/rhe_allotment.css
+scripts[] = js/rhe_allotment.js
