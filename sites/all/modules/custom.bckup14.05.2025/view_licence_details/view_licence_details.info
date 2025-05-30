@@ -1,0 +1,6 @@
+name = View Licence Details
+decsription = View Licence Details Module
+core = 7.x
+package = eallotment RHE License Module
+stylesheets[all][] = css/view_licence_details.css
+scripts[] = js/view_licence_details.js

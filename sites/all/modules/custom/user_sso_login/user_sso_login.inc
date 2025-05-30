@@ -15,7 +15,10 @@ function user_sso_login($form, &$form_state, $userHRMSID)
     {
         $userHRMSID = base64_decode($userHRMSID); 
         $userData = getHRMSUserData($userHRMSID);
+<<<<<<< HEAD
         // print_r($userData);die;
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
         if (!empty($userData))
         {
             // print_r($userData);

@@ -38,6 +38,7 @@
 			'file' => 'include/allotment_list_approve_page.inc',
 			'access arguments' => array('administer Allotment List Approve'),
 		);
+<<<<<<< HEAD
 		/* added by dg 26-05-2025   */
 		$items['allotment_list_hold'] = array(
 			'title' => 'List of Allottees for Hold',
@@ -47,6 +48,8 @@
 			'access arguments' => array('administer Allotment List for Hold'),
 		);
 		/* end */
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 		return $items;
 	}
@@ -72,11 +75,14 @@
 				'title' => t('administer Allotment List Approve'),
 				'description' => t('perform administer Allotment List Approve.'),
 			),
+<<<<<<< HEAD
 
 			'administer Allotment List for Hold' => array(
 				'title' => t('Administer Allotment List Hold'),
 				'description' => t('perform administer Allotment List Hold.'),
 			),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		);	
 	}
 	
@@ -116,7 +122,11 @@
 	}
 	
 	//before approval
+<<<<<<< HEAD
 	function fetch_all_allottee_details_for_approve($allotment_process_date = '', $allotment_process_no = '',  						$allotment_process_type = '', $shifting_estate_id = '') {
+=======
+		function fetch_all_allottee_details_for_approve($allotment_process_date = '', $allotment_process_no = '', $allotment_process_type = '', $shifting_estate_id = '') {
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 			$query = db_select('housing_applicant_official_detail', 'haod');
 			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
@@ -138,7 +148,10 @@
 			$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
 			$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
 			$query->innerJoin('housing_district', 'hd', 'he.district_code = hd.district_code');
+<<<<<<< HEAD
 			$query->innerJoin('housing_allotment_status_master', 'hasm', 'hasm.short_code = hoa.status'); ////added dg 23-05-2025
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			
 			$query->fields('ha', array());
 			$query->fields('haod', array());
@@ -158,8 +171,11 @@
 			}
 			
 			$query->addField('hoa', 'online_application_id');
+<<<<<<< HEAD
 			$query->addField('hoa', 'status');  //added dg 23-05-2025
 			$query->addField('hasm', 'status_description');  //added dg 23-05-2025
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$query->addField('hoa', 'date_of_application');
 			$query->addField('hoa', 'application_no');
 			$query->addField('hfo', 'allotment_no');
@@ -175,6 +191,7 @@
 			$query->addField('hd', 'district_name');
 			
 			
+<<<<<<< HEAD
 			$db_or = db_or();
 			$db_or->condition('hoa.status', 'allotted', '=');
 			$db_or->condition('hoa.status', 'allotment_on_hold', '=');
@@ -182,6 +199,15 @@
 			
 			$db_and = db_and();
 			//$db_and->condition('hoa.status', 'allotted', '=');
+=======
+			/*$db_or = db_or();
+			$db_or->condition('hoa.status', 'allotted', '=');
+			$db_or->condition('hoa.status', 'reject_offer', '=');
+			$query->condition($db_or);*/
+			
+			$db_and = db_and();
+			$db_and->condition('hoa.status', 'allotted', '=');
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$db_and->condition('hfo.online_application_id', NULL, 'IS NOT');
 			$db_and->condition('hfo.allotment_date', $allotment_process_date, '=');
 			$db_and->condition('hfo.allotment_process_no', $allotment_process_no, '=');

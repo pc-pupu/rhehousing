@@ -1,0 +1,784 @@
+<?php
+	
+	function update_flat_init() {
+		drupal_add_css(drupal_get_path('module', 'common_application') . '/css/select2.min.css');
+		drupal_add_js(drupal_get_path('module', 'common_application') . '/js/select2.min.js');	
+	}
+	
+	function update_flat_menu() {
+		$items['update_flat'] = array(
+	  		'title' => 'RHE Flat Master',	
+	  		//'page callback' => 'update_flat_page',
+	  		'page callback' => 'drupal_get_form',
+	  		'page arguments' => array('update_flat_form'),
+	  		'file' => 'view_flat_list_page.inc',
+	  		'access arguments' => array('administer RHE flat Master'),
+	  		//'access arguments' => array('access content'),
+		);
+		
+		$items['add_block'] = array(
+	  		'title' => 'Add RHE Block Name',	
+	  		//'page callback' => 'update_flat_page',
+	  		'page callback' => 'drupal_get_form',
+	  		'page arguments' => array('add_flat_block_form'),
+	  		'file' => 'add_flat_block_form.inc',
+	  		'access arguments' => array('administer RHE block Master'),
+		);
+	
+		$items['update_flat/edit/%'] = array(
+	  		'title' => 'Update RHE Flat Master(Edit Flat Data)',	
+	  		'page callback' => 'editFlatList',
+	  		'page arguments' => array(2),
+	  		'file' => 'view_flat_list_page.inc',
+	  		'access arguments' => array('administer RHE flat Master'),
+		);
+		
+		/*$items['flat_list_pdf/%']=array(
+			'title' => 'List of Flats PDF',
+			'page callback' => 'flat_list_page_pdf',
+			'page arguments' => array(1),
+			'file' => 'flat_list_page_pdf.inc',
+			'access arguments' => array('administer RHE flat Master'),
+		);*/
+		
+		$items['rhe_wise_flat_list'] = array(
+	  		'title' => 'RHE Wise Flat List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhe_wise_flat_list_form'),
+	  		'file' => 'rhe_wise_flat_list_page.inc',
+	  		'access arguments' => array('administer RHE wise flat list Master'),
+		);
+		
+		$items['rhe_wise_flat_list_pdf/%/%'] = array(
+			'title' => 'RHE Wise Flat List PDF',
+			'page callback' => 'rhe_wise_flat_list_page_pdf',
+			'page arguments' => array(1, 2),
+			'file' => 'rhe_wise_flat_list_page_pdf.inc',
+			'access arguments' => array('administer RHE wise flat list Master'),
+		);
+
+		
+
+		/*DDO Estate Mapping Start*/
+	    $items['ddo-estate-mapping-list'] = array(
+	        'title' => 'DDO Estate Mapping List',
+	        'page callback' => 'fss_price_list_page',
+	        'access arguments' => array(
+	            'administer ddo estate mapping home'
+	        ),
+	        'file' => 'ddo_estate_mapping/ddo_estate_mappings_page.inc',
+	        'type' => MENU_NORMAL_ITEM
+	    );
+	    $items['add-ddo-estate-mapping/%ctools_js'] = array(
+	        'title' => 'Add DDO Estate Mapping',
+	        'page callback' => 'add_fss_price_page',
+	        'page arguments' => array(
+	            1
+	        ),
+	        'file' => 'ddo_estate_mapping/add_ddo_estate_mappings_page.inc',
+	        'access arguments' => array(
+	            'administer add ddo estate mapping'
+	        ),
+	        //'access callback' => TRUE,
+	        'type' => MENU_CALLBACK
+	    );
+
+	     $items['view-ddo-estate-mapping/%ctools_js/%'] = array(
+	        'title' => 'View DDO Estate Mapping',
+	        'page callback' => 'view_fss_price_page',
+	        'page arguments' => array(
+	            1,
+	            2
+	        ),
+	        'file' => 'ddo_estate_mapping/ddo_estate_mappings_view_page.inc',
+	        'access arguments' => array(
+	            'administer view ddo estate mapping'
+	        ),
+	        //'access callback' => TRUE,
+	        'type' => MENU_CALLBACK
+	    );
+	    /*DDO Estate Mapping End*/
+		
+		return $items;
+	}
+	
+	/*function update_flat_page() {
+		$build = array();
+
+		// Render your two forms here.
+		$build['form_one'] = drupal_get_form('add_flat_block_form');
+		$build['form_two'] = drupal_get_form('update_flat_form');
+		
+		return $build;
+	}*/
+	
+	function update_flat_form($form, &$form_state) {
+		global $user_role;
+		$form['third_heading'] = array (
+			// '#markup' => '<h1><font style="color: #5996d9">RHE WISE FLAT LIST FOR EDIT</font></h1>'// sd 24-06-2024 turned off
+			'#markup' => '<div class="title mt-4"><h3>Add Flat Data</h3></div>'// sd 24-06-2024
+		);
+		if($user_role == 7 || $user_role == 8) {
+			$form['rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list_specific(),
+				'#required' => TRUE,
+				//'#weight' => -10,
+				// '#prefix' => '<div class="two">', //sd 24-06-2024 turned off
+				// '#suffix' => '</div>', //sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+				'#prefix' => '<div class="row"><div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+
+				// '#select2' => array(
+				// 	//'width' => '500', //sd 24-06-2024 turned off
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);
+		} else {
+			$form['rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list(),
+				'#required' => TRUE,
+				//'#weight' => -10,
+				//'#prefix' => '<div class="two">', //sd 24-06-2024 turned off
+				//'#suffix' => '</div>', // sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+				'#prefix' => '<div class="row"><div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				// '#select2' => array(
+				// 	//'width' => '500', // sd 24-06-2024 turned off
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);	
+		}
+		
+		$form['flat_type'] = array(
+			'#title' => t('Flat Type'),
+			'#type' => 'select',
+			'#options' => rhe_flat_type(),
+			'#required' => TRUE,
+			//'#prefix' => '<div class="two">', // sd 24-06-2024 turned off
+			//'#suffix' => '</div>',// sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+
+		);
+		
+		$form['rhe_block'] = array(
+			'#title' => t('Name of the Block'),
+			//'#description' => t('If you don\'t find block name please add it first.'),
+			'#type' => 'select',
+			'#options' => rhe_block_list(),
+			'#required' => TRUE,
+			//'#weight' => -10,
+			//'#prefix' => '<div class="two">',// sd 24-06-2024 turned off
+			//'#suffix' => '</div>', // sd 24-06-2024 turned off
+			'#prefix' => '<div class="row"><div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+			// '#select2' => array(
+			// 	//'width' => '300', // sd 24-06-2024 turned off
+			// 	//'placeholder' => '- Select -',
+			// 	'allowClear' => TRUE
+        	// )
+		);
+		
+		$form['flat_floor'] = array(
+			'#title' => t('Floor No.'),
+			'#type' => 'select',
+			// '#options' => array('G' => 'Ground', 'F' => 'First', 'S' => 'Second', 'T' => 'Third'),
+			'#options' => array('Ground' => 'Ground', 'First' => 'First', 'Second' => 'Second', 'Third' => 'Third','Fourth'=>'Fourth',
+								'Fifth'=>'Fifth','Sixth'=>'Sixth','Seventh'=>'Seventh','Eighth'=>'Eighth','Top'=>'Top'),
+			'#required' => TRUE,
+			//'#weight' => -10,
+			'#prefix' => '<div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+			// '#prefix' => '<div class="two">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+		);
+	  
+		$form['flat_no'] = array(
+			'#title' => t('Flat No.'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#required' => TRUE,
+			// '#prefix' => '<div class="three">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="row"><div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+			'#element_validate' => array('validate_flat_no'),
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()",'class'=>array('form-control')),
+		);
+	  
+		$form['flat_status'] = array(
+			'#title' => t('Flat Status'),
+			'#type' => 'select',
+			'#options' => flat_status_list(),
+			'#required' => TRUE,
+			// '#prefix' => '<div class="three">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-6"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024,
+			'#attributes' => array('class' => array('form-select')),
+			'#ajax' => array(										// Subham 24-10-2024
+      			'event' => 'change',								// Subham 24-10-2024
+				'callback' => 'remarks_textbox_function',			// Subham 24-10-2024
+				'method' => 'replace',								// Subham 24-10-2024
+    		)														// Subham 24-10-2024
+		);
+		
+		// <---------------------- Done by Subham 24-10-2024 -------------------------->
+		
+		$form['remarks_textbox'] = array(
+			'#title' => t('Remarks'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#disabled' => TRUE,
+			'#required' => TRUE,
+			'#prefix' => '<div class="row" id="remarks_textbox_replace"><div class="col-md-6"><div class="form-floating"> ',
+			'#suffix' => '</div></div></div>',
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()",'class'=>array('form-control'))
+		);
+
+		if (isset($form_state['values']['flat_status']) && $form_state['values']['flat_status'] == 8) {
+			$form['remarks_textbox']['#disabled'] = false;
+		}
+
+		// <--------------------------------- END -------------------------------------->
+		
+	  	$form['submit'] = array(
+			'#value' => t('Add'),
+			'#type' => 'submit',
+			// '#prefix' => '<div class="three" style="padding-top: 42px">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-12">',//sd 24-06-2024 
+			'#suffix' => '</div>',//sd 24-06-2024,
+			'#attributes' => array('class' => array('btn bg-primary btn-sm px-5 mb-4 rounded-pill text-white fw-bolder'))//sd 24-06-2024,
+	  	);
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_update_flat_form()');
+	  	$form['#submit']= array('update_flat_submit');
+		
+		$form['second_heading'] = array (
+			// '#markup' => '<h1><font style="color: #5996d9">RHE WISE FLAT LIST FOR EDIT</font></h1>'// sd 24-06-2024 turned off
+			'#markup' => '<div class="title mt-4"><h3>Update Flat Data</h3></div>'// sd 24-06-2024
+		);
+		
+		
+		$rhe_name =  isset($form_state['values']['update_rhe_name']) && !empty($form_state['values']['update_rhe_name']) ? $form_state['values']['update_rhe_name'] : 0;
+		$flat_type =  isset($form_state['values']['update_flat_type']) &&!empty($form_state['values']['update_flat_type']) ? $form_state['values']['update_flat_type'] : 0;
+		$block_name =  isset($form_state['values']['update_block_name']) &&!empty($form_state['values']['update_block_name']) ? $form_state['values']['update_block_name'] : 0;
+		
+		if($user_role == 7 || $user_role == 8) {
+			$form['update_rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list_specific(),
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flat_type_update',
+					'method' => 'replace',
+				),
+			);
+		} else {
+			$form['update_rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list(),
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flat_type_update',
+					'method' => 'replace',
+				),
+			);	
+		}
+		
+		$form['update_flat_type'] = array(
+			// '#prefix' => '<div class="three" id="flat_type_replace_update">', // sd 24-06-2024 turned off
+			// '#suffix' => '</div>', // sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-4" id="flat_type_replace_update"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+		);
+			
+		if($rhe_name != 0) {
+			$form['update_flat_type'] = array(
+				'#title' => t('Flat Type'),
+				'#type' => 'select',
+				'#options' => flat_type_under_rhe($rhe_name),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				//'#prefix' => '<div class="three" id="flat_type_replace_update">', // sd 24-06-2024 turned off
+				//'#suffix' => '</div>', // sd 24-06-2024 turned off
+				//'#attributes' => array('class'	=> array('dropdown3')), // sd 24-06-2024 turned off
+				'#prefix' => '<div class="col-md-4" id="flat_type_replace_update"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#attributes' => array('class'	=> array('form-select')), // sd 24-06-2024
+
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_blocklist_update',
+					'method' => 'replace',
+				),
+			);
+		}
+		
+		$form['update_block_name'] = array(
+			//'#prefix' => '<div class="three" id="block_name_replace_update">',// sd 24-06-2024 turned off
+			//'#suffix' => '</div>',// sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-6" id="block_name_replace_update"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024
+		);
+			
+		if($rhe_name != 0 && $flat_type != 0) {
+			$form['update_block_name'] = array(
+				'#title' => t('Name of the Block'),
+				'#type' => 'select',
+				'#options' => block_name_under_rhe($rhe_name, $flat_type),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				//'#prefix' => '<div class="three" id="block_name_replace_update">', // sd 24-06-2024 turned off
+				//'#suffix' => '</div>',// sd 24-06-2024 turned off
+				//'#attributes' => array('class'	=> array('dropdown3')),// sd 24-06-2024 turned off
+				'#prefix' => '<div class="col-md-4" id="block_name_replace_update"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div></div>',//sd 24-06-2024
+				'#attributes' => array('class'	=> array('form-select')), // sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flatlist_update',
+					'method' => 'replace',
+				),
+			);
+		}
+	  	
+		$form['all_list'] = array(
+			//'#prefix' => '<div style="margin-top:30px;" id="flat_list_replace_update">',//sd 24-06-2024 turned off
+			//'#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-12" id="flat_list_replace_update">',//sd 24-06-2024
+			'#suffix' => '</div>',//sd 24-06-2024
+		);
+		
+		if($rhe_name != 0 && $flat_type != 0 && $block_name != 0) {
+			$form['all_list'] = array(
+				'#type' => 'markup',
+				'#markup' => viewFlatList($rhe_name, $flat_type, $block_name),
+				'#weight' => 50,
+				//'#prefix' => '<div style="margin-top:30px;" id="flat_list_replace_update">',
+				//'#suffix' => '</div>',
+				'#prefix' => '<div class="col-md-12" id="flat_list_replace_update">',//sd 24-06-2024
+				'#suffix' => '</div>',//sd 24-06-2024
+			);
+		}
+		
+	  
+		return $form;
+	}
+
+	// <---------------------- Done by Subham 24-10-2024 -------------------------->
+
+	function remarks_textbox_function($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#remarks_textbox_replace", drupal_render($form['remarks_textbox']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+
+	function remarks_edit_textbox_function($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#remarks_edit_textbox_replace", drupal_render($form['remarks_edit_textbox']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+	// <--------------------------------- END -------------------------------------->
+
+	// function remarks_textbox_function($form, &$form_state) {
+	// 	// echo $form_state['values']['flat_status'];die();
+	// 	if (isset($form_state['values']['flat_status']) && $form_state['values']['flat_status'] == 'other') {
+	// 	  $form['remarks_textbox']['#disabled'] = FALSE;
+	// 	} else {
+	// 		$form['remarks_textbox']['#disabled'] = TRUE;
+	// 	}
+		
+	// 	// return $form['remarks_textbox'];
+	// }
+	
+	function editFlatList($edit = '') {
+		return drupal_get_form('edit_flat_form',$edit);
+	}
+	
+	function edit_flat_form($form, &$form_state, $id) {
+		global $user_role;
+		$id = decrypt_url($id);
+		$edit = rhe_flat_list_rst_id($id)->fetchObject();
+	 
+		$form['flat_id'] = array(
+			'#type' => 'hidden',
+			'#default_value' =>$edit->flat_id ,
+			'#weight' => -11,
+	  	);
+		
+	  	if($user_role == 7 || $user_role == 8) {
+			$form['rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list_specific(),
+				'#required' => TRUE,
+				'#default_value' => $edit->estate_id,
+				//'#weight' => -10,
+				// '#prefix' => '<div class="two">', //sd 24-06-2024 turned off
+				// '#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				// '#select2' => array(
+				// 	//'width' => '500', //sd 24-06-2024 turned off
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);
+		} else {
+			$form['rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list(),
+				'#required' => TRUE,
+				'#default_value' => $edit->estate_id,
+				//'#weight' => -10,
+				//'#prefix' => '<div class="two">',//sd 24-06-2024 turned off
+				//'#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				// '#select2' => array(
+				// 	//'width' => '500', //sd 24-06-2024 turned off
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);	
+		}
+		
+		$form['flat_type'] = array(
+			'#title' => t('Flat Type'),
+			'#type' => 'select',
+			'#options' => rhe_flat_type(),
+			'#default_value' => $edit->flat_type_id,
+			'#required' => TRUE,
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+			'#prefix' => '<div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+			//'#prefix' => '<div class="two">', //sd 24-06-2024 turned off
+			//'#suffix' => '</div>',//sd 24-06-2024 turned off
+	 	 );
+		
+		$form['rhe_block'] = array(
+			'#title' => t('Name of the Block'),
+			'#type' => 'select',
+			'#options' => rhe_block_list(),
+			'#required' => TRUE,
+			'#default_value' => $edit->block_id,
+			//'#weight' => -10,
+			//'#prefix' => '<div class="two">',//sd 24-06-2024 turned off
+			//'#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+			'#prefix' => '<div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024
+			// '#select2' => array(
+			// 	//'width' => '300',//sd 24-06-2024 turned off
+			// 	//'placeholder' => '- Select -',
+			// 	'allowClear' => TRUE
+        	// )
+		);
+		
+		$form['flat_floor'] = array(
+			'#title' => t('Floor No.'),
+			'#type' => 'select',
+			// '#options' => array('G' => 'Ground', 'F' => 'First', 'S' => 'Second', 'T' => 'Third'),
+			'#options' => array('Ground' => 'Ground', 'First' => 'First', 'Second' => 'Second', 'Third' => 'Third','Fourth'=>'Fourth','Fifth'=>'Fifth',
+								'Sixth'=>'Sixth','Seventh'=>'Seventh','Eighth'=>'Eighth','Top'=>'Top'),
+			'#required' => TRUE,
+			'#default_value' => $edit->floor,
+			//'#weight' => -10,
+			//'#prefix' => '<div class="two">',//sd 24-06-2024 turned off
+			//'#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+			'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+		);
+	  
+	  	$form['flat_no'] = array(
+			'#title' => t('Flat no'),
+			'#type' => 'textfield',
+			'#default_value' => $edit->flat_no,
+			'#required' => TRUE,
+			//'#prefix' => '<div class="three">',//sd 24-06-2024 turned off
+			//'#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#element_validate' => array('edit_validate_flat_no'),
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()",'class' => array('form-select')),//sd 24-06-2024 
+			'#prefix' => '<div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+	  	);
+	   	
+		/*$form['flat_status'] = array(
+			'#title' => t('Flat Status'),
+			'#type' => 'select',
+			'#options' => flat_status_list(),
+			'#default_value' => $edit->flat_status_id,
+			'#required' => TRUE,
+			// '#prefix' => '<div class="three">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024
+			'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+	 	 );*/
+		  $form['flat_status'] = array(
+			'#title' => t('Flat Status'),
+			'#type' => 'select',
+			'#options' => flat_status_list(),
+			'#required' => TRUE,
+			// '#prefix' => '<div class="three">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div></div>',//sd 24-06-2024,
+			'#attributes' => array('class' => array('form-select')),
+			'#ajax' => array(										// Subham 24-10-2024
+      			'event' => 'change',								// Subham 24-10-2024
+				'callback' => 'remarks_edit_textbox_function',			// Subham 24-10-2024
+				'method' => 'replace',								// Subham 24-10-2024
+    		)														// Subham 24-10-2024
+		);
+		
+		// <---------------------- Done by Subham 24-10-2024 -------------------------->
+		
+		$form['remarks_edit_textbox'] = array(
+			'#title' => t('Remarks'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#disabled' => TRUE,
+			'#required' => TRUE,
+			'#prefix' => '<div class="row" id="remarks_edit_textbox_replace"><div class="col-md-4"><div class="form-floating"> ',
+			'#suffix' => '</div></div></div>',
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()",'class'=>array('form-control'))
+		);
+		if (isset($form_state['values']['flat_status']) && $form_state['values']['flat_status'] == 8) {
+			$form['remarks_edit_textbox']['#disabled'] = false;
+		}
+		 
+	  	$form['submit'] = array(
+			'#value' => t('Update'),
+			'#type' => 'submit',
+			// '#prefix' => '<div class="three" style="padding-top: 42px">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			// '#prefix' => '<div class="col-md-6">',//sd 24-06-2024 
+			// '#suffix' => '</div>',//sd 24-06-2024,
+			'#attributes' => array('class' => array('btn bg-primary btn-sm px-5 mb-4 rounded-pill text-white fw-bolder'))//sd 24-06-2024,
+	  	);
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_update_flat_form()');
+	  	$form['#submit']= array('edit_flat_submit');
+		
+	  	//$options['attributes']['class'] = array('button','small','round','link-button','steel_blue');//sd 24-06-2024 turned off
+	  	$options['attributes']['class'] = array('btn bg-dark btn-sm px-5 mb-4 rounded-pill text-white fw-bolder');
+	  	$str = l('Go to Add New', 'update_flat',$options);
+		
+		// $form['add_flat'] = array(
+		// 	'#type' => 'markup',
+		// 	'#markup' => $str.'<br><br>',
+		// 	'#prefix' => '<div class="col-md-6">',//sd 24-06-2024 
+		// 	'#suffix' => '</div></div>'//sd 24-06-2024 
+		// 	// '#prefix' => '<div style="margin-top:20px;">',//sd 24-06-2024 turned off
+		// 	// '#suffix' => '</div>',//sd 24-06-2024 turned off
+		// );
+		
+		$form['second_heading'] = array (
+			'#markup' => '<div class="title"><h3>RHE WISE FLAT LIST FOR EDIT</h3></div>'
+		);
+		
+		$rhe_name =  isset($form_state['values']['update_rhe_name']) && !empty($form_state['values']['update_rhe_name']) ? $form_state['values']['update_rhe_name'] : 0;
+		$flat_type =  isset($form_state['values']['update_flat_type']) &&!empty($form_state['values']['update_flat_type']) ? $form_state['values']['update_flat_type'] : 0;
+		$block_name =  isset($form_state['values']['update_block_name']) &&!empty($form_state['values']['update_block_name']) ? $form_state['values']['update_block_name'] : 0;
+		
+		if($user_role == 7 || $user_role == 8) {
+			$form['update_rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list_specific(),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				// '#prefix' => '<div class="one">',//sd 24-06-2024 turned off
+				// '#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flat_type_update',
+					'method' => 'replace',
+				),
+			);
+		} else {
+			$form['update_rhe_name'] = array(
+				'#title' => t('Name of the RHE'),
+				'#type' => 'select',
+				'#options' => rhe_list(),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				//'#prefix' => '<div class="one">',//sd 24-06-2024 turned off
+				//'#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#attributes' => array('class' => array('form-select')),//sd 24-06-2024 
+				'#prefix' => '<div class="row"><div class="col-md-4"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flat_type_update',
+					'method' => 'replace',
+				),
+			);	
+		}
+		
+		$form['update_flat_type'] = array(
+			// '#prefix' => '<div class="three" id="flat_type_replace_update">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-4" id="flat_type_replace_update"><div class="form-floating" >',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+		);
+			
+		if($rhe_name != 0) {
+			$form['update_flat_type'] = array(
+				'#title' => t('Flat Type'),
+				'#type' => 'select',
+				'#options' => flat_type_under_rhe($rhe_name),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				// '#prefix' => '<div class="three" id="flat_type_replace_update">',//sd 24-06-2024 turned off
+				// '#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#prefix' => '<div class="col-md-4" id="flat_type_replace_update"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div>',//sd 24-06-2024
+				'#attributes' => array('class'	=> array('form-select')),//sd 24-06-2024
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_blocklist_update',
+					'method' => 'replace',
+				),
+			);
+		}
+		
+		$form['update_block_name'] = array(
+			// '#prefix' => '<div class="three" id="block_name_replace_update">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-4" id="block_name_replace_update"><div class="form-floating">',//sd 24-06-2024
+			'#suffix' => '</div></div>',//sd 24-06-2024
+		);
+			
+		if($rhe_name != 0 && $flat_type != 0) {
+			$form['update_block_name'] = array(
+				'#title' => t('Name of the Block'),
+				'#type' => 'select',
+				'#options' => block_name_under_rhe($rhe_name, $flat_type),
+				//'#required' => TRUE,
+				//'#weight' => -10,
+				// '#prefix' => '<div class="three" id="block_name_replace_update">',//sd 24-06-2024 turned off
+				// '#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#prefix' => '<div class="col-md-4" id="block_name_replace_update"><div class="form-floating">',//sd 24-06-2024
+				'#suffix' => '</div></div></div>',//sd 24-06-2024
+				'#attributes' => array('class'	=> array('form-select')),//sd 24-06-2024 turned off
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_rhewise_flatlist_update',
+					'method' => 'replace',
+				),
+			);
+		}
+	  	
+		$form['all_list'] = array(
+			// '#prefix' => '<div style="margin-top:30px;" id="flat_list_replace_update">',//sd 24-06-2024 turned off
+			// '#suffix' => '</div>',//sd 24-06-2024 turned off
+			'#prefix' => '<div class="col-md-12" id="flat_list_replace_update">',//sd 24-06-2024
+			'#suffix' => '</div>',//sd 24-06-2024
+		);
+		
+		if($rhe_name != 0 && $flat_type != 0 && $block_name != 0) {
+			$form['all_list'] = array(
+				'#type' => 'markup',
+				'#markup' => '</br></br>'.viewFlatList($rhe_name, $flat_type, $block_name),
+				'#weight' => 50,
+				// '#prefix' => '<div style="margin-top:20px;" id="flat_list_replace_update">',//sd 24-06-2024 turned off
+				// '#suffix' => '</div>',//sd 24-06-2024 turned off
+				'#prefix' => '<div class="col-md-12" id="flat_list_replace_update" >',//sd 24-06-2024
+				'#suffix' => '</div>',//sd 24-06-2024
+			);
+		}
+		
+	  	return $form;
+	}
+	
+	
+	
+	function update_flat_permission() {
+		return array(
+			'administer RHE flat Master' => array(
+				'title' => t('Administer RHE flat Master'),
+				'description' => t('Perform administration tasks for RHE flat Master.'),
+			),
+			
+			'administer RHE block Master' => array(
+				'title' => t('Administer RHE block Master'),
+				'description' => t('Perform administration tasks for RHE block Master.'),
+			),
+			
+			'administer RHE wise flat list Master' => array(
+				'title' => t('Administer RHE wise flat list Master'),
+				'description' => t('Perform administration tasks for RHE wise flat list Master.'),
+			),
+
+			'administer add ddo estate mapping' => array(
+				'title' => t('Administer Add DDO Estate Mapping'),
+				'description' => t('Perform administration tasks for Add DDO Estate Mapping.'),
+			),
+
+			'administer ddo estate mapping home' => array(
+				'title' => t('Administer DDO Estate Mapping Home'),
+				'description' => t('Perform administration tasks for DDO Estate Mapping Home.'),
+			),
+		);
+	}
+	
+	
+	function _reload_rhewise_flat_type_update($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#flat_type_replace_update", drupal_render($form['update_flat_type']));
+		$commands[] = ajax_command_replace("#block_name_replace_update", drupal_render($form['update_block_name']));
+		$commands[] = ajax_command_replace("#flat_list_replace_update", drupal_render($form['all_list']));
+		
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+	
+	function _reload_rhewise_blocklist_update($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#block_name_replace_update", drupal_render($form['update_block_name']));
+		$commands[] = ajax_command_replace("#flat_list_replace_update", drupal_render($form['all_list']));
+		
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+	
+	function _reload_rhewise_flatlist_update($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#flat_list_replace_update", drupal_render($form['all_list']));
+		
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+
+	
+	
+	require_once("update_flat_fetch_data.form.inc");
+	require_once("update_flat_validate.form.inc");
+	require_once("update_flat_add_data.form.inc");

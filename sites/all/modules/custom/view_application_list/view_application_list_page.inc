@@ -83,7 +83,10 @@ function view_app_page($status ='', $entity = '',$page_status ='') {
 			$entityMsg = 'Renew Licence ';
 		}
 		// echo $statusMsg;die;	
+<<<<<<< HEAD
 		if(!empty($entityMsg))
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		drupal_set_title($statusMsg.'Application List for '.$entityMsg);
 			
 		
@@ -188,7 +191,11 @@ function view_app_page($status ='', $entity = '',$page_status ='') {
 			$fields = array();
 			if($entity == 'new-apply' || $entity == 'vs'||$entity == 'cs' ){
 				
+<<<<<<< HEAD
 				// echo $entity;die;
+=======
+
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				if($page_status == 'verified-list'|| $page_status == 'reject-list'){
 
 					$fields[] = $data->applicant_name;
@@ -275,30 +282,62 @@ function view_app_page($status ='', $entity = '',$page_status ='') {
 
 					
 					
+<<<<<<< HEAD
 					if(!empty($data->computer_serial_no)){
 							$computer_serial_no = $data->computer_serial_no;
 					}else{
 							$computer_serial_no = 'vs_cs';
 					}
+=======
+
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				
 
 					$onclick="return confirm('Are you sure you want to approve?')";
 					$onclick1="return confirm('Are you sure you want to reject?')";
 					if($reject_status == 'housing_sup_reject_1' || $reject_status == 'housing_official_reject' || $reject_status == 'housing_sup_reject_2' || $reject_status == 'housingapprover_reject2' || $reject_status == 'housingapprover_reject1')
 					{
+<<<<<<< HEAD
 						
 						$fields[] = l('<span class="badge text-bg-success rounded fa fa-check">
 						</span>' ,'application-approve/'.encrypt_url($data->online_application_id).'/'.encrypt_url($update_status).'/'.encrypt_url($status).'/'.encrypt_url($entity).'/'.encrypt_url($computer_serial_no), array('html'=>TRUE, 'attributes' => array('onclick' => $onclick))).'&nbsp;'.
+=======
+						// echo "kkk";die;
+						$fields[] = l('<span class="badge text-bg-success rounded fa fa-check">
+						</span>' ,'application-approve/'.encrypt_url($data->online_application_id).'/'.encrypt_url($update_status).'/'.encrypt_url($status).'/'.encrypt_url($entity), array('html'=>TRUE, 'attributes' => array('onclick' => $onclick))).'&nbsp;'.
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 						l('<span class="badge text-bg-danger rounded fa fa-times" > </span>' ,'application_detail/'.encrypt_url($data->online_application_id).'/'.'action-list'.'/'.
 						encrypt_url($reject_status),array('html'=>TRUE));
 
 					}else{
+<<<<<<< HEAD
 						
 						
 						$fields[] = l('<span class="badge text-bg-success rounded fa fa-check">
 						</span>','application-approve/'.encrypt_url($data->online_application_id).'/'.encrypt_url($update_status).'/'.encrypt_url($status).'/'.encrypt_url($entity).'/'.encrypt_url($computer_serial_no), array('html'=>TRUE, 'attributes' => array('onclick' => $onclick))).'&nbsp;'.
 						l('<span class="badge text-bg-danger rounded fa fa-times" > </span>','update_status/'.encrypt_url($data->online_application_id).'/'.encrypt_url($reject_status).'/'.encrypt_url($status).'/'.encrypt_url($entity).'/'.encrypt_url($computer_serial_no),array('html'=>TRUE, 'attributes' => array('onclick' => $onclick1)));
 						
+=======
+						//echo "hhh";die;
+
+						// $fields[] = l('<span class="badge text-bg-success rounded fa fa-check">
+						// </span>' ,
+
+						// 'c/'.encrypt_url($data->online_application_id).'/'.encrypt_url($update_status).'/'.encrypt_url($status).'/
+						// '.encrypt_url($entity), array('html'=>TRUE, 'attributes' => array('onclick' => $onclick))).' '.
+
+						// l(
+						// 	'<span class="badge text-bg-danger rounded fa fa-times" > </span>' ,
+						// 'update_status/'.encrypt_url($data->online_application_id).'/'.encrypt_url($reject_status).'/'.encrypt_url($status).'/'.encrypt_url($entity),
+						// 	array('html'=>TRUE, 'attributes' => array('onclick' => $onclick1))
+						// );
+
+
+
+						$fields[] = l('<span class="badge text-bg-success rounded fa fa-check">
+						</span>','application-approve/'.encrypt_url($data->online_application_id).'/'.encrypt_url($update_status).'/'.encrypt_url($status).'/'.encrypt_url($entity), array('html'=>TRUE, 'attributes' => array('onclick' => $onclick))).'&nbsp;'.
+						l('<span class="badge text-bg-danger rounded fa fa-times" > </span>','update_status/'.encrypt_url($data->online_application_id).'/'.encrypt_url($reject_status).'/'.encrypt_url($status).'/'.encrypt_url($entity),array('html'=>TRUE, 'attributes' => array('onclick' => $onclick1)));
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					}	
 

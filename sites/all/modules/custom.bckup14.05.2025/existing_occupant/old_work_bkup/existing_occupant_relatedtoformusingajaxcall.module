@@ -1,0 +1,516 @@
+<?php
+
+	function existing_occupant_init() {
+		drupal_add_library('system','ui.datepicker');
+		
+		drupal_add_css(drupal_get_path('module', 'common_application') . '/css/select2.min.css');
+		drupal_add_js(drupal_get_path('module', 'common_application') . '/js/select2.min.js');
+		
+		drupal_add_js('(function($) {
+    		Drupal.behaviors.ajaxDatepicker = {
+      		attach: function (context, settings) {
+        	//code starts
+			$( "#occupant-dob" ).datepicker({
+			  	dateFormat: "dd/mm/yy",
+			  	changeMonth: true,
+				changeYear: true,
+				yearRange: "-70:-18",
+				maxDate: "-18Y",
+				autoSize: true
+			});
+			
+			$( "#occupant-doj" ).datepicker({
+			  	dateFormat: "dd/mm/yy",
+			  	changeMonth: true,
+				changeYear: true,
+				yearRange: "-70:+0",
+				maxDate: "0",
+				autoSize: true
+			});
+			
+			$( "#occupant-dor" ).datepicker({
+			  	dateFormat: "dd/mm/yy",
+			  	changeMonth: true,
+				changeYear: true,
+				yearRange: "-0:+70",
+				minDate: "0",
+				autoSize: true
+			});
+			//code ends
+      		}
+    		};
+    	})(jQuery);', 'inline');
+		
+		drupal_add_js('(function($) {
+    		Drupal.behaviors.ajaxMobileNoNumericPositive = {
+      		attach: function (context, settings) {
+        	//code starts
+			$( "#mobile_no" ).keypress(function (e)  
+			{ 
+			  if( e.which!=8 && e.which!=0 && (e.which<48 || e.which>57))
+			  {
+				return false;
+			  }	
+			});
+			
+			$( ".numeric_positive" ).keypress(function (e)  
+			{ 
+			  if( e.which!=8 && e.which!=0 && (e.which<48 || e.which>57))
+			  {
+				return false;
+			  }	
+			});
+			//code ends
+      		}
+    		};
+    	})(jQuery);', 'inline');
+	}
+	
+	function existing_occupant_menu() {
+		$items = array();
+		/*$items['existing_occupant_search'] = array(
+			'title'=>'Search Existing Occupant',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('existing_occupant_search_form'),
+			'file' => 'include/existing_occupant_search_form.inc',
+			'access arguments' => array('administer Existing Occupant Form'),
+			//'access callback'=>TRUE
+		);
+		
+		$items['all_ready_existing_occupant/%'] = array(
+			'title'=>'Existing Occupant Data Entry',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('all_ready_existing_occupant_form',1),
+			'file' => 'include/all_ready_existing_occupant_form.inc',
+			'access arguments' => array('administer Existing Occupant Form'),
+			//'access callback'=>TRUE
+		);
+		
+		$items['existing_occupant'] = array(
+			'title'=>'Existing Occupant Data Entry',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('existing_occupant_form',1),
+			'file' => 'include/existing_occupant_form.inc',
+			'access arguments' => array('administer Existing Occupant Form'),
+			//'access callback'=>TRUE
+		);*/
+		
+		
+		$items['rhewise_flatlist'] = array(
+	  		'title' => 'RHEwise Occupant Entry',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhewise_flatlist_form'),
+	  		'file' => 'include/rhewise_flatlist_page.inc',
+	  		'access arguments' => array('administer Existing Occupant'),
+		);
+		
+		/*$items['rhewise_occupant_data_entry/%'] = array(
+			'title'=>'Flatwise Occupant Data Entry',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('existing_occupant_form',1),
+			'file' => 'include/existing_occupant_form.inc',
+			'access arguments' => array('administer Existing Occupant'),
+			//'access callback'=>TRUE
+		);*/
+		
+		$items['rhewise_occupantlist'] = array(
+	  		'title' => 'RHEwise Occupant List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhewise_occupantlist_form'),
+	  		'file' => 'include/rhewise_occupantlist_page.inc',
+	  		'access arguments' => array('administer Existing Occupant List'),
+		);
+		
+		$items['update_occupant_status/%/%'] = array(
+			'title' => 'Update Occupant Status',	
+			'page callback' => 'occupant_status_update',
+			'page arguments' => array(1, 2),
+			'access arguments' => array('administer Existing Occupant List'),
+		);
+		
+		$items['occupant_detail/%'] = array(
+			'title' => 'View Occupant Detail',	
+			'page callback' => 'view_occupant_detail_page',
+			'page arguments' => array(1),
+			'access arguments' => array('administer Existing Occupant List'),
+		);
+		
+		
+		$items['occupant_detail_pdf/%/%'] = array(
+			'page callback' => 'occupant_detail_pdf_gen',
+			'page arguments' => array(1,2),
+			'file' => 'include/occupant_detail_pdf_gen.inc',
+			'access arguments' => array('administer Existing Occupant List'),
+			'access callback' => TRUE,
+		);
+		
+		return $items;	
+		
+	}
+	
+	
+	function view_occupant_detail_page($online_app_id = '') {
+		$online_app_id = decrypt_url($online_app_id);
+		//die($app_id);
+		$output = array();
+		if(is_numeric($online_app_id) && $online_app_id > 0) {
+			$output[] = true;
+			$output[] = $online_app_id;
+		}
+		return theme('view_occupant_detail_template', array('output' => $output));
+	}
+	
+	function existing_occupant_theme() {
+	
+		return array(
+			'view_occupant_detail_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be custom-page.tpl.php
+				'template' => 'view_occupant_detail',
+			),
+		);
+	}
+	
+	
+	function existing_occupant_permission() {
+		return array(
+			'administer Existing Occupant' => array(
+				'title' => t('Administer Existing Occupant'),
+				'description' => t('Perform Administer Existing Occupant Data Entry.'),
+			),
+			
+			'administer Existing Occupant List' => array(
+				'title' => t('Administer Existing Occupant List'),
+				'description' => t('Perform Administer Existing Occupant List Verification and Approval.'),
+			),
+		);	
+	}
+	
+	
+	/*function get_housing_flat1($occupation_estate = '', $occupation_block = '') {
+	
+	
+		$housing_flat_arr = array('' => '-- select --');
+		if(!empty($occupation_estate) && !empty($occupation_block)) {
+			$query=db_select('housing_flat','hf');
+			$query->fields('hf',array('flat_id','flat_no'));
+			$query->condition('hf.estate_id', $occupation_estate);
+			$query->condition('hf.block_id', $occupation_block);
+			
+			//$query->condition('hf.flat_status_id', 2);
+			//$query->condition('hf.flat_category_id', 1);
+			$query->orderBy('flat_no', 'ASC');
+			$result=$query->execute();
+			
+			foreach($result as $val) {
+				$housing_flat_arr[$val->flat_id] = $val->flat_no;
+			}
+		}
+		
+		return $housing_flat_arr;
+	
+	}*/
+	
+	
+	function flat_type_under_rhe($rhe_name = '') {
+		$flat_type_options = array();
+		if($rhe_name !== '' && is_numeric($rhe_name)) {
+			$query = db_select('housing_flat', 'hf');
+			$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
+			$query->addField('hf', 'flat_type_id');	
+			$query->addField('hft', 'flat_type');
+			$query->condition('hf.estate_id', $rhe_name, '=');
+			$query->groupBy('hf.flat_type_id');
+			$query->groupBy('hft.flat_type');
+			$query->orderBy('hf.flat_type_id', 'ASC');
+			$result = $query->execute();
+			
+			if($result->rowCount() > 0) {
+				foreach($result as $val) {
+					$flat_type_options[$val->flat_type_id] = $val->flat_type;
+				}
+				return $flat_type_options;
+			} else {
+				$flat_type_options[''] = 'No Data Found';
+				return $flat_type_options;		
+			}
+		}
+	}
+	
+	function block_name_under_rhe($rhe_name = '', $flat_type = '') {
+		$block_name_options = array();
+		if(($rhe_name !== '' && $flat_type !== '') && (is_numeric($rhe_name) && is_numeric($flat_type))) {
+			$query = db_select('housing_flat', 'hf');
+			$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+			$query->addField('hf', 'block_id');	
+			$query->addField('hb', 'block_name');
+			$db_and = db_and();
+			$db_and->condition('hf.estate_id', $rhe_name, '=');
+			$db_and->condition('hf.flat_type_id', $flat_type, '=');
+			$query->condition($db_and);
+			$query->groupBy('hf.block_id');
+			$query->groupBy('hb.block_name');
+			$query->orderBy('hb.block_name', 'ASC');
+			$result = $query->execute();
+			
+			if($result->rowCount() > 0) {
+				foreach($result as $val) {
+					$block_name_options[$val->block_id] = $val->block_name;
+				}
+				return $block_name_options;
+			} else {
+				$block_name_options[''] = 'No Data Found';
+				return $block_name_options;		
+			}
+		}
+	}
+	
+	function flatno_under_rhe($rhe_name = '', $flat_type = '', $block_name = '') {
+		$flat_no_options = array();
+		if($rhe_name !== '' && $flat_type !== '' && $block_name !== '' && is_numeric($rhe_name) && is_numeric($flat_type) && is_numeric($block_name)) {
+			$query = db_select('housing_flat', 'hf');
+			$query->leftJoin('housing_flat_occupant', 'hfo', 'hf.flat_id = hfo.flat_id');
+			$query->addField('hf', 'flat_id');
+			$query->addField('hf', 'flat_no');
+			$db_and = db_and();
+			$db_and->condition('hf.estate_id', $rhe_name, '=');
+			$db_and->condition('hf.flat_type_id', $flat_type, '=');
+			$db_and->condition('hf.block_id', $block_name, '=');
+			$db_and->condition('hfo.flat_id', NULL, 'is');
+			$query->condition($db_and);
+			$query->orderBy('flat_id', 'ASC');
+			$result = $query->execute();
+			
+			if($result->rowCount() > 0) {
+				foreach($result as $val) {
+					$flat_no_options[$val->flat_id] = $val->flat_no;
+				}
+				return $flat_no_options;
+			} else {
+				$flat_no_options[''] = 'No Data Found';
+				return $flat_no_options;		
+			}
+		}
+	}
+	
+	function rhe_flattype_wise_occupantlist_for_update($rhe_name = '', $flat_type = '') {
+		
+		if($rhe_name != 0 && $flat_type != 0) {
+			$query = db_select('users', 'u');
+			$query->innerJoin('users_roles', 'ur', 'u.uid = ur.uid');
+			$query->innerJoin('housing_applicant', 'ha', 'u.uid = ha.uid');
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'u.uid = haod.uid');
+			$query->innerJoin('housing_online_application', 'hoa', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+			$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hoa.online_application_id = hnaa.online_application_id');
+			$query->innerJoin('housing_flat_occupant', 'hfo', 'hoa.online_application_id = hfo.online_application_id');
+			$query->innerJoin('housing_flat', 'hf', 'hfo.flat_id = hf.flat_id');
+			$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
+			$query->innerJoin('housing_district', 'hd', 'hd.district_code = he.district_code');
+			$query->innerJoin('housing_block', 'hb', 'hf.block_id = hb.block_id');
+			$query->innerJoin('housing_flat_status', 'hfs', 'hf.flat_status_id = hfs.flat_status_id');
+			$query->innerJoin('housing_flat_category', 'hfc', 'hf.flat_category_id = hfc.flat_category_id');
+			$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
+			$query->fields('u');
+			$query->addField('u', 'status', 'user_status');
+			$query->fields('ur');
+			$query->fields('ha');
+			$query->fields('haod');
+			$query->fields('hoa');
+			$query->fields('hnaa');
+			$query->fields('hfo');
+			$query->addField('hf', 'flat_id');
+			$query->addField('hf', 'flat_no');
+			$query->addField('hf', 'estate_id');
+			$query->addField('hf', 'flat_type_id');
+			$query->addField('hf', 'block_id');
+			$query->addField('hf', 'floor');
+			$query->addField('hf', 'flat_status_id');
+			$query->addField('hf', 'flat_category_id');
+			$query->addField('he', 'estate_name');
+			$query->addField('he', 'estate_address');
+			$query->addField('hd', 'district_name');
+			$query->addField('hb', 'block_name');	
+			$query->addField('hfs', 'flat_status');
+			$query->addField('hfc', 'flat_category');
+			$query->addField('hfs', 'is_occupied');
+			$query->addField('hft', 'flat_type');
+			$db_and = db_and();
+			$db_and->condition('u.status', 0, '=');
+			$db_and->condition('ur.rid', 5, '=');
+			$db_and->condition('hoa.status', 'allotted', '=');
+			$db_and->condition('hoa.is_backlog_applicant', 2, '=');
+			$db_and->condition('hf.estate_id', $rhe_name, '=');
+			$db_and->condition('hf.flat_type_id', $flat_type, '=');
+			$query->condition($db_and);
+			$query->orderBy('hf.flat_id', 'ASC');
+			//$query = $query->extend('PagerDefault')->limit(5);
+			//$query = $query->extend('TableSort')->extend('PagerDefault')->limit(5);
+			
+			//echo $query;
+			return $query->execute();	
+		}
+	}
+	
+	function flatwise_occupantlist($flat_id = '') {
+		if($flat_id != 0) {
+			$query = db_select('users', 'u');
+			$query->innerJoin('users_roles', 'ur', 'ur.uid = u.uid');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'haod.uid = u.uid');
+			$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+			$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hnaa.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+			$query->fields('u');
+			$query->addField('u', 'status', 'user_status');
+			$query->fields('ur');
+			$query->fields('ha');
+			$query->fields('haod');
+			$query->fields('hoa');
+			$query->fields('hnaa');
+			$query->fields('hfo');
+			$db_and = db_and();
+			$db_and->condition('hfo.flat_id', $flat_id, '=');
+			$db_and->condition('ur.rid', 5, '=');
+			$db_and->condition('hoa.is_backlog_applicant', 2, '=');
+			$db_and->condition('hoa.status', 'allotted', '=');
+			$query->condition($db_and);
+			$query->orderBy('u.uid', 'ASC');
+			return $query->execute();		
+		}
+	}
+	
+	function occupant_status_update($user_id = 0, $status = '') {
+		$uid = decrypt_url($user_id);
+		$status = decrypt_url($status);
+		
+		if($status == 'approve') {
+			db_update('users')
+			->fields(array(
+				'status' => 1,
+				)
+			)
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			drupal_set_message('Occupant has been verified and approved.');
+			drupal_goto('rhewise_occupantlist');
+		}
+		elseif($status == 'reject') {
+			db_delete('users')
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			db_delete('users_roles')
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			drupal_set_message('Occupant entry has been deleted.');
+			drupal_goto('rhewise_occupantlist');
+		}
+	}
+	
+	/* fetch pay band*/ 
+	 function pay_band_list_specific($flat_type = '') {
+		
+		$pay_band_options = array(''=>'- Select -');
+		$query = db_select('housing_pay_band', 'hpb')->fields('hpb')->orderBy('scale_from', 'ASC');
+		$query->condition('flat_type_id', $flat_type, '=');
+		$result = $query->execute();
+		foreach($result as $val) {
+			if($val->scale_from == 0 && $val->scale_to != 0) {
+				$str =  $val->payband.' (Up to Rs '.$val->scale_to.'/-)';
+			}
+			else if($val->scale_from != 0 && $val->scale_to == 0) {
+				if($val->grade_pay_from == 0 && $val->grade_pay_to != 0) {
+					$str =  $val->payband.' (Rs '.$val->scale_from.'/- and above & GP Up to Rs. '.$val->grade_pay_to.'/-)';
+				}
+				else if($val->grade_pay_from != 0 && $val->grade_pay_to == 0) {
+					$str =  $val->payband.' (Rs '.$val->scale_from.'/- and above & GP Rs. '.$val->grade_pay_from.'/- and above)';
+				}
+				//$str =  $val->payband.' (Rs '.$val->scale_from.'/- and above)';
+			}
+			else {
+				$str = $val->payband.' (Rs '.$val->scale_from.'/- to Rs '.$val->scale_to.'/-)';
+			}
+			
+			$pay_band_options[$val->pay_band_id] = $str;
+		}
+		
+		return $pay_band_options;
+	}
+	
+	/*fetch specific RHE */
+  	function rhe_list_specific() {
+		global $user;
+		$rhe_options = array(''=>'- Select -');
+		
+		$query1 = db_select('users_details', 'ud');
+		$query1->fields('ud');
+		$query1->condition('uid',$user->uid,'=');
+		$result1 = $query1->execute();
+		$data1 = $result1->fetchObject();
+		
+		if($data1->division_id != '' && $data1->subdiv_id != '') {
+			if($data1->subdiv_id != 0) {
+				$query = db_select('housing_estate', 'he');
+				$query->fields('he');
+				$db_and = db_and();
+				$db_and->condition('he.division_id', $data1->division_id, '=');
+				$db_and->condition('he.subdiv_id', $data1->subdiv_id, '=');
+				$query->condition($db_and);
+				$query->orderBy('estate_name','ASC');
+				$result = $query->execute();	
+			} else {
+				$query = db_select('housing_estate', 'he');
+				$query->fields('he');
+				$query->condition('he.division_id', $data1->division_id, '=');
+				$query->orderBy('estate_name','ASC');
+				$result = $query->execute();	
+			}
+		}
+		
+		foreach($result as $val) {
+			$str = $val->estate_name;
+			if($val->estate_address != null){
+				$str = $str.' | '.$val->estate_address;
+			}
+			$rhe_options[$val->estate_id] = $str;
+		}
+		
+		return $rhe_options;
+	}
+	
+	
+	function fetch_occupant_details($online_app_id = '') {
+		if($online_app_id != 0) {
+			$query = db_select('users', 'u');
+			$query->innerJoin('users_roles', 'ur', 'ur.uid = u.uid');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'haod.uid = u.uid');
+			$query->innerJoin('housing_pay_band', 'hpb', 'hpb.pay_band_id = haod.pay_band_id');
+			$query->innerJoin('housing_ddo', 'hddo', 'hddo.ddo_id = haod.ddo_id');
+			$query->innerJoin('housing_district', 'hd', 'hd.district_code = hddo.district_code');
+			$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+			$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hnaa.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+			$query->fields('u');
+			$query->addField('u', 'status', 'user_status');
+			$query->fields('ur');
+			$query->fields('ha');
+			$query->fields('haod');
+			$query->fields('hpb');
+			$query->fields('hddo');
+			$query->fields('hd');
+			$query->fields('hoa');
+			$query->fields('hnaa');
+			$query->fields('hfo');
+			$db_and = db_and();
+			$db_and->condition('hoa.online_application_id', $online_app_id, '=');
+			$db_and->condition('ur.rid', 5, '=');
+			$db_and->condition('hoa.is_backlog_applicant', 2, '=');
+			$db_and->condition('hoa.status', 'allotted', '=');
+			$query->condition($db_and);
+			$query->orderBy('u.uid', 'ASC');
+			return $query->execute();		
+		}	
+	}

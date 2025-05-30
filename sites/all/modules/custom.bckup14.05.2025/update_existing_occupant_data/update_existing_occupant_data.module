@@ -1,0 +1,196 @@
+<?php
+ function update_existing_occupant_data_init() {
+
+ }
+ function update_existing_occupant_data_menu() {
+    $items['update_occupant'] = array(
+	  'title' => 'Update Existing Occupant\'s Master Data',	
+      //'page callback' => 'new_application_page',
+	  'page callback' => 'drupal_get_form',
+      'page arguments' => array('application_form'),
+	  'access arguments' => array('administer Existing Occupant\'s Master'),
+    );
+	$items['update_occupant/view'] = array(
+	  'title' => 'View Occupant List',	
+      'page callback' => 'viewOccupantList',
+	  'file' => 'view_occupant_list_page.inc',
+	  'access arguments' => array('administer Existing Occupant\'s Master'),
+    );
+	 $items['update_occupant/view/%'] = array(
+	  'title' => 'View Occupant Detail',	
+      'page callback' => 'view_Occupant_detail_page',
+	  'page arguments' => array(2),
+	  'access arguments' => array('administer Existing Occupant\'s Master'),
+    );
+    return $items;
+  }
+  
+  
+function update_existing_occupant_data_form_alter(&$form, &$form_state, $form_id) {
+	  //global $custom_url;
+	  /*echo $custom_url;
+	  echo '<br>';
+	  echo print_r($form['#action']);
+	  echo '<br>';
+	  echo $custom_url.'/update_occupant';
+	  echo '<br>';*/
+	  
+	  if($form['#action'] == '/update_occupant') {
+		//echo 'Test'; 
+	  	$options['attributes']['class'] = array('button','small','round','link-button','steel_blue');
+		$str=l('View Occupant List', 'update_occupant/view',$options).'</br></br>';
+		$form['breadcrumb'] = array(
+			   '#type' => 'markup',
+			   '#markup' => $str,
+				'#weight' => -10
+		);
+		$form['ddo']['file'] = NULL;
+
+//Starting of Occupant's Allotment Information Section	
+		$form['allotment_info'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Occupant\'s Allotment Information'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+		);
+	  	$form['allotment_info']['estate_name'] = array(
+			'#title' => t('RHE Name'),
+			'#type' => 'select',
+			'#options' => array(''=>'Choose Pay Band First'),
+			'#required' => TRUE,
+			'#validated' => TRUE,
+			'#prefix' => '<div class="four" id="estate_list">',
+			'#suffix' => '</div>',
+	  	);
+	  $form['allotment_info']['flat_name'] = array(
+		'#title' => t('Flat No'),
+		'#type' => 'select',
+		'#options' => array(''=>'Choose Estate Name First'),
+		'#required' => TRUE,
+		'#validated' => TRUE,
+		'#prefix' => '<div class="four" id="flat_list">',
+ 		'#suffix' => '</div>',
+	  );
+	   $form['allotment_info']['allotment_no'] = array(
+		'#title' => t('Allotment No'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		'#prefix' => '<div class="four">',
+ 		'#suffix' => '</div>',
+	  );
+	   
+	  $form['allotment_info']['allotment_date'] = array(
+		'#title' => t('Allotment Date'),
+		'#type' => 'textfield',
+		'#attributes' => array('id' => 'ad'),
+		'#required' => TRUE, 
+		'#prefix' => '<div class="four">',
+ 		'#suffix' => '</div>',
+	  );
+	    $form['allotment_info']['license_no'] = array(
+		'#title' => t('Licence No'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		'#prefix' => '<div class="three">',
+ 		'#suffix' => '</div>',
+	  ); 
+	  $form['allotment_info']['license_issue_date'] = array(
+		'#title' => t('Licence Issue Date'),
+		'#type' => 'textfield',
+		'#attributes' => array('id' => 'lid'),
+		'#required' => TRUE,
+		'#prefix' => '<div class="three">',
+ 		'#suffix' => '</div>',
+	  );
+	  $form['allotment_info']['license_expiry_date'] = array(
+		'#title' => t('Licence Expiry Date'),
+		'#type' => 'textfield',
+		'#attributes' => array('id' => 'led'),
+		'#default_value' => '',
+		'#required' => TRUE,
+		'#prefix' => '<div class="three">',
+ 		'#suffix' => '</div>',
+	  );	//End of Occupant's Allotment Information Section
+	  
+		$form['draft'] = NULL;
+		$form['submit']['#value'] = t('Add Occupant');
+	
+	$form['official_info']['pay_band']['#ajax'] = array(
+				   'event' => 'change',
+				   'callback' => '_reload_rhe_list',
+				   'effect' => 'fade',
+				   'progress' => array(
+					  'type' => '',
+					  'message' => '',
+					 )
+		 );
+    
+	  $form['allotment_info']['estate_name']['#ajax'] = array(
+				   'event' => 'change',
+				   'callback' => '_reload_flat_list',
+				   'effect' => 'fade',
+				   'progress' => array(
+					  'type' => '',
+					  'message' => '',
+					 )
+		 );
+	 	$form['#submit']= array('add_existing_occupant');
+	 
+	  }
+	 $form['#clientside_validation_settings']['settings']['validate_options']['validate_before_ajax'] = 0 ;
+	
+
+}
+
+//Use for view particular occupant details
+function view_Occupant_detail_page($Occupant_id = '') {
+	//echo $Occupant_id;
+	$Occupant_id = decrypt_url($Occupant_id);
+	$Occupant_details = rhe_occupant_list($Occupant_id);
+	
+	$output = array();
+	if($Occupant_id !== '' && (!is_numeric($Occupant_id) || $Occupant_id <= 0)) {
+    	$output[] = false;
+  	}
+	else if($Occupant_details->rowCount() == 0) {
+		$Occupant_details = rhe_eoccupant_list($Occupant_id);
+		if($Occupant_details->rowCount() == 0) {
+			$output[] = false;
+		}
+		else {	
+			$output[] = true;
+			$output[] = $Occupant_details->fetchObject();
+		}
+	}
+	else {	
+		$output[] = true;
+		$output[] = $Occupant_details->fetchObject();
+	}
+
+	return theme('view_Occupant_detail_template', array('output' => $output));
+
+}
+
+function update_existing_occupant_data_theme() {
+	
+	return array(
+        'view_Occupant_detail_template' => array(
+			'variables' => array('output' => NULL),
+            // file name will be custom-page.tpl.php
+            'template' => 'view_occupant_detail',
+        ),
+		
+		
+    );
+}
+
+function update_existing_occupant_data_permission() {
+  return array(
+    'administer Existing Occupant\'s Master' => array(
+      'title' => t('Administer Existing Occupant\'s Master'),
+      'description' => t('Perform administration tasks for Existing Occupant\'s Master.'),
+    ),
+  );
+}
+require_once('update_existing_occupant_fetch_data.form.inc');
+require_once('update_existing_occupant_add_update_data.form.inc');

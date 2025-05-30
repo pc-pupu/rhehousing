@@ -56,10 +56,17 @@ function application_status_check_menu() {
     'access arguments' => array('common_allotment_view'),
   );
 
+<<<<<<< HEAD
   $items['request-for-offer-letter-extension/%/%/%/%/%'] = array(
     'title' => 'Request for Offer Letter Extension',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('request_for_offer_letter_extension_form',1,2,3,4,5),
+=======
+  $items['request-for-offer-letter-extension/%/%/%/%'] = array(
+    'title' => 'Request for Offer Letter Extension',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('request_for_offer_letter_extension_form',1,2,3,4),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
     'file' => 'include/request_for_offer_letter_extension.inc',
     'access arguments' => array('common_allotment_view'),
   );
@@ -102,7 +109,10 @@ function search_common_data_fetch($app_id = '', $app_status = ''){
     $query->addField('hoa', 'online_application_id');
     $query->addField('haod', 'applicant_official_detail_id');
     $query->addField('hoa', 'status');
+<<<<<<< HEAD
     $query->addField('hoa', 'date_of_verified');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
     $query->addField('hasm', 'status_description');
     $query->addField('hol', 'license_no');
     $query->addField('hol', 'possession_date');
@@ -115,7 +125,11 @@ function search_common_data_fetch($app_id = '', $app_status = ''){
 
     $result = $query->execute();
     // $data = $result->fetchAll();
+<<<<<<< HEAD
     
+=======
+    // print_r($data);die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
    
     $header['applicant_name'] = array('data' => 'Name');
     $header['application_no'] = array('data' => 'Application Number');
@@ -126,7 +140,11 @@ function search_common_data_fetch($app_id = '', $app_status = ''){
 		$output = '';
 		
 		while($data = $result->fetchObject()) {
+<<<<<<< HEAD
      // echo "<pre>";print_r($data);die;
+=======
+      // print_r($data);die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$fields = array();
 			$fields[] = $data->applicant_name;
 			$fields[] = $data->application_no;
@@ -205,7 +223,11 @@ function search_common_data_fetch($app_id = '', $app_status = ''){
                 ).' '.
                l(
                 ' Extend Offer Letter',
+<<<<<<< HEAD
                 'request-for-offer-letter-extension/'. $app_id.'/'.$app_status.'/'.encrypt_url($data->uid).'/'.encrypt_url($data->applicant_official_detail_id).'/'. encrypt_url($data->date_of_verified), //
+=======
+                'request-for-offer-letter-extension/'. $app_id.'/'.$app_status.'/'.encrypt_url($data->uid).'/'.encrypt_url($data->applicant_official_detail_id), //
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
                 array(
                     'html'=>TRUE,
                     'attributes'=> array('class'=>array('btn fa fa-history bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
@@ -401,8 +423,11 @@ function common_applicant_data_fetch($app_id = '', $app_status = '') {
           $display_app_type = 'Category Shifting';
       } elseif (strpos($application_no_test, 'PA') !== false) {
           $display_app_type = 'Physical Application';
+<<<<<<< HEAD
       }elseif (strpos($application_no_test, 'EO') !== false) {
           $display_app_type = 'Existing Occupant Application';
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
       }
 
     // Display Gender
@@ -510,7 +535,11 @@ function common_applicant_data_fetch($app_id = '', $app_status = '') {
           </tr>
           <tr>
             <th style="background-color:#00000000">Date of Application:</th>
+<<<<<<< HEAD
             <td>'.(isset($output['date_of_application']) ? $output['date_of_application'] : 'Not Avalaible').'</td>
+=======
+            <td>'.implode('/', array_reverse(explode('-', $output['date_of_application']))).'</td>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
           </tr>
           <tr>
             <th style="background-color:#00000000">Application Status:</th>

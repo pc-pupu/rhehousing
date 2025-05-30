@@ -82,7 +82,6 @@
 		global $base_path;
 		
 		$output = '';
-
 		$result = rhe_wise_flat_list_detail($rhe_name);
 		
 		$result1 = rhe_wise_flat_list_detail($rhe_name);

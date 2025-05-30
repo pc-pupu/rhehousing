@@ -759,11 +759,14 @@
 				'title' => t('Administer DDO Estate Mapping Home'),
 				'description' => t('Perform administration tasks for DDO Estate Mapping Home.'),
 			),
+<<<<<<< HEAD
 
 			'administer RHE wise flat list Master for Division' => array(
 				'title' => t('Administer Flat List Master Delete For Division'),
 				'description' => t('Perform administration tasks for deletion flat master for division.'),
 			),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		);
 	}
 	
@@ -792,6 +795,7 @@
 		return array('#type' => 'ajax', '#commands' => $commands);
 	}
 
+<<<<<<< HEAD
 	function delete_flat_info($flat_id_en = ''){
 		
 		$flat_id = decrypt_url($flat_id_en);
@@ -815,6 +819,10 @@
 		}
 	}
 
+=======
+	
+	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	require_once("update_flat_fetch_data.form.inc");
 	require_once("update_flat_validate.form.inc");
 	require_once("update_flat_add_data.form.inc");

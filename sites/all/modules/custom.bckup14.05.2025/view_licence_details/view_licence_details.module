@@ -1,0 +1,109 @@
+<?php
+
+	function view_licence_details_info() {
+		
+	}
+	
+	function view_licence_details_menu() {
+		
+		$items = array();
+		
+		$items['view_licence_details'] = array(
+			'title' => 'View Licence Details',
+	  		'page callback' => 'drupal_get_form',
+		  	'page arguments' => array('view_licence_details_form'),
+	  		'file' => 'include/view_licence_details_page.inc',
+	  		'access arguments' => array('administer View Licence Details'),
+		);
+		
+		$items['download_licence_pdf/%/%/%/%/%'] = array(	
+      		'page callback' => 'download_licence_pdf_page',
+	  		'page arguments' => array(1, 2, 3, 4, 5),
+			'file' => 'include/download_licence_pdf.inc',
+	  		'access arguments' => array('administer View Licence Details'),
+    	);
+		
+		return $items;	
+		
+		
+	}
+	
+	function view_licence_details_permission() {
+		return array(
+			'administer View Licence Details' => array(
+			  'title' => t('Administer View Licence Details'),
+			  'description' => t('Perform Administer View Licence Details'),
+			),
+		);
+	}
+	
+	function fetch_online_application_id($licence_type = '') {
+		global $user;
+		
+		$query = db_select('users', 'u');
+		$query->innerJoin('housing_applicant_official_detail', 'haod', 
+		'haod.uid = u.uid');
+		
+		$query->innerJoin('housing_online_application', 'hoa', 
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		
+		$query->innerJoin('housing_license_application', 'hla', 
+		'hla.online_application_id = hoa.online_application_id');
+		
+		$query->innerJoin('housing_flat_occupant', 'hfo', 
+		'hfo.allotment_no = hla.allotment_no');
+		
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hfo', 'flat_occupant_id');
+		$query->addField('hla', 'license_application_id');
+		$db_and = db_and();
+		$db_and->condition('u.uid', $user->uid, '=');
+		$db_and->condition('hoa.status', 'issued', '=');
+		$db_and->condition('hla.type_of_application', $licence_type, '=');
+		$query->condition($db_and);
+		
+		return $query->execute();
+	}
+	
+	function individual_licence_details($licence_type = '', $online_application_id = '', $flat_occupant_id = '', $license_application_id = '') {
+		
+		$query = db_select('housing_occupant_license', 'hol');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.license_application_id = hol.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.allotment_no = hla.allotment_no');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.online_application_id = hla.online_application_id');
+		$query->innerJoin('housing_applicant_official_detail', 'haod', 
+		'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 'hd.district_code = he.district_code');
+		$query->innerJoin('housing_ddo', 'hddo', 'hddo.ddo_id = haod.ddo_id');
+		
+		$query->fields('hol', array());
+		$query->fields('hla', array());
+		$query->fields('hfo', array());
+		$query->fields('hoa', array());
+		$query->fields('haod', array());
+		$query->fields('ha', array());
+		$query->fields('hf', array());
+		$query->fields('he', array());
+		$query->fields('hft', array());
+		$query->fields('hd', array());
+		$query->fields('hddo', array());
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.status', 'issued', '=');
+		$db_and->condition('hla.type_of_application', $licence_type, '=');
+		
+		$db_and->condition('hoa.online_application_id', $online_application_id, '=');
+		$db_and->condition('hfo.flat_occupant_id', $flat_occupant_id, '=');
+		$db_and->condition('hla.license_application_id', $license_application_id, '=');
+		
+		$query->condition($db_and);
+		
+		return $query->execute();
+		
+		
+	}
+	

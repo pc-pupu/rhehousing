@@ -1,0 +1,126 @@
+<?php
+
+	function licence_list_init() {
+		
+	}
+	
+	function licence_list_menu() {
+		$items = array();
+		$items['licence_list'] = array(
+			'title' => 'View Licensee List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('licensee_list_form'),
+			'file' => 'include/licence_list_page.inc',
+			'access arguments' => array('administer Licence List'),
+		);
+		
+		$items['licence_list_pdf/%/%']=array(
+			'title' => 'List of Licensee PDF',
+			'page callback' => 'licence_list_page_pdf',
+			'page arguments' => array(1, 2),
+			'file' => 'include/licence_list_page_pdf.inc',
+			'access arguments' => array('administer Licence List'),
+		);
+		
+		//for division and sub-division user
+		$items['rhewise_licensee_list'] = array(
+			'title' => 'RHE Wise Licensee List',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhewise_licensee_list_form'),
+			'file' => 'include/rhewise_licensee_list.inc',
+			'access arguments' => array('administer RHE Wise Licensee List'),
+		);
+		
+		$items['rhewise_licensee_list_pdf/%/%']=array(
+			'title' => 'List of RHE Wise Licensee PDF',
+			'page callback' => 'rhewise_licensee_list_pdf',
+			'page arguments' => array(1, 2),
+			'file' => 'include/rhewise_licensee_list_pdf.inc',
+			'access arguments' => array('administer RHE Wise Licensee List'),
+		);
+		
+		return $items;
+	}
+	
+	function licence_list_permission() {
+		return array(
+			'administer Licence List' => array(
+				'title' => t('administer Licence List'),
+      			'description' => t('Perform administer Licence List.'),
+			),
+			'administer RHE Wise Licensee List' => array(
+				'title' => t('administer RHE Wise Licensee List'),
+      			'description' => t('Perform administer RHE Wise Licensee List by Division and Sub-Division.'),
+			),
+		);
+	}
+	
+	function fetch_licence_list($licensee_type = '') {
+		
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_occupant_license', 'hol', 'hol.license_application_id = hla.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.flat_occupant_id = hol.flat_occupant_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		
+		$query->fields('ha', array());
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hla', 'type_of_application');
+		$query->addField('hol', 'license_no');
+		$query->addField('hol', 'license_issue_date');
+		$query->addField('hol', 'license_expiry_date');
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.status', 'issued', '=');
+		if($licensee_type == 1) {
+			$db_and->condition('hla.type_of_application', 'new', '=');
+		}
+		else if($licensee_type == 2) {
+			$db_and->condition('hla.type_of_application', 'vs', '=');
+		}
+		else if($licensee_type == 3) {
+			$db_and->condition('hla.type_of_application', 'cs', '=');
+		}
+		$query->condition($db_and);	
+		$query->orderBy('hoa.online_application_id', 'ASC');
+		
+		//echo $query;
+		//$query = $query->extend('PagerDefault')->limit(10);
+		return $query->execute();	
+	}
+	
+	
+	function fetch_rhewise_licensee_list($rhe_name = '') {
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_occupant_license', 'hol', 'hol.license_application_id = hla.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.flat_occupant_id = hol.flat_occupant_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->leftJoin('file_managed', 'fm_signed_licence', 'fm_signed_licence.fid = hol.uploaded_licence');
+		
+		$query->fields('ha', array());
+		$query->addField('he', 'estate_name');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hla', 'type_of_application');
+		$query->addField('hol', 'license_no');
+		$query->addField('hol', 'license_issue_date');
+		$query->addField('hol', 'license_expiry_date');
+		$query->addField('hol', 'uploaded_licence');
+		$query->addField('fm_signed_licence', 'uri', 'uri_signed_licence');
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.status', 'issued', '=');
+		$db_and->condition('he.estate_id', $rhe_name, '=');
+		$query->condition($db_and);	
+			
+		$query->orderBy('hoa.online_application_id', 'ASC');
+		
+		//echo $query;
+		//$query = $query->extend('PagerDefault')->limit(10);
+		return $query->execute();
+	}

@@ -1,0 +1,7 @@
+name = Application for License Renewal
+decsription = License Renewal Application Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/renew_license.css
+scripts[] = js/renew_license.js
+dependencies[] = common_application

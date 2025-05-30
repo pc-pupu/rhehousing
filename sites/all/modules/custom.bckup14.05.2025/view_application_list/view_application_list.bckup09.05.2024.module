@@ -1,0 +1,848 @@
+<?php
+ function view_application_list_menu() {
+
+	$items['view_application_list/%/%'] = array(
+	  'title' => 'View Application List',	
+      'page callback' => 'app_page',
+	  'page arguments' => array(1,2),
+	  'access arguments' => array('administer View Application List'),
+    );
+	
+	$items['view_application/%/%'] = array(
+	  'title' => 'View Application',	
+      'page callback' => 'view_app_page',
+	  'page arguments' => array(1,2),
+	  'file' => 'view_application_list_page.inc',
+	  'access arguments' => array('administer View Application List'),
+    );
+	$items['application_detail/%'] = array(
+	  'title' => 'View Application Detail',	
+      'page callback' => 'view_app_detail_page',
+	  'page arguments' => array(1),
+	  'access arguments' => array('administer View Application'),
+    );
+	
+	
+	$items['application_detail_pdf/%/%'] = array(
+      'page callback' => 'application_detail_pdf_gen',
+	  'page arguments' => array(1,2),
+	  'file' => 'application_detail_pdf_gen.inc',
+	  'access arguments' => array('administer View Application PDF'),
+	  'access callback' => TRUE,
+    );
+	
+	$items['update_status/%/%/%/%'] = array(
+	  'title' => 'Update Application',	
+      'page callback' => 'update_page',
+	  'page arguments' => array(1, 2, 3, 4),
+	  'access arguments' => array('administer View Application List'),
+	);
+	//applicant application form upload
+	$items['application-approve/%/%/%/%'] = array(
+		'title' => 'Approve Application',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('application_form_upload', 1, 2, 3, 4),
+		'file' => 'new_application_approve_form.inc',
+		'access arguments' => array('administer approve applicaion'),
+	);
+
+	$items['application-list'] = array(
+		  'title' => 'Application List',	
+		  'page callback' => 'application_list_page',
+		  'file' => 'application_list_page.inc',
+		  'access arguments' => array('administer Application List'),
+		);
+		
+	$items['view-application/%'] = array(
+		  'title' => 'View Application',	
+		  'page callback' => 'view_application_page',
+		  'page arguments' => array(1),
+		  //'file' => 'view_application_page.inc',
+		  'access arguments' => array('administer View Applicant Application'),
+		);
+		
+	$items['application-pdf-gen/%/%'] = array(
+		  'title' => 'View Application',	
+		  'page callback' => 'application_pdf_gen',
+		  'page arguments' => array(1,2),
+		  'file' => 'application_pdf_gen.inc',
+		  'access arguments' => array('administer Application PDF'),
+		);
+		
+	//applicant application form upload
+	$items['application_form_upload/%'] = array(
+			'title' => 'Upload Applicaion Form',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('application_form_upload', 1),
+			'file' => 'application_form_upload.inc',
+			'access arguments' => array('administer Application List'),
+		);
+
+    return $items;
+  }
+  
+	function app_page($status='',$url = '') {
+		/*echo $url;
+		echo '<br>';*/
+		if($url == ''){
+			$url = encrypt_url('new-apply');
+		}
+		/*echo $url;
+		echo '<br>';
+		echo $status;*/
+		$status = decrypt_url($status);
+		$url1 = decrypt_url($url);
+		/*echo '<br>';*/
+		//echo $status;
+		$output = array();
+		if($status !== '' && $url !== '' && preg_match("/^[a-zA-Z\-\_]*$/",$status) && preg_match("/^[a-zA-Z\-\_]*$/",$url1)){
+			$output['new-apply'] = fetch_all_application_detail('new-apply',$status)->rowCount();
+			$output['vs'] = fetch_all_application_detail('vs',$status)->rowCount();
+			$output['cs'] = fetch_all_application_detail('cs',$status)->rowCount();
+			$output['new_license'] = fetch_all_application_detail('new_license',$status)->rowCount();
+			
+			//new code
+			$output['vs_licence'] = fetch_all_application_detail('vs_licence',$status)->rowCount();
+			$output['cs_licence'] = fetch_all_application_detail('cs_licence',$status)->rowCount();
+			//
+			
+			$output['renew_license'] = fetch_all_application_detail('renew_license',$status)->rowCount();
+			$output['url'] = $url;
+			$output['status'] = $status;
+		}
+		
+		return theme('application_template', array('output' => $output));
+	}	
+	function view_app_detail_page($app_id = '') {
+		$app_id = decrypt_url($app_id);
+		//echo $app_id;
+		if(is_numeric($app_id) && $app_id > 0) {
+			$app_details = fetch_application_detail($app_id);
+			$output = array();
+			
+			/*if ($app_id !== '' && (!is_numeric($app_id) || $app_id <= 0)) {
+				$output[] = false;
+			}else*/ 
+			
+			if($app_details->rowCount() == 0){
+				$output[] = false;
+			}else{	
+				$output[] = true;
+				$output[] = $app_details->fetchObject();
+				$output[] = check_application_entity(0,$app_id);
+				$output[] = applicant_personal_info_detail($app_id)->fetchObject();
+			}
+		}
+		return theme('view_application_detail_template', array('output' => $output));
+	}
+function update_page($app_id = 0, $status_new = '', $status = '', $entity = '') {
+	$app_id = decrypt_url($app_id);
+	$status_new = decrypt_url($status_new);
+	echo $status_new.'/'.$app_id.'/'.$status.'/'.$entity;
+	
+	update_status($app_id, $status_new);
+	unset($_SESSION['application_list']);
+	unset($_SESSION['new_application_list']);
+	unset($_SESSION['verified_application_list']);
+	unset($_SESSION['reject_application_list']);
+	//drupal_goto('application_detail/'.encrypt_url($app_id));
+	drupal_goto('view_application/'.$status.'/'.$entity);
+}
+
+
+/*function get_max_waiting_list() {
+	$max_waiting_no = 0;
+	$result = db_query("select max(waiting_no) as max_waiting_no from housing_online_application where status = 'verified' and substring(application_no,1,2) = 'NA'");
+	$data = $result->fetchObject();
+	if(!empty($data->max_waiting_no))
+	$max_waiting_no = $data->max_waiting_no;
+	
+	
+	return $max_waiting_no;
+	
+}*/
+
+
+function view_application_list_theme() {
+	
+	return array(
+        'view_application_detail_template' => array(
+			'variables' => array('output' => NULL),
+            // file name will be custom-page.tpl.php
+            'template' => 'view_application_detail',
+        ),
+		'application_template' => array(
+			'variables' => array('output' => NULL),
+            'template' => 'application',
+        ),
+		
+    );
+}
+
+/*update status*/
+/*function update_status($app_id = '', $status = '') {	
+	db_update('housing_online_application')
+	->fields(array(
+		'status' => $status,
+		'date_of_verified' => date('Y-m-d'),
+		)
+	)
+	->condition('online_application_id',$app_id, '=')
+	->execute();
+	
+}*/
+
+
+function fetch_all_application_detail($entity = '',$status = ''){
+	
+		global $user;
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha',
+		'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_ddo', 'hd',
+		'hd.ddo_id = haod.ddo_id');
+		$query->innerJoin('housing_pay_band', 'hpb',
+		'hpb.pay_band_id = haod.pay_band_id');
+		$query->leftJoin('file_managed', 'fm_app_form', 'fm_app_form.fid = hoa.uploaded_app_form');
+		
+		if($entity == 'new-apply'){
+			$query->innerJoin('housing_new_allotment_application', 'hna',
+			'hna.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat_type', 'hft',
+			'hna.flat_type_id = hft.flat_type_id');
+			
+			$query->leftJoin('file_managed', 'fm',
+			'fm.fid = hna.document');
+			$query->leftJoin('file_managed', 'fm1',
+			'fm1.fid = hna.extra_doc');
+			$query->leftJoin('file_managed', 'fm2',
+			'fm2.fid = hna.scaned_sign');
+		}
+		else if($entity == 'vs'){
+			$query->innerJoin('housing_vs_application', 'hva',
+			'hva.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_vs',
+			'fm_vs.fid = hva.file_licence');
+		}
+		else if($entity == 'cs'){
+			$query->innerJoin('housing_cs_application', 'hca',
+			'hca.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_cs',
+			'fm_cs.fid = hca.file_licence');
+		}
+		else if($entity == 'new_license' || $entity == 'renew_license'){
+			$query->innerJoin('housing_license_application', 'hla',
+			'hla.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_licence',
+			'fm_licence.fid = hla.document');
+		}
+		
+		//new code
+		else if($entity == 'vs_licence' || $entity == 'cs_licence'){
+			$query->innerJoin('housing_license_application', 'hla',
+			'hla.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_licence',
+			'fm_licence.fid = hla.document');
+		}
+		//
+		
+		if($entity == 'new-apply'){
+			$query->addField('hft', 'flat_type_id');
+		}
+		$query->addField('ha', 'applicant_name');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hd', 'district_code');
+		$query->addField('hd', 'ddo_designation');
+		$query->addField('hd', 'ddo_address');
+		$query->addField('haod', 'applicant_designation');
+		$query->addField('haod', 'applicant_headquarter');
+		$query->addField('haod', 'applicant_posting_place');
+		$query->addField('hpb', 'payband');
+		$query->addField('hpb', 'scale_from');
+		$query->addField('hpb', 'scale_to');
+		$query->addField('haod', 'uid');
+		$query->addField('haod', 'pay_in_the_pay_band');
+		$query->addField('haod', 'grade_pay');
+		$query->addField('haod', 'gpf_no');
+		$query->addField('haod', 'date_of_joining');
+		$query->addField('haod', 'date_of_retirement');
+		$query->addField('haod', 'office_name');
+		$query->addField('haod', 'office_street');
+		$query->addField('haod', 'office_city_town_village');
+		$query->addField('haod', 'office_post_office');
+		$query->addField('haod', 'office_pin_code');
+		$query->addField('haod', 'office_district');
+		$query->addField('haod', 'office_phone_no');
+		$query->addField('haod', 'hrms_id');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'application_no');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'date_of_verified');
+		$query->addField('hoa', 'uploaded_app_form');
+		$query->addField('fm_app_form', 'uri', 'uri_app_form');
+		
+		if($entity == 'new-apply'){
+			$query->addField('hna', 'allotment_category');
+			$query->addField('hft', 'flat_type');
+			$query->addField('fm', 'uri', 'uri_doc');
+			$query->addField('fm2', 'uri', 'uri_scaned_sign');
+			$query->addField('fm1', 'uri', 'uri_extra_doc');
+		}
+		else if($entity == 'vs'){
+			$query->addField('hva', 'allotment_category');
+			$query->addField('fm_vs', 'uri', 'uri_vs');
+		}
+		else if($entity == 'cs'){
+			$query->addField('hca', 'allotment_category');
+			$query->addField('fm_cs', 'uri', 'uri_cs');
+		}
+		else if($entity == 'new_license' || $entity == 'vs_licence' || $entity == 'cs_licence' || $entity == 'renew_license'){
+			$query->addField('fm_licence', 'uri', 'uri_licence');
+		}
+		
+		if($entity != 'new_license' && $entity != 'renew_license' && $entity != 'vs_licence' && $entity != 'cs_licence' && 
+		$status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'new_license' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'new', '=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'renew_license' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'renew', '=');
+			$query->condition($db_and);
+		}
+		
+		//new code
+		/*if($entity != 'vs_licence' && $entity != 'cs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$query->condition($db_and);
+		}*/
+		else if($entity == 'vs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'vs', '=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'cs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'cs', '=');
+			$query->condition($db_and);
+		}
+		//end
+		
+		/*if($entity == 'new-apply'){
+			$query->orderBy('flat_type','ASC');
+		}
+		if($entity == 'new-apply' || $entity == 'vs' || $entity == 'cs' ){
+			$query->orderBy('allotment_category','ASC');
+		}*/
+		//$query->condition('hft.flat_type', 'A', '=');
+		//$query->orderBy('date_of_application','ASC');
+		$query->orderBy('online_application_id','ASC');
+		
+		//echo $query;
+		return $query->execute();
+}
+
+function fetch_all_application_detail1($entity = '',$status = ''){
+	//echo $entity;die;
+		global $user;
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha',
+		'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_ddo', 'hd',
+		'hd.ddo_id = haod.ddo_id');
+		$query->innerJoin('housing_pay_band', 'hpb',
+		'hpb.pay_band_id = haod.pay_band_id');
+		$query->leftJoin('file_managed', 'fm_app_form', 'fm_app_form.fid = hoa.uploaded_app_form');
+		
+		if($entity == 'new-apply'){
+			$query->innerJoin('housing_new_allotment_application', 'hna',
+			'hna.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat_type', 'hft',
+			'hna.flat_type_id = hft.flat_type_id');
+			
+			$query->leftJoin('file_managed', 'fm',
+			'fm.fid = hna.document');
+			$query->leftJoin('file_managed', 'fm1',
+			'fm1.fid = hna.extra_doc');
+			$query->leftJoin('file_managed', 'fm2',
+			'fm2.fid = hna.scaned_sign');
+		}
+		else if($entity == 'vs'){
+			$query->innerJoin('housing_vs_application', 'hva',
+			'hva.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_vs',
+			'fm_vs.fid = hva.file_licence');
+		}
+		else if($entity == 'cs'){
+			$query->innerJoin('housing_cs_application', 'hca',
+			'hca.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_cs',
+			'fm_cs.fid = hca.file_licence');
+		}
+		else if($entity == 'new_license' || $entity == 'renew_license'){
+			$query->innerJoin('housing_license_application', 'hla',
+			'hla.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_licence',
+			'fm_licence.fid = hla.document');
+		}
+		
+		//new code
+		else if($entity == 'vs_licence' || $entity == 'cs_licence'){
+			$query->innerJoin('housing_license_application', 'hla',
+			'hla.online_application_id = hoa.online_application_id');
+			
+			$query->leftJoin('file_managed', 'fm_licence',
+			'fm_licence.fid = hla.document');
+		}
+		//
+		
+		if($entity == 'new-apply'){
+			$query->addField('hft', 'flat_type_id');
+		}
+		$query->addField('ha', 'applicant_name');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hd', 'district_code');
+		$query->addField('hd', 'ddo_designation');
+		$query->addField('hd', 'ddo_address');
+		$query->addField('haod', 'applicant_designation');
+		$query->addField('haod', 'applicant_headquarter');
+		$query->addField('haod', 'applicant_posting_place');
+		$query->addField('hpb', 'payband');
+		$query->addField('hpb', 'scale_from');
+		$query->addField('hpb', 'scale_to');
+		$query->addField('haod', 'uid');
+		$query->addField('haod', 'pay_in_the_pay_band');
+		$query->addField('haod', 'grade_pay');
+		$query->addField('haod', 'gpf_no');
+		$query->addField('haod', 'date_of_joining');
+		$query->addField('haod', 'date_of_retirement');
+		$query->addField('haod', 'office_name');
+		$query->addField('haod', 'office_street');
+		$query->addField('haod', 'office_city_town_village');
+		$query->addField('haod', 'office_post_office');
+		$query->addField('haod', 'office_pin_code');
+		$query->addField('haod', 'office_district');
+		$query->addField('haod', 'office_phone_no');
+		$query->addField('haod', 'hrms_id');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'application_no');
+		$query->addField('hoa', 'date_of_application');
+		//$query->addField('hoa', 'date_of_verified');
+		//$query->addField('hoa', 'computer_serial_no');
+		
+		$query->addField('hoa', 'is_backlog_applicant');
+		$query->addField('hoa', 'computer_serial_no');
+		$query->addField('hoa', 'uploaded_app_form');
+		$query->addField('fm_app_form', 'uri', 'uri_app_form');
+		
+		if($entity == 'new-apply'){
+			$query->addField('hna', 'allotment_category');
+			$query->addField('hft', 'flat_type');
+			$query->addField('fm', 'uri', 'uri_doc');
+			$query->addField('fm2', 'uri', 'uri_scaned_sign');
+			$query->addField('fm1', 'uri', 'uri_extra_doc');
+		}
+		else if($entity == 'vs'){
+			$query->addField('hva', 'allotment_category');
+			$query->addField('fm_vs', 'uri', 'uri_vs');
+		}
+		else if($entity == 'cs'){
+			$query->addField('hca', 'allotment_category');
+			$query->addField('fm_cs', 'uri', 'uri_cs');
+		}
+		else if($entity == 'new_license' || $entity == 'vs_licence' || $entity == 'cs_licence' || $entity == 'renew_license'){
+			$query->addField('fm_licence', 'uri', 'uri_licence');
+		}
+		
+		if($entity != 'new_license' && $entity != 'renew_license' && $entity != 'vs_licence' && $entity != 'cs_licence' && 
+		$status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'new_license' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'new', '=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'renew_license' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'renew', '=');
+			$query->condition($db_and);
+		}
+		
+		//new code
+		/*if($entity != 'vs_licence' && $entity != 'cs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$query->condition($db_and);
+		}*/
+		else if($entity == 'vs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'vs', '=');
+			$query->condition($db_and);
+		}
+		else if($entity == 'cs_licence' && $status !=''){
+			$db_and = db_and();
+			$db_and->condition('hoa.status', $status, '=');
+			$db_and->condition('hoa.status', 'allotted', '!=');
+			$db_and->condition('hla.type_of_application', 'cs', '=');
+			$query->condition($db_and);
+		}
+		//end
+		
+		/*if($entity == 'new-apply'){
+			$query->orderBy('flat_type','ASC');
+		}
+		if($entity == 'new-apply' || $entity == 'vs' || $entity == 'cs' ){
+			$query->orderBy('allotment_category','ASC');
+		}*/
+		
+		//$query->orderBy('date_of_application','ASC');
+		//$query->orderBy('online_application_id','ASC');
+		
+		if($entity == 'new-apply'){
+			$query->orderBy('to_number(hoa.computer_serial_no, text(9999999999))', 'ASC');
+			$query->orderBy('hoa.computer_serial_no','ASC');
+		}
+		
+		if($entity == 'vs' || $entity == 'cs' || $entity == 'new_license' || $entity == 'vs_licence' || $entity == 'cs_licence' || $entity == 'renew_license'){
+			$query->orderBy('online_application_id','ASC');
+		}
+		
+		//echo $query;die;
+		//$query = $query->extend('PagerDefault')->limit(10);
+		return $query->execute();
+}
+	
+/*fetch applicant personal information*/
+   function applicant_personal_info_detail($online_application_id = 0){
+   		//echo "g";die;
+	    global $user;
+	    $query = db_select('users', 'u');
+		$query->innerJoin('housing_applicant', 'ha',
+		'ha.uid = u.uid');
+		$query->innerJoin('housing_applicant_official_detail', 'haod',
+		'haod.uid = u.uid');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->addField('u', 'mail');
+		$query->fields('ha');
+		/*$query->addField('ha', 'applicant_name');
+		$query->addField('ha', 'guardian_name');
+		$query->addField('ha', 'gender');
+		$query->addField('ha', 'mobile_no');
+		$query->addField('ha', 'date_of_birth');*/
+		$query->condition('hoa.online_application_id', $online_application_id, '=');
+		return $query->execute();
+   }
+/*URL Encryption*/
+function encrypt_url($string) {
+  $key = "MAL_979805"; //key to encrypt and decrypts.
+  $result = '';
+  $test = array();
+   for($i=0; $i<strlen($string); $i++) {
+     $char = substr($string, $i, 1);
+     $keychar = substr($key, ($i % strlen($key))-1, 1);
+     $char = chr(ord($char)+ord($keychar));
+
+     $test[$char]= ord($char)+ord($keychar);
+     $result.=$char;
+   }
+
+   return urlencode(base64_encode($result));
+}
+/*URL Decryption*/
+function decrypt_url($string) {
+    $key = "MAL_979805"; //key to encrypt and decrypts.
+    $result = '';
+    $string = base64_decode(urldecode($string));
+   for($i=0; $i<strlen($string); $i++) {
+     $char = substr($string, $i, 1);
+     $keychar = substr($key, ($i % strlen($key))-1, 1);
+     $char = chr(ord($char)-ord($keychar));
+     $result.=$char;
+   }
+   return $result;
+}
+
+ function view_application_list_permission() {
+  return array(
+    'administer View Application List' => array(
+      'title' => t('administer View Application List'),
+      'description' => t('Perform administer View Application List.'),
+    ),
+	'administer View Application' => array(
+      'title' => t('administer View Application'),
+      'description' => t('Perform administer View Application.'),
+    ),
+	'administer View Application PDF' => array(
+      'title' => t('administer View Application PDF'),
+      'description' => t('Perform administer View Application PDF.'),
+    ),
+    'administer approve applicaion' => array(
+      'title' => t('Administer Approve Applicaion'),
+      'description' => t('Administer Approve Applicaion.'),
+    ),
+  );
+}
+
+	// function view_application_page($app_id = '') {
+	// 	global $user;
+	// 	$app_id = decrypt_url($app_id);
+	// 	if(is_numeric($app_id) && $app_id > 0) {
+	// 		$app_details = fetch_application_detail($app_id);
+	// 		$rowCountData = $app_details->rowCount();
+	// 		$app_data = $app_details->fetchObject();
+	// 		$output = array();
+			
+	// 		if($app_data->uid == $user->uid) {
+	// 			if($rowCountData == 0){
+	// 				$output[] = false;
+	// 			}
+	// 			else{	
+	// 				$output[] = true;
+	// 				$output[] = $app_data;
+	// 				$output[] = check_application_entity(0,$app_id);
+	// 				$output[] = applicant_personal_info()->fetchObject();
+	// 			}
+	// 		}
+	// 	}
+		
+	// 	return theme('view_application_template', array('output' => $output));
+	// }         
+
+	// function application_list_theme() {
+		
+	// 	return array(
+	// 		'view_application_template' => array(
+	// 			'variables' => array('output' => NULL),
+	// 			// file name will be custom-page.tpl.php
+	// 			'template' => 'view_application',
+	// 		),
+	// 	);
+	// }
+	
+	// function application_list_permission() {
+	//   return array(
+	// 	'administer Application List' => array(
+	// 	  'title' => t('administer Application List'),
+	// 	  'description' => t('Perform administer Application List.'),
+	// 	),
+	// 	'administer View Applicant Application' => array(
+	// 	  'title' => t('administer View Applicant Application'),
+	// 	  'description' => t('Perform administer View Applicant Application.'),
+	// 	),
+	// 	'administer Application PDF' => array(
+	// 	  'title' => t('administer Application PDF'),
+	// 	  'description' => t('Perform administer Application PDF.'),
+	// 	),
+	//   );
+	// }
+
+	
+	// function check_application_entity($i,$online_application_id){
+	// 	global $entities;
+	// 	if($i == count($entities)){
+	// 		return false;
+	// 	}
+	// 	$entityList = $entities[$i];
+	// 	$entity = $entityList['entity'];
+	// 	$fields = $entityList['fields'];
+	// 	$expressions = $entityList['expressions'];
+	// 	$join = $entityList['join'];
+	// 	$entityType = $entityList['type'];
+	// 	$conditions = $entityList['condition'];
+	// 	$query = db_select($entity['table'], $entity['tableAlias']);
+	
+	// 	foreach($join as $entityAlias => $joinPropertity ){
+	// 		$joinEntity = $joinPropertity['joinEntity'];
+	// 		$onClause = $joinPropertity['onClause'];
+	// 		$joinType = $joinPropertity['joinType'];
+	// 		$joinExpression = $entity['tableAlias'].'.'.$onClause['leftEntity'].' = '.$entityAlias.'.'.$onClause['rightEntity'];
+	// 		if($joinType == 'right'){
+	// 			$query->rightJoin($joinEntity,$entityAlias,$joinExpression);
+	// 		}else if($joinType == 'left'){
+	// 			$query->leftJoin($joinEntity,$entityAlias,$joinExpression);
+	// 		}else {
+	// 			$query->innerJoin($joinEntity,$entityAlias,$joinExpression);
+	// 		}
+		
+	// 	}
+	// 	if(count($expressions) != 0){
+	// 		foreach($expressions as $entityAlias => $columnHeadFieldSet ){
+	// 			foreach($columnHeadFieldSet as $columnHead => $expression){
+					
+	// 				$query->addExpression($expression[0], $expression[1]);
+	// 			}
+				
+	// 		}
+	// 	}
+	// 	if(count($fields) != 0){
+	// 		foreach($fields as $entityAlias => $columnHeadFieldSet ){
+	// 			foreach($columnHeadFieldSet as $columnHead => $field){
+	// 				$query->addField($entityAlias, $field[0], $field[1]);
+	// 			}
+				
+	// 		}
+	// 	}
+	
+	// 	if(count($expressions) == 0 && count($fields) == 0) {
+	// 		$query->fields($entity['tableAlias']);
+	// 	}
+		
+	// 	if(count($conditions) == 0){
+	// 		$query->condition($entity['tableAlias'].'.online_application_id', $online_application_id, '=');
+	// 	}
+	// 	else{
+
+	// 		$db_and = db_and();
+	// 		$db_and->condition($entity['tableAlias'].'.online_application_id', $online_application_id, '=');
+
+	// 		foreach($conditions as $tableAlias => $condition){
+	// 			foreach($condition as $expression){
+	// 				$db_and->condition($tableAlias.'.'.$expression['attribute'], $expression['value'], $expression['operator']);
+	// 			}
+	// 		}
+	// 		$query->condition($db_and);
+	// 	}
+
+	// 	$result = $query->execute();
+		
+	// 	if($result->rowcount() > 0){
+	// 		$applicationData = $result->fetchObject();
+	// 		return array($entityList,$applicationData);
+			
+	// 	}
+	// 	else{
+	// 		$i++;
+	// 		if($i < count($entities)){
+	// 			return check_application_entity($i,$online_application_id);
+	// 		}
+	// 	}
+	// }
+
+	
+	// function fetch_application_detail($online_application_id = 0){
+	// 	global $user;
+	// 	$query = db_select('housing_applicant_official_detail', 'haod');
+	// 	$query->innerJoin('housing_online_application', 'hoa',
+	// 	'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+	// 	$query->innerJoin('housing_ddo', 'hd',
+	// 	'hd.ddo_id = haod.ddo_id');
+	// 	$query->innerJoin('housing_district', 'hds',
+	// 	'hds.district_code = hd.district_code');
+	// 	$query->innerJoin('housing_pay_band_categories', 'hpb',
+	// 	'hpb.pay_band_id = haod.pay_band_id');
+	// 	$query->leftJoin('housing_new_allotment_application', 'hna',
+	// 	'hna.online_application_id = hoa.online_application_id');
+	// 	$query->leftJoin('file_managed', 'fm_app_form', 'fm_app_form.fid = hoa.uploaded_app_form');
+	// 	$query->leftJoin('file_managed', 'fm',
+	// 	'fm.fid = hna.document');
+	// 	$query->leftJoin('file_managed', 'fm1',
+	// 	'fm1.fid = hna.extra_doc');
+	// 	$query->leftJoin('file_managed', 'fm2',
+	// 	'fm2.fid = hna.scaned_sign');
+	// 	$query->leftJoin('housing_flat_type', 'hft',
+	// 	'hpb.flat_type_id = hft.flat_type_id');
+	// 	/* $query->leftJoin('housing_flat_type', 'hft',
+	// 	'hna.flat_type_id = hft.flat_type_id'); */
+	// 	$query->leftJoin('housing_vs_application', 'hva',
+	// 		'hva.online_application_id = hoa.online_application_id');
+	// 	$query->leftJoin('file_managed', 'fm_vs',
+	// 	'fm_vs.fid = hva.file_licence');
+	// 	$query->leftJoin('housing_cs_application', 'hca',
+	// 		'hca.online_application_id = hoa.online_application_id');
+	// 	$query->leftJoin('file_managed', 'fm_cs',
+	// 	'fm_cs.fid = hca.file_licence');
+	// 	$query->leftJoin('housing_license_application', 'hla',
+	// 		'hla.online_application_id = hoa.online_application_id');
+	// 	$query->leftJoin('file_managed', 'fm_licence',
+	// 	'fm_licence.fid = hla.document');
+	// 	$query->addField('hft', 'flat_type_id');
+	// 	$query->addField('hft', 'flat_type');
+	// 	$query->addField('hoa', 'online_application_id');
+	// 	$query->addField('hoa', 'application_no');
+	// 	$query->addField('hd', 'district_code');
+	// 	$query->addField('hd', 'ddo_designation');
+	// 	$query->addField('hd', 'ddo_address');
+	// 	$query->addField('hds', 'district_name');
+	// 	$query->addField('haod', 'applicant_designation');
+	// 	$query->addField('haod', 'applicant_headquarter');
+	// 	$query->addField('haod', 'applicant_posting_place');
+	// 	//$query->addField('hpb', 'payband');
+	// 	$query->addField('hpb', 'scale_from');
+	// 	$query->addField('hpb', 'scale_to');
+	// 	$query->addField('haod', 'uid');
+	// 	$query->addField('haod', 'pay_in_the_pay_band');
+	// 	$query->addField('haod', 'grade_pay');
+	// 	$query->addField('haod', 'gpf_no');
+	// 	$query->addField('haod', 'date_of_joining');
+	// 	$query->addField('haod', 'date_of_retirement');
+	// 	$query->addField('haod', 'office_name');
+	// 	$query->addField('haod', 'office_street');
+	// 	$query->addField('haod', 'office_city_town_village');
+	// 	$query->addField('haod', 'office_post_office');
+	// 	$query->addField('haod', 'office_pin_code');
+	// 	$query->addField('haod', 'office_district');
+	// 	$query->addField('haod', 'office_phone_no');
+	// 	$query->addField('haod', 'hrms_id');
+	// 	$query->addField('hoa', 'status');
+	// 	$query->addField('hoa', 'date_of_application');
+	// 	$query->addField('hoa', 'date_of_verified');
+	// 	$query->addField('hoa', 'uploaded_app_form');
+	// 	$query->addField('fm_app_form', 'uri', 'uri_app_form');
+	// 	$query->addField('fm', 'uri', 'uri_doc');
+	// 	$query->addField('fm2', 'uri', 'uri_scaned_sign');
+	// 	$query->addField('fm1', 'uri', 'uri_extra_doc');
+	// 	$query->addField('fm_vs', 'uri', 'uri_vs');
+	// 	$query->addField('fm_cs', 'uri', 'uri_cs');
+	// 	$query->addField('fm_licence', 'uri', 'uri_licence');
+	// 	$query->orderBy('hoa.online_application_id', 'ASC');
+	// 	if($online_application_id == 0){
+	// 		$query->condition('haod.uid', $user->uid, '=');
+	// 	}
+	// 	else{
+	// 		$query->condition('hoa.online_application_id', $online_application_id, '=');
+	// 	}
+	// 	//echo $query; die();
+	// 	return $query->execute();
+	// }
+
+

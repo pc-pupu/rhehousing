@@ -1,0 +1,6 @@
+name = Applicant Data Upload
+decsription = Applicant Data Upload Module
+core = 7.x
+package = eallotment RHE Allotment Module
+
+scripts[] = js/applicant_data_upload.js

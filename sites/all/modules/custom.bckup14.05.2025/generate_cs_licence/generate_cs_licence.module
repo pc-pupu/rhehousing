@@ -1,0 +1,238 @@
+<?php
+
+	function generate_cs_licence_info() {
+		
+	}
+	
+	function generate_cs_licence_menu() {
+		$items = array();
+		
+		$items['generate_cs_licence'] = array(
+			'title' => 'Generate CS Licence',
+	  		'page callback' => 'generate_cs_licence_page',
+      		//'page arguments' => array('generate_cs_licence_form'),
+	  		'file' => 'include/generate_cs_licence_page.inc',
+	  		'access arguments' => array('Generate CS Licence List'),
+		);
+		
+		$items['update_cs_licence_status/%/%/%'] = array(
+	  		'title' => 'Update CS Licence',	
+      		'page callback' => 'update_cs_licence_page',
+	  		'page arguments' => array(1, 2, 3),
+	  		'access arguments' => array('Generate CS Licence by Housing Official'),
+    	);
+		
+		$items['cs_licence_pdf_gen/%/%/%'] = array(	
+      		'page callback' => 'cs_licence_pdf_gen_page',
+	  		'page arguments' => array(1, 2, 3),
+			'file' => 'include/cs_licence_pdf_gen_page.inc',
+	  		'access arguments' => array('administer CS Licence Pdf Gen'),
+    	);
+		
+		$items['signed_cs_licence_upload/%/%'] = array(
+			'title' => 'Upload Signed Licence',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('signed_cs_licence_upload', 1, 2),
+			'file' => 'include/signed_cs_licence_upload.inc',
+			'access arguments' => array('Generate CS License List'),
+		);
+		
+		//for applicant and occupant
+		$items['download_cs_licence'] = array(
+			'title' => 'Download CS Licence',
+	  		'page callback' => 'download_cs_licence_page',
+	  		'file' => 'include/download_cs_licence_page.inc',
+	  		'access arguments' => array('Download CS Licence Permission'),
+		);
+		
+		return $items;
+	}
+	
+	function update_cs_licence_page($app_id = 0, $flat_occupant_id = 0, $licence_application_id = 0) {
+		$app_id = decrypt_url($app_id);
+		$flat_occupant_id = decrypt_url($flat_occupant_id);
+		$licence_application_id = decrypt_url($licence_application_id);
+		
+		//echo 'Hi';
+		update_status_cs_licence($app_id, $flat_occupant_id, $licence_application_id);
+		
+		drupal_set_message('Licence generated.');
+		drupal_goto('generate_cs_licence');
+	}
+	
+	function update_status_cs_licence($app_id = '', $flat_occupant_id = '', $licence_application_id = '') {
+		
+		db_update('housing_online_application')
+		->fields(array(
+			'status' => 'issued',
+			)
+		)
+		->condition('online_application_id',$app_id, '=')
+		->execute();
+		
+		$no = 'ICSL-'.$licence_application_id;
+		
+		$licence_issue_date = date('Y-m-d');
+		$licence_expiry_date = date('Y-m-d', strtotime($licence_issue_date.'+3 years -1 day'));
+		
+			
+		db_insert('housing_occupant_license')
+		->fields(array(
+			'flat_occupant_id' => $flat_occupant_id,
+			'license_application_id' => $licence_application_id,
+			'license_issue_date' => $licence_issue_date,
+			'license_expiry_date' => $licence_expiry_date,
+			'license_no' => $no
+			)
+		)
+		->execute();
+	
+	}
+
+	
+	/*function generate_cs_licence_form($form, &$form_state) {
+	
+	
+		$flat_type_val =  !empty($form_state['values']['flat_type']) ? $form_state['values']['flat_type'] : 0;
+	
+		$form['flat_type'] = array(
+			'#title' => t('RHE Flat Type'),
+			'#type' => 'select',
+			'#options' => rhe_flat_type(),
+			'#required' => TRUE,
+	 		'#prefix' => '<div class="four ">',
+			'#suffix' => '</div>',
+			'#weight' =>2
+		);
+		$form['search'] = array(
+			'#value' => t('Search'),
+			'#type' => 'submit',
+	 		'#prefix' => '<div class="four " style="margin-top:43px;height: 30px;">',
+			'#suffix' => '</div>',
+			'#weight' =>3
+		);
+	
+		if($flat_type_val != 0) {
+	  
+	 		$output = generate_cs_licence_page(trim($flat_type_val));
+	 		$form['breadcrumb'] = array(
+	   			'#type' => 'markup',
+	   			'#markup' => $output,
+				'#weight' => 5
+			);	
+		}
+	
+	  	return $form;
+	}
+	
+	function generate_cs_licence_form_submit($form, &$form_state) {
+		$form_state['rebuild'] = TRUE;
+	}*/
+	
+	function generate_cs_licence_permission() {
+		return array(
+			'Generate CS Licence List' => array(
+			  'title' => t('Generate CS Licence List'),
+			  'description' => t('Perform Generate CS Licence List'),
+			),
+			
+			'Generate CS Licence by Housing Official' => array(
+			  'title' => t('Generate CS Licence by Housing Official'),
+			  'description' => t('Perform Generate CS Licence by Housing Official'),
+			),
+			
+			'administer CS Licence Pdf Gen' => array(
+			  'title' => t('Administer CS Licence Pdf Gen'),
+			  'description' => t('Perform administer CS Licence Pdf Gen'),
+			),
+			
+			'Download CS Licence Permission' => array(
+			  'title' => t('Download CS Licence Permission'),
+			  'description' => t('Perform Download CS Licence Permission'),
+			),
+		);
+	}
+	
+	function cs_allotment_details_fetch($uid = '') {
+		$status = array('verified', 'issued');
+		
+		$query = db_select('housing_license_application', 'hla');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.online_application_id = hla.online_application_id');
+		
+		$query->innerJoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+		$query->innerJoin('users', 'u', 'u.uid = haod.uid');
+		
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.allotment_no = hla.allotment_no');
+		$query->addField('hla', 'online_application_id');
+		$query->addField('hoa', 'status');
+		$query->fields('hla', array());
+		$query->fields('hoa', array());
+		$query->fields('hfo', array());
+		$db_and = db_and();
+		$db_and->condition('hoa.status', $status, 'IN');
+		$db_and->condition('hla.type_of_application', 'cs', '=');
+		
+		if($uid != '') {
+			$db_and->condition('u.uid', $uid, '=');	
+		}
+		
+		$query->condition($db_and);
+		$query->orderBy('hla.online_application_id', 'ASC');
+		
+		//echo $query;
+		return $query->execute();
+	}
+	
+	function cs_licence_details($online_application_id = '', $flat_occupant_id = '', $license_application_id = '') {
+		$query = db_select('housing_occupant_license', 'hol');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.license_application_id = hol.license_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.allotment_no = hla.allotment_no');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.online_application_id = hla.online_application_id');
+		$query->innerJoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 'hd.district_code = he.district_code');
+		$query->innerJoin('housing_ddo', 'hddo', 'hddo.ddo_id = haod.ddo_id');
+		$query->leftJoin('file_managed', 'fm_signed_licence', 'fm_signed_licence.fid = hol.uploaded_licence');
+		
+		$query->fields('hol', array());
+		$query->fields('hla', array());
+		$query->fields('hfo', array());
+		$query->fields('hoa', array());
+		$query->fields('haod', array());
+		$query->fields('ha', array());
+		$query->fields('hf', array());
+		$query->fields('he', array());
+		$query->fields('hft', array());
+		$query->fields('hd', array());
+		$query->fields('hddo', array());
+		$query->addField('fm_signed_licence', 'uri', 'uri_signed_licence');
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.online_application_id', $online_application_id, '=');
+		$db_and->condition('hfo.flat_occupant_id', $flat_occupant_id, '=');
+		$db_and->condition('hla.license_application_id', $license_application_id, '=');
+		$query->condition($db_and);
+		
+		return $query->execute();
+			
+	}
+	
+	
+	function cs_licence_type($occupant_license_id = '') {
+		$query = db_select('housing_occupant_license', 'hol');
+		$query->innerJoin('housing_license_application', 'hla', 'hla.license_application_id = hol.license_application_id');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.online_application_id = hla.online_application_id');
+		$query->innerJoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+		
+		$query->fields('hol', array());
+		$query->fields('hla', array());
+		$query->fields('haod', array());
+		
+		$query->condition('hol.occupant_license_id', $occupant_license_id, '=');
+		
+		return $query->execute();
+			
+	}

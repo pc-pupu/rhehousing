@@ -1,0 +1,6 @@
+name = Waiting List
+decsription = Waiting List Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/waiting_list.css
+scripts[] = js/waiting_list.js

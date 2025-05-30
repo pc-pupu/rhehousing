@@ -1,0 +1,4 @@
+name = Estate treasury selection form
+description = Selection form of housing Estate and it's respective treasury
+core = 7.x
+package = Estate Treasury Selection

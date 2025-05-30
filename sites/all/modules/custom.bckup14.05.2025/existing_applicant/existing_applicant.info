@@ -1,0 +1,6 @@
+name = Existing Applicant
+description = Module for Existing Applicant
+core = 7.x
+package = eallotment Update Master Data Module
+stylesheets[all][] = css/existing_applicant.css
+scripts[] = js/existing_applicant.js

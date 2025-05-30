@@ -1,0 +1,6 @@
+name = Generate New License
+decsription = Generate New License Module
+core = 7.x
+package = eallotment RHE License Module
+stylesheets[all][] = css/generate_new_license.css
+scripts[] = js/generate_new_license.js

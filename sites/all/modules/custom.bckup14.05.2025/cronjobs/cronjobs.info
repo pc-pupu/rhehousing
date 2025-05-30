@@ -1,0 +1,4 @@
+name = All Cron Jobs
+description = All Cron MODULE
+core = 7.x
+package = eallotment User Module

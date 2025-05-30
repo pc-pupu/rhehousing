@@ -1,0 +1,6 @@
+name = Update RHE flat Master
+decsription = Update RHE flat Master Module
+core = 7.x
+package = eallotment Update Master Data Module
+stylesheets[all][] = css/update_flat.css
+scripts[] = js/update_flat.js

@@ -1,0 +1,14 @@
+CREATE TABLE housing_treasury_estate_mapping
+(
+  housing_treasury_estate_mapping_id bigserial NOT NULL,
+  treasury_id bigint NOT NULL,
+  estate_id bigint NOT NULL,
+  is_active integer,
+  CONSTRAINT housing_treasury_estate_mapping_pkey PRIMARY KEY (housing_treasury_estate_mapping_id),
+  CONSTRAINT housing_treasury_estate_mapping_estate_id_fkey FOREIGN KEY (estate_id)
+      REFERENCES housing_estate (estate_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT housing_treasury_estate_mapping_treasury_id_fkey FOREIGN KEY (treasury_id)
+      REFERENCES housing_treasury (treasury_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)

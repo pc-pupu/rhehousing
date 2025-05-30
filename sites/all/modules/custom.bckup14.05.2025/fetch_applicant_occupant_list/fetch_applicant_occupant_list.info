@@ -1,0 +1,5 @@
+name = Fetching details Existing Occupant and Physical Applicant
+description = Form for fetching exisiting occupant and physical applicant
+core = 7.x
+package = Existing Occupant and Physical Application Checking Module
+dependencies[] = system

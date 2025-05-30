@@ -19,6 +19,7 @@
 	  		'file' => 'include/rhewise_flatlist_page.inc',
 	  		'access arguments' => array('administer Existing Occupant'),
 		);
+<<<<<<< HEAD
 
 			/*    dg 07-05-2025   */
 
@@ -31,6 +32,8 @@
 	  	);
 
 	  		/* end */
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 		/*$items['rhewise_occupant_data_entry/%/%'] = array(
 			'title'=>'Flatwise Occupant Data Entry',
@@ -49,6 +52,7 @@
 			'access arguments' => array('administer Existing Occupant'),
 			//'access callback'=>TRUE
 		);
+<<<<<<< HEAD
 
 		/* dg 08-05-2025 */
 		$items['rhewise_occupant_draft_data_entry/%'] = array(
@@ -71,6 +75,10 @@
 		);
 
 		//menu for division user
+=======
+		
+	//menu for division user
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$items['rhewise_occupantlist'] = array(
 	  		'title' => 'Occupant List',
 			'page callback' => 'drupal_get_form',
@@ -103,7 +111,11 @@
 		);
 
 		$items['view-unauthorised-occupants'] = array(
+<<<<<<< HEAD
 			'title' => 'System-Flagged Unauthorised Occupant List',
+=======
+			'title' => 'Unauthorised Occupant List',
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			'page callback' => 'view_unauthorised_occupants_list',
 			'file' => 'include/view_unauthorised_occupants_list.inc',
 			'access arguments' => array('administer Unauthorised Occupant List')
@@ -123,6 +135,7 @@
 			//'file' => 'include/view_unauthorised_occupants_list.inc',
 			'access arguments' => array('access content')
 		);
+<<<<<<< HEAD
 		$items['existing-occupant-view-det-draft/%'] = array(
 			'title' => 'View Existing Occupant Details without HRMS ID',	
 			'page callback' => 'existing_occupant_view_details_draft',
@@ -139,6 +152,8 @@
 			// 'file' => 'include/rhewise_occupant_draft_list.inc',
 			'access arguments' => array('administer RHE wise flat list Master'),
 		);
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 		return $items;
 	}
@@ -183,11 +198,14 @@
 				'title' => t('Administer Unauthorised Occupant List'),
 				'description' => t('Perform Administer to see unauthorised occupant list.'),
 			),
+<<<<<<< HEAD
 
 			'administer Existing Occupant Draft List' => array(
 				'title' => t('Administer Existing Occupant Draft List View'),
 				'description' => t('Perform Administer to see existing occupant draft list.'),
 			),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		);	
 	}
 	
@@ -200,6 +218,7 @@
 			return $query->execute();		
 		}
 	}
+<<<<<<< HEAD
 
 	function occupant_entry_check_draft($flat_id = ''){
 		if($flat_id != 0) {
@@ -210,6 +229,8 @@
 			return $query->execute();		
 		}
 	}
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	
 	function get_occupant_rhe_details($flat_id = '') {
 		if($flat_id !== '' && is_numeric($flat_id)) {	
@@ -551,7 +572,11 @@
 
 	/*Done by Subham*/
 	function view_occupant_list_form() {  
+<<<<<<< HEAD
 		global $base_root, $base_path,$user, $user_role;
+=======
+		global $base_root, $base_path,$user;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$output = '';
 
 			/* Done by Subham 30-12-2024*/
@@ -574,7 +599,10 @@
 					$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
 					$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
 					$query->innerJoin('users', 'u', 'u.uid = haod.uid');
+<<<<<<< HEAD
 					// $query->leftJoin('users', 'u', 'u.uid = haod.uid');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$query->condition('hoa.status', 'existing_occupant', '=');
 					// $query->condition('haod.is_active', 1, '=');
@@ -585,7 +613,10 @@
 					$query->addField('haod', 'hrms_id');
 					$query->addField('u', 'status');
 					$query->addField('haod', 'uid');
+<<<<<<< HEAD
 					$query->addField('hf', 'flat_id');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$db_and = db_and();														// Added by Subham 30-12-2024
 					$db_and->condition('he.division_id', $data_fetch->division_id, '=');	// Added by Subham 30-12-2024
@@ -615,7 +646,10 @@
 					$query->addField('haod', 'hrms_id');
 					$query->addField('u', 'status');
 					$query->addField('haod', 'uid');
+<<<<<<< HEAD
 					$query->addField('hf', 'flat_id');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$query->condition('he.division_id', $data_fetch->division_id, '=');		// Added by Subham 30-12-2024
 					$result =$query->execute();
@@ -630,10 +664,13 @@
 			$header['Flat Type'] = array('data' => 'Flat Type');
 			$header['Approval Status'] = array('data' => 'Approval Status');
 			$header['Details'] = array('data' => 'Details');
+<<<<<<< HEAD
 			// Added 22-05-2025
 			if($user_role == 8){
 				$header['Action'] = array('data' => 'Action');
 			}
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 			$rows =array();
 			$output = '';
@@ -659,6 +696,7 @@
                 'html'=>TRUE,
                 'attributes'=> array('class'=>array('btn bg-success btn-sm px-4 rounded-pill text-white fw-bolder')),
             ));	
+<<<<<<< HEAD
 			
 			// Added 22-05-2025
 			if($user_role == 8){
@@ -667,6 +705,8 @@
 			/*end*/	
 			}
 
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$serialNumber++;
 
 			$rows[] = $fields;
@@ -764,6 +804,7 @@
 		$data = $result->fetchObject();
 		//print_r($data);die;
 
+<<<<<<< HEAD
 		$present_address_parts = array_filter([
 			$data->present_street ?? '',
 			$data->present_city_town_village ?? '',
@@ -794,6 +835,8 @@
 		
 		$office_address = !empty($office_address_parts) ? implode(', ', $office_address_parts) : 'Not Available';
 
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 		$display_output1 = '
 		    <div class="table-bottom">
@@ -826,11 +869,19 @@
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Present Address</th>
+<<<<<<< HEAD
 		            <td>'.$present_address.'</td>
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Parmanent Address</th>
 		            <td>'.$permanent_address.'</td>
+=======
+		            <td>'.$data->present_street.', '.$data->present_city_town_village.', P.O- '.$data->present_post_office.', '.$data->present_district_name.'-'.$data->present_pincode.'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Parmanent Address</th>
+		            <td>'.$data->permanent_street.', '.$data->permanent_city_town_village.', P.O- '.$data->permanent_post_office.', '.$data->permanent_district_name.'-'.$data->permanent_pincode.'</td>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Gender:</th>
@@ -890,7 +941,11 @@
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Office Address:</th>
+<<<<<<< HEAD
 		            <td>'.$office_address.'</td>
+=======
+		            <td>'.$data->office_street.', '.$data->office_city_town_village.', P.O- '.$data->office_post_office.', '.$data->office_district_name.'-'.$data->office_pin_code.'</td>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Office Phone No.:</th>
@@ -960,6 +1015,7 @@
 
     return $display_output1;
 
+<<<<<<< HEAD
 	}
 
 
@@ -1224,3 +1280,6 @@ function rhe_wise_flat_occupant_delete($val = '', $occupant_id_enc = '', $flat_i
 		drupal_goto('view-occupant-list');
 	}
 }
+=======
+	}
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
