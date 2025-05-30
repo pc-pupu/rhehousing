@@ -1,0 +1,6 @@
+name = Generate CS Licence
+decsription = Generate CS Licence Module
+core = 7.x
+package = eallotment RHE License Module
+stylesheets[all][] = css/generate_cs_licence.css
+scripts[] = js/generate_cs_licence.js

@@ -1,0 +1,1 @@
+This module is used for to customize sidebar

@@ -1,0 +1,666 @@
+<?php
+function auto_updation_menu() {
+  $items = array();
+
+
+  $items['auto-updation-offer'] = array(
+    'title' => 'Auto Updation Exceed Offer Letter Generation Date',
+    'page callback' => 'auto_updation_offer',
+    'page arguments' => array(),
+    'access arguments' => array('access content'),
+  );
+
+  $items['auto-updation-offer-after-extension'] = array(
+    'title' => 'Auto Updation Exceed Offer Letter extended Date',
+    'page callback' => 'auto_updation_offer_after_extension',
+    'page arguments' => array(),
+    'access arguments' => array('access content'),
+  );
+
+  $items['auto-updation-license-after-extension'] = array(
+    'title' => 'Auto Updation Exceed License extended Date',
+    'page callback' => 'auto_updation_license_after_extension',
+    'page arguments' => array(),
+    'access arguments' => array('access content'),
+  );
+
+  $items['auto-updation-license'] = array(
+    'title' => 'Auto Updation Exceed License Generation Date',
+    'page callback' => 'auto_updation_license',
+    'page arguments' => array(),
+    'access arguments' => array('access content'),
+  );
+
+  $items['auto-cancellation-list'] = array(
+    'title' => 'List Of Auto Cancelled Offer Letters / Licenses',
+    'page callback' => 'auto_cancellation_applicant_list',
+    'page arguments' => array(),
+    'access arguments' => array('auto cancellation list view'),
+  );
+  
+  $items['auto-transfer-checking'] = array(
+    'title' => 'Auto Transfer Checking for DDO updation',
+    'page callback' => 'auto_transfer_checking',
+    'page arguments' => array(),
+    'access arguments' => array('access content'),
+  );
+
+  // $items['auto-updation-offer-final-cancel'] = array(
+  //   'title' => 'Auto Updation Exceed Offer Letter extended Date',
+  //   'page callback' => 'auto_updation_offer_final_cancel',
+  //   'page arguments' => array(),
+  //   'access arguments' => array('access content'),
+  // );
+
+  return $items;
+}
+
+function auto_updation_permission() {
+  return array(
+    'auto cancellation list view' => array(
+			'title' => t('Auto Cancellation List View'),
+			'description' => t('Auto Cancellation List View from housing official end')
+		)
+  );
+}
+
+
+/////////debaleena 12-11-2024/////
+
+function auto_updation_offer(){
+  // echo "hii";die;
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->condition('hoa.status','housing_official_approved','=');
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+
+ 
+  foreach ($data_arr as $data) {
+    
+    $offer_letter_generation_date = $data->date_of_verified;
+    $current_date = date('Y-m-d H:i:s');
+    //echo $offer_letter_generation_date.'<br>'.$current_date;
+    $dateDiff = dateDiffInDays($offer_letter_generation_date, $current_date);
+    $uid = $data->uid;
+    $application_no = $data->application_no;
+    $online_application_id = $data->online_application_id;
+
+    
+    
+   if($dateDiff > 15){
+      
+      $status_updation_arr  = array();
+      $status_updation_arr['status']  =  'offer_letter_cancel';
+      $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+      db_update('housing_online_application')
+					->fields($status_updation_arr)
+					->condition('online_application_id', $online_application_id)
+					->execute();
+
+      // is_active status will be updated if offer letter is cancelled, done by Subham 25-11-2024
+      $app_official_detail_status_update_arr['is_active']  =  0;
+      db_update('housing_applicant_official_detail')
+        ->fields($app_official_detail_status_update_arr)
+        ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+        ->execute();
+
+      $status_id = get_status_id('offer_letter_cancel'); // Done by Subham 25/11/2024
+
+      // Done by Subham 22/11/2024
+      $insert_housing_process_flow = array(
+                                    'online_application_id' => $online_application_id,
+                                    'status_id' => $status_id,
+                                    'created_at' => date('Y-m-d H:i:s'),
+                                    'uid' => NULL,
+                                    'short_code' => 'offer_letter_cancel'
+      );
+      db_insert('housing_process_flow')
+          ->fields($insert_housing_process_flow)
+          ->execute();
+      
+      $insert_housing_auto_cancellation = array(
+                                    'uid' => $uid,
+                                    'online_application_id' => $online_application_id,
+                                    'cancellation_type' => 'offer-letter'
+      );
+
+      db_insert('housing_auto_cancellation')
+          ->fields($insert_housing_auto_cancellation)
+          ->execute();
+
+
+      $update_flat_occupant_cancellation = array(
+                                      'cancellation_extension_status' => 'offer_letter_cancel',
+                                      'cancellation_extension_date' => date('Y-m-d H:i:s')
+                                    );
+
+      db_update('housing_flat_occupant')
+                      ->fields($update_flat_occupant_cancellation)
+                      ->condition('online_application_id', $online_application_id, '=')
+                      ->execute();                              
+      // End
+   }else{
+    echo 'continue';
+   }
+  }
+  
+}
+
+function auto_updation_license(){
+  
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->innerjoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+  $query->innerjoin('housing_occupant_license', 'hol', 'hol.flat_occupant_id = hfo.flat_occupant_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->addField('hol', 'possession_date');
+  $query->condition('hoa.status','license_generate','=');
+
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+
+  // print_r($data_arr);die;
+  foreach ($data_arr as $data) {
+    
+    $license_generation_date = $data->date_of_verified;
+    $current_date = date('Y-m-d H:i:s');
+    //echo $offer_letter_generation_date.'<br>'.$current_date;
+    $dateDiff = dateDiffInDays($license_generation_date, $current_date);
+    $uid = $data->uid;
+    $application_no = $data->application_no;
+    //echo $application_no;die;
+
+    $online_application_id = $data->online_application_id;
+    $possession_date = $data->possession_date;
+    // echo $online_application_id;die;
+    
+    
+   if($dateDiff > 15 && empty($possession_date)){
+      
+      $status_updation_arr  = array();
+      $status_updation_arr['status']  =  'license_cancel';
+      $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+      db_update('housing_online_application')
+					->fields($status_updation_arr)
+					->condition('online_application_id', $online_application_id)
+					->execute();
+
+      // is_active status will be updated iflicense is cancelled, done by Subham 25-11-2024
+      $app_official_detail_status_update_arr['is_active']  =  0;
+      db_update('housing_applicant_official_detail')
+        ->fields($app_official_detail_status_update_arr)
+        ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+        ->execute();
+
+      $status_id = get_status_id('license_cancel'); // Done by Subham 25/11/2024
+      // Done by Subham 22/11/2024
+      $insert_housing_process_flow = array(
+                                    'online_application_id' => $online_application_id,
+                                    'status_id' => $status_id,
+                                    'created_at' => date('Y-m-d H:i:s'),
+                                    'uid' => NULL,
+                                    'short_code' => 'license_cancel'
+      );
+      db_insert('housing_process_flow')
+          ->fields($insert_housing_process_flow)
+          ->execute();
+      
+      $insert_housing_auto_cancellation = array(
+                                    'uid' => $uid,
+                                    'online_application_id' => $online_application_id,
+                                    'cancellation_type' => 'license'
+      );
+
+      db_insert('housing_auto_cancellation')
+          ->fields($insert_housing_auto_cancellation)
+          ->execute();
+
+      $update_flat_occupant_cancellation = array(
+        'cancellation_extension_status' => 'license_cancel',
+        'cancellation_extension_date' => date('Y-m-d H:i:s')
+      );
+
+      db_update('housing_flat_occupant')
+                  ->fields($update_flat_occupant_cancellation)
+                  ->condition('online_application_id', $online_application_id, '=')
+                  ->execute();      
+      // End
+   }else{
+    echo 'continue';
+   }
+    
+  }
+  
+}
+
+function dateDiffInDays($date1, $date2) {
+  
+  // Calculating the difference in timestamps
+  $diff = strtotime($date2) - strtotime($date1);
+
+  // 1 day = 24 hours
+  // 24 * 60 * 60 = 86400 seconds
+  return abs(round($diff / 86400));
+}
+
+/////06.12.2024//////
+
+function auto_cancellation_applicant_list(){
+
+  global $base_root, $base_path;
+  $output1 = '';
+  $query = "SELECT hoa.application_no, ha.applicant_name, haod.applicant_designation,hoa.status,hf.floor,hf.flat_no,hb.block_name,he.estate_name
+            FROM housing_online_application hoa
+            INNER JOIN housing_applicant_official_detail haod ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id
+            INNER JOIN housing_applicant ha ON ha.housing_applicant_id = haod.housing_applicant_id
+            INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+            INNER JOIN housing_flat hf ON hf.flat_id = hfo.flat_id
+            INNER JOIN housing_estate he ON he.estate_id = hf.estate_id
+            INNER JOIN housing_block hb ON hb.block_id = hf.block_id
+            WHERE hoa.status IN ('offer_letter_cancel', 'license_cancel','offer_letter_extended','license_extended')";
+            // echo $query;die;
+  $result = db_query($query);
+
+   ///////////////////debaleena 06-12-2024////////////////////////
+   $header['application_no'] = array('data' => 'Application No');
+   $header['Flat Allotted'] = array('data' => 'Flat Allotted');
+   $header['Floor'] = array('data' => 'Floor');
+   $header['Name of R.H.E.'] = array('data' => 'Name of R.H.E.');
+   $header['Block'] = array('data' => 'Block');
+   $header['Cancellation Type'] = array('data' => 'Cancellation / Extension');
+   
+  
+
+       
+  $rows =array();
+  $output = '';
+  
+  while($data = $result->fetchObject()) {
+    // print_r($data);die;
+      $fields = array();
+
+      if($data->status == 'offer_letter_cancel'){
+        $application_status = 'Offer Letter Cancel';
+      }else if($data->status == 'license_cancel'){
+        $application_status = 'License Cancel';
+      } else if($data->status == 'license_extended'){
+        $application_status = 'License Extended';
+      }else if($data->status == 'offer_letter_extended'){
+        $application_status = 'Offer Letter Extended';
+      }   
+
+      $fields[] = $data->application_no;
+      $fields[] = $data->flat_no;
+      $fields[] = $data->floor;
+      $fields[] = $data->estate_name;
+      $fields[] = $data->block_name;
+      $fields[] = $application_status;
+      
+
+    
+     
+      $rows[] = $fields;
+  }
+
+       
+
+       $variables = array(
+           'attributes' => array('class'=>array('table table-list table-striped')),
+           'header' => $header,
+           'rows' => $rows,
+           'sticky' => true,
+           'empty' => t("No data found!") // The message to be displayed if table is empty
+         );
+         //end
+       //sd turned off 21-06-2024
+       if(count($rows) > 0) {
+           // Render using Drupal's render API.
+           $build['datatable'] = array(
+             '#theme' => 'datatable',
+             '#header' => $header,
+             '#rows' => $rows,
+             '#attributes' => array(),
+           );
+           
+           // Or, render using a theme function.
+           $variables = array(
+             'attributes' => array('class'=>array('table table-list table-striped')),
+             'header' => $header,
+             'rows' => $rows,
+           );
+           
+           $output = theme('datatable', $variables);
+       }
+       else {
+           $output = '<div>
+                           <table class="datatable_no_data_found table table-list">
+                               <tr class="tr_no_data_found">
+                                   <th class="th_no_data_found"></th>
+                               </tr>
+                               <tr class="tr_no_data_found">
+                                   <td class="td_no_data_found">No data found!</td>
+                               </tr>
+                           </table>
+                       </div>';
+       }
+   
+  return $output;
+}
+
+
+///end////
+
+
+function auto_updation_offer_after_extension(){
+
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->innerjoin('housing_license_offer_letter_extension', 'hlole', 'hlole.online_application_id = hoa.online_application_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->addField('hlole', 'extended_upto');
+  $query->condition('hoa.status','offer_letter_extended','=');
+  $query->condition('haod.is_active','1','=');
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+
+  foreach ($data_arr as $data) {
+   
+    $current_date = date('Y-m-d');
+    $extension_upto_date = $data->extended_upto;
+
+    if($extension_upto_date < $current_date){
+      
+      $status_updation_arr  = array();
+      $status_updation_arr['status']  =  'offer_letter_cancel';
+      $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+      db_update('housing_online_application')
+					->fields($status_updation_arr)
+					->condition('online_application_id', $data->online_application_id)
+					->execute();
+
+      // is_active status will be updated iflicense is cancelled, 
+      $app_official_detail_status_update_arr['is_active']  =  0;
+      db_update('housing_applicant_official_detail')
+        ->fields($app_official_detail_status_update_arr)
+        ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+        ->execute();
+
+      $status_id = get_status_id('offer_letter_cancel'); 
+      
+      $insert_housing_process_flow = array(
+                                    'online_application_id' => $data->online_application_id,
+                                    'status_id' => $status_id,
+                                    'created_at' => date('Y-m-d H:i:s'),
+                                    'uid' => NULL,
+                                    'short_code' => 'offer_letter_cancel'
+      );
+      db_insert('housing_process_flow')
+          ->fields($insert_housing_process_flow)
+          ->execute();
+      
+      $insert_housing_auto_cancellation = array(
+                                    'uid' => $data->uid,
+                                    'online_application_id' => $data->online_application_id,
+                                    'cancellation_type' => 'offer-letter'
+      );
+
+      db_insert('housing_auto_cancellation')
+          ->fields($insert_housing_auto_cancellation)
+          ->execute();
+
+      $update_flat_occupant_cancellation = array(
+        'cancellation_extension_status' => 'offer_letter_cancel',
+        'cancellation_extension_date' => date('Y-m-d H:i:s')
+      );
+
+      db_update('housing_flat_occupant')
+                  ->fields($update_flat_occupant_cancellation)
+                  ->condition('online_application_id', $data->online_application_id, '=')
+                  ->execute();      
+   
+    }else{
+      echo 'continue';
+    }
+  }
+}
+
+
+
+function auto_updation_license_after_extension(){
+
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->innerjoin('housing_license_offer_letter_extension', 'hlole', 'hlole.online_application_id = hoa.online_application_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->addField('hlole', 'extended_upto');
+  $query->condition('hoa.status','license_extended','=');
+  $query->condition('haod.is_active','1','=');
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+  // print_r($data_arr);die;
+  foreach ($data_arr as $data) {
+   
+    $current_date = date('Y-m-d');
+    $extension_upto_date = $data->extended_upto;
+
+    if($extension_upto_date < $current_date){
+      
+      $status_updation_arr  = array();
+      $status_updation_arr['status']  =  'license_cancel';
+      $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+      db_update('housing_online_application')
+					->fields($status_updation_arr)
+					->condition('online_application_id', $data->online_application_id)
+					->execute();
+
+      // is_active status will be updated iflicense is cancelled, 
+      $app_official_detail_status_update_arr['is_active']  =  0;
+      db_update('housing_applicant_official_detail')
+        ->fields($app_official_detail_status_update_arr)
+        ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+        ->execute();
+
+      $status_id = get_status_id('license_cancel'); 
+      
+      $insert_housing_process_flow = array(
+                                    'online_application_id' => $data->online_application_id,
+                                    'status_id' => $status_id,
+                                    'created_at' => date('Y-m-d H:i:s'),
+                                    'uid' => NULL,
+                                    'short_code' => 'license_cancel'
+      );
+      db_insert('housing_process_flow')
+          ->fields($insert_housing_process_flow)
+          ->execute();
+      
+      $insert_housing_auto_cancellation = array(
+                                    'uid' => $data->uid,
+                                    'online_application_id' => $data->online_application_id,
+                                    'cancellation_type' => 'license'
+      );
+
+      db_insert('housing_auto_cancellation')
+          ->fields($insert_housing_auto_cancellation)
+          ->execute();
+
+      $update_flat_occupant_cancellation = array(
+        'cancellation_extension_status' => 'license_cancel',
+        'cancellation_extension_date' => date('Y-m-d H:i:s')
+      );
+
+      db_update('housing_flat_occupant')
+                  ->fields($update_flat_occupant_cancellation)
+                  ->condition('online_application_id', $data->online_application_id, '=')
+                  ->execute();      
+   
+    }else{
+      echo 'continue';
+    }
+  }
+}
+
+function auto_transfer_checking(){
+
+  // fetch license holder hrms
+  $query = db_select('housing_occupant_license','hol');
+  $query->fields('hol', array('license_application_id','possession_date'));
+
+  $query->join('housing_license_application','hla','hla.license_application_id = hol.license_application_id');
+  $query->fields('hla',array('online_application_id'));
+
+  $query->join('housing_online_application','hoa','hoa.online_application_id = hla.online_application_id');
+  $query->fields('hoa',array('applicant_official_detail_id','online_application_id'));
+
+  $query->join('housing_applicant_official_detail','haod','haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->fields('haod',array('ddo_id','hrms_id'));
+
+  $query->join('housing_ddo','hddo','hddo.ddo_id = haod.ddo_id');
+  $query->fields('hddo',array('ddo_code','district_code'));
+
+  $query->join('housing_district','hd','hd.district_code = hddo.district_code');
+  $query->fields('hd',array());
+
+  $query->condition('hddo.is_active','Y');
+  $query->condition('haod.is_active',1);
+  $query->isNotNull('hol.possession_date');
+  $result = $query->execute();
+
+  if($result->rowCount() > 0){
+    foreach($result->fetchAll() as $row){
+      $hrmsID = $row->hrms_id;
+      $savedDDOCode =  $row->ddo_code;
+      $savedDDODist =  $row->hrms_district_id;
+
+
+      $userJsonDecode = json_decode(fetchHRMSUserAPIData($hrmsID), true);
+
+      $newDDOCode = $userJsonDecode['resp']['data'][0]['ddoId'];
+      $newDDODist = $userJsonDecode['resp']['data'][0]['officeDistrict'];
+
+      if($savedDDOCode != $newDDOCode){ 
+        if($savedDDODist != $newDDODist){
+          // echo 'transfer DDO Code with illegal occupant';
+          // echo 'data insert with illegal remarks';
+
+          $insarr = array('ddo_code_new'=>$savedDDOCode,'ddo_code_new' => $newDDOCode,'hrms_id' => $hrmsID,'created_datetime' =>date('Y-m-d H:i:s'),'remarks'=>'illegal_occupant');
+          $insquery = db_insert('housing_applicant_ddo_transfer')->fields($insarr)->execute();
+        }else{
+          // echo 'Transfer DDO but in same district';
+          // echo 'data insert with legal remarks';
+          // check before insert
+          $checkquery = db_select('housing_applicant_ddo_transfer','hdt')->fields('hdt',array('id'))->condition('ddo_code_new',$newDDOCode,'=')->condition('hrms_id',$hrmsID,'=');
+          $checkresult = $checkquery->execute();
+          if($checkresult->rowCount() == 0){
+            $insarr = array('ddo_code_new' => $newDDOCode,'hrms_id' => $hrmsID,'created_datetime' =>date('Y-m-d H:i:s'),'remarks'=>'legal_occupant','online_application_id'=> $row->online_application_id, 'ddo_code_old'=> $savedDDOCode);
+            $insquery = db_insert('housing_applicant_ddo_transfer')->fields($insarr)->execute();
+          }  
+        }
+      }
+    }
+  }
+}
+
+//not done//
+function auto_updation_offer_final_cancel(){
+  
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->condition('hoa.status','offer_letter_cancel','=');
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+
+  echo "<pre>";print_r($data_arr);die;
+
+  foreach ($data_arr as $data) {
+    
+    $offer_letter_cancel_date = $data->date_of_verified;
+    $current_date = date('Y-m-d H:i:s');
+    //echo $offer_letter_generation_date.'<br>'.$current_date;
+    $dateDiff = dateDiffInDays($offer_letter_cancel_date, $current_date);
+    $uid = $data->uid;
+    $application_no = $data->application_no;
+    $online_application_id = $data->online_application_id;
+
+    
+    
+    if($dateDiff > 15){
+        
+        $status_updation_arr  = array();
+        $status_updation_arr['status']  =  'offer_letter_cancel';
+        $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+        db_update('housing_online_application')
+            ->fields($status_updation_arr)
+            ->condition('online_application_id', $online_application_id)
+            ->execute();
+
+        // is_active status will be updated if offer letter is cancelled, done by Subham 25-11-2024
+        $app_official_detail_status_update_arr['is_active']  =  0;
+        db_update('housing_applicant_official_detail')
+          ->fields($app_official_detail_status_update_arr)
+          ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+          ->execute();
+
+        $status_id = get_status_id('offer_letter_cancel'); // Done by Subham 25/11/2024
+
+        // Done by Subham 22/11/2024
+        $insert_housing_process_flow = array(
+                                      'online_application_id' => $online_application_id,
+                                      'status_id' => $status_id,
+                                      'created_at' => date('Y-m-d H:i:s'),
+                                      'uid' => NULL,
+                                      'short_code' => 'offer_letter_cancel'
+        );
+        db_insert('housing_process_flow')
+            ->fields($insert_housing_process_flow)
+            ->execute();
+        
+        $insert_housing_auto_cancellation = array(
+                                      'uid' => $uid,
+                                      'online_application_id' => $online_application_id,
+                                      'cancellation_type' => 'offer-letter'
+        );
+
+        db_insert('housing_auto_cancellation')
+            ->fields($insert_housing_auto_cancellation)
+            ->execute();
+
+
+        $update_flat_occupant_cancellation = array(
+                                        'cancellation_extension_status' => 'offer_letter_cancel',
+                                        'cancellation_extension_date' => date('Y-m-d H:i:s')
+                                      );
+
+        db_update('housing_flat_occupant')
+                        ->fields($update_flat_occupant_cancellation)
+                        ->condition('online_application_id', $online_application_id, '=')
+                        ->execute();                              
+        // End
+    }else{
+      echo 'continue';
+    }
+    }
+
+
+}
+
+
+
+

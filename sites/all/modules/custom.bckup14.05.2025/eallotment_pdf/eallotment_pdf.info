@@ -1,0 +1,4 @@
+name = e-Allotment pdf
+description = e-Allotment pdf module
+core = 7.x
+package = e-Allotment Report

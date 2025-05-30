@@ -1,0 +1,1 @@
+This module used by Applicant / Occupant User to view all application history along status

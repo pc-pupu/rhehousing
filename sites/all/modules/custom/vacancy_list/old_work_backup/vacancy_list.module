@@ -1,0 +1,226 @@
+<?php
+
+	function vacancy_list_menu() {
+	
+		$items['vacany_list'] = array(
+		  'title' => 'Vacancy List',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('vacancy_list_form'),
+		  'file' => 'vacancy_list_page.inc',
+		  'access arguments' => array('administer Vacancy List'),
+		);
+		
+		$items['flat_vacancy_list_pdf/%/%/%/%']=array(
+			'title' => 'RHE Flat Vacancy List PDF',
+			'page callback' => 'rhe_flat_vacancy_list_pdf',
+			'page arguments' => array(1,2,3,4),
+			'file' => 'rhe_flat_vacancy_list_pdf.inc',
+			'access arguments' => array('administer RHE Flat Vacancy List PDF'),
+		);
+		
+		$items['housing_details'] = array(
+			'title' => 'All Housing Details',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('housing_list_form'),
+			'file' => 'view_housing_list_page.inc',
+			'access arguments' => array('administer Housing Details'),
+		);
+		
+		$items['view_vacancy_list'] = array(
+		  'title' => 'View Vacancy List',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('vacancy_list_form'),
+		  'file' => 'view_vacancy_list_page.inc',
+		  'access arguments' => array('administer View Vacancy List'),
+		);
+
+		
+	 	return $items;
+	}
+	function vacancy_list_form($form, &$form_state) {
+
+	   $flat_type_val =  !empty($form_state['values']['flat_type']) ? $form_state['values']['flat_type'] : 0;
+	   $flat_category_val = !empty($form_state['values']['flat_category']) ? $form_state['values']['flat_category'] : 0;
+	 
+	   $form['flat_type'] = array(
+			'#title' => t('RHE Flat Type'),
+			'#type' => 'select',
+			'#options' => rhe_flat_type(),
+			'#required' => TRUE,
+			'#attributes' => array('class' => array('dropdown3')),
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#ajax' => array(
+				'event' => 'change',
+				//'wrapper' => 'no_of_vacancy',
+				'callback' => '_reload_flat_category',
+				'method' => 'replace',
+			),
+	  );
+	  
+	  $form['flat_category'] = array(
+			'#title' => t('Flat Category'),
+			'#type' => 'select',
+			'#options' => array(),
+			'#required' => TRUE,
+			'#attributes' => array('class' => array('dropdown3')),
+			'#prefix' => '<div id="flat_category" class="two">',
+			'#suffix' => '</div>',
+			'#ajax' => array(
+				'event' => 'change',
+				//'wrapper' => 'no_of_vacancy',
+				'callback' => '_reload_vacancy_list',
+				'method' => 'replace',
+			),
+		);
+		
+		if($flat_type_val != 0) {
+			$form['flat_category'] = array(
+				'#title' => t('Flat Category'),
+				'#type' => 'select',
+				'#options' => flat_category_list(),
+				'#required' => TRUE,
+				'#attributes' => array('class' => array('dropdown3')),
+				'#prefix' => '<div id="flat_category" class="two">',
+				'#suffix' => '</div>',
+				'#ajax' => array(
+					'event' => 'change',
+					//'wrapper' => 'no_of_vacancy',
+					'callback' => '_reload_vacancy_list',
+					'method' => 'replace',
+				),
+			);
+		}
+		
+		$form['vacancy_list'] = array(
+			'#prefix' => '<div  id="vacancy_list">',
+			'#suffix' => '</div>',
+		);
+	
+	  if($flat_type_val != 0 && $flat_category_val != 0) {
+		  
+		  $form['vacancy_list'] = array(
+				'#type' => 'markup',
+				'#markup' => vacancy_list_page(trim($flat_type_val), trim($flat_category_val)),
+				'#prefix' => '<div id="vacancy_list">',
+				'#suffix' => '</div>',
+			);
+	
+		 // $form['pager'] = array('#markup' => theme('pager'));
+
+	
+	  }
+	  
+	  	  return $form;
+  }
+  
+   function vacancy_list_form_validate($form, &$form_state) {
+	
+	#krumo($form_state['values']['table']);
+	
+
+	}
+	function vacancy_list_form_submit($form, &$form_state) {
+				$form_state['rebuild'] = TRUE;
+		
+	
+	}
+	
+	function _reload_flat_category($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#flat_category", drupal_render($form['flat_category']));
+		$commands[] = ajax_command_replace("#vacancy_list", drupal_render($form['vacancy_list']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+  
+	}
+	
+	function _reload_vacancy_list($form, &$form_state) {
+		$commands = array();
+		
+		$commands[] = ajax_command_replace("#vacancy_list", drupal_render($form['vacancy_list']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+  
+	}
+  
+  function housing_list_form($form, &$form_state) {
+
+	   $flat_type_val =  !empty($form_state['values']['flat_type']) ? $form_state['values']['flat_type'] : 0;
+	   $flat_category_val = !empty($form_state['values']['flat_category']) ? $form_state['values']['flat_category'] : 0;
+	 
+	   $form['flat_type'] = array(
+		'#title' => t('RHE Flat Type'),
+		'#type' => 'select',
+		'#options' => rhe_flat_type(),
+		'#required' => TRUE,
+		 '#prefix' => '<div class="four ">',
+ 		'#suffix' => '</div>',
+		'#weight' =>2
+	  );
+	  
+	  $form['flat_category'] = array(
+			'#title' => t('Flat Category'),
+			'#type' => 'select',
+			'#options' => flat_category_list(),
+			'#required' => TRUE,
+			'#prefix' => '<div class="four ">',
+			'#suffix' => '</div>',
+			'#weight' =>3
+		);
+		
+	  $form['search'] = array(
+		'#value' => t('Search'),
+		'#type' => 'submit',
+		 '#prefix' => '<div class="four" style="margin-top:43px;height: 30px;">',
+		'#suffix' => '</div>',
+		'#weight' =>4
+	  );
+	
+	  if($flat_type_val != 0 && $flat_category_val != 0) {
+		 
+		 $output = housing_list_page(trim($flat_type_val), trim($flat_category_val));
+		 $form['breadcrumb'] = array(
+		   '#type' => 'markup',
+		   '#markup' => $output,
+			'#weight' => 5
+		);
+		 // $form['pager'] = array('#markup' => theme('pager'));
+
+	
+	  }
+	  
+	  	  return $form;
+  }
+   
+   
+	
+	function housing_list_form_submit($form, &$form_state) {
+				$form_state['rebuild'] = TRUE;
+		
+	
+	}
+ 
+	 function vacancy_list_permission() {
+	  return array(
+		'administer Vacancy List' => array(
+		  'title' => t('administer Vacancy List'),
+		  'description' => t('Perform administer Vacancy List.'),
+		),
+		
+		'administer RHE Flat Vacancy List PDF' => array(
+		  'title' => t('administer RHE Flat Vacancy List PDF'),
+		  'description' => t('Perform administer RHE Flat Vacancy List PDF.'),
+		),
+		
+		'administer Housing Details' => array(
+		  'title' => t('administer Housing Details'),
+		  'description' => t('Perform administer Housing Details.'),
+		),
+		
+		'administer View Vacancy List' => array(
+		  'title' => t('administer View Vacancy List'),
+		  'description' => t('Perform administer View Vacancy List.'),
+		),
+	  );
+  
+	}
+	require_once('vacancy_list_fetch_data.inc');

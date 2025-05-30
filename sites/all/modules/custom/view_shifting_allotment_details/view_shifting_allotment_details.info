@@ -1,0 +1,4 @@
+name = View Shifting Allotment Details
+description = View Shifting Allotment Details Module
+core = 7.x
+package = eallotment Online Application Module

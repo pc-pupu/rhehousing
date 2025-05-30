@@ -1,0 +1,6 @@
+name = User Registration
+decsription = User Registration Module
+core = 7.x
+package = eallotment User Module
+stylesheets[all][] = css/user_registration.css
+scripts[] = js/user_registration.js

@@ -1,0 +1,404 @@
+<?php
+/** 
+ * Implements hook_cron().
+ */
+
+/*////////////////array_column Function custom Start////////////////////*/
+if (! function_exists('array_column')) {
+    function array_column(array $input, $columnKey, $indexKey = null) {
+        $array = array();
+        foreach ($input as $value) {
+            if ( !array_key_exists($columnKey, $value)) {
+                trigger_error("Key \"$columnKey\" does not exist in array");
+                return false;
+            }
+            if (is_null($indexKey)) {
+                $array[] = $value[$columnKey];
+            }
+            else {
+                if ( !array_key_exists($indexKey, $value)) {
+                    trigger_error("Key \"$indexKey\" does not exist in array");
+                    return false;
+                }
+                if ( ! is_scalar($value[$indexKey])) {
+                    trigger_error("Key \"$indexKey\" does not contain scalar value");
+                    return false;
+                }
+                $array[$value[$indexKey]] = $value[$columnKey];
+            }
+        }
+        return $array;
+    }
+}
+/*////////////////array_column Function custom End////////////////////*/
+
+
+function cronjobs_cron()
+{
+    $lineBreak=" \r\n ";
+    $contentToWrite = $lineBreak. date('Y-m-d H:i:s') .$lineBreak;
+    
+    ///set the users invalid Start//
+    $resultIds = db_query("SELECT distinct(u.uid) as uids FROM users AS u
+					INNER JOIN users_roles AS ur 
+					ON u.uid=ur.uid
+					LEFT JOIN housing_applicant_official_detail AS haod 
+					ON u.uid=haod.uid
+					LEFT JOIN housing_online_application AS hoa 
+					ON haod.applicant_official_detail_id=hoa.applicant_official_detail_id
+					WHERE u.status=1 AND ur.rid=4 AND to_timestamp(u.created) < NOW() - INTERVAL '30 days' AND ((hoa.status='draft' AND hoa.application_no LIKE 'NA-%') OR hoa.status is NULL)
+					ORDER BY u.uid")->fetchCol();
+    
+    $uidStr = implode(',', $resultIds);
+    if (!empty($uidStr)) {
+        db_query("UPDATE users SET status=0 WHERE uid IN (" . $uidStr . ")");
+        $contentToWrite .= "The updated User ids are " . $uidStr . $lineBreak;
+    } else {
+        $contentToWrite .= "No User id updated." . $lineBreak;
+    }
+    ///set the users invalid End//
+	
+	
+	///set the housing_flat_occupant status=Cancel For New Allotment Start//
+    $resultIds = db_query("SELECT hoa.online_application_id AS a_id, hfo.flat_id AS flat_id
+					FROM housing_applicant_official_detail haod 
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_new_allotment_application hnaa ON hnaa.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat hf ON hf.flat_id = hfo.flat_id
+					INNER JOIN housing_estate he ON hf.estate_id = he.estate_id 
+					INNER JOIN housing_flat_type hft ON hf.flat_type_id = hft.flat_type_id 
+					INNER JOIN housing_district hd ON he.district_code = hd.district_code
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date < NOW() - INTERVAL '30 days' AND hfo.accept_reject_status is NULL");
+    
+    $result           = $resultIds->fetchAll();
+    $applicationId    = array_column(json_decode(json_encode($result), True), 'a_id');
+    $applicationIdStr = implode(',', $applicationId);
+    $flatId           = array_column(json_decode(json_encode($result), True), 'flat_id');
+    $flatIdStr        = implode(',', $flatId);
+    
+    if (!empty($applicationIdStr)) {
+        db_query("UPDATE housing_flat_occupant SET accept_reject_status='Cancel' WHERE online_application_id IN (" . $applicationIdStr . ")");
+        $contentToWrite .= "New Allotment The updated online application ids are " . $applicationIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "New Allotment No online application ids updated." . $lineBreak;
+    }
+    
+    if (!empty($flatIdStr)) {
+        db_query("UPDATE housing_flat SET flat_status_id=1 WHERE flat_id IN (" . $flatIdStr . ")");
+        $contentToWrite .= "New Allotment The updated flat ids are " . $flatIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "New Allotment No flat ids updated." . $lineBreak;
+    }
+    ///set the housing_flat_occupant status=Cancel For New Allotment End//
+    
+	
+    ///set the housing_flat_occupant status=Cancel For Vertical Shifting Start//
+    $resultIds = db_query("SELECT hoa.online_application_id AS a_id, hfo.flat_id AS flat_id
+					FROM housing_applicant_official_detail haod 
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_vs_application hva ON hva.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat hf ON hf.flat_id = hfo.flat_id
+					INNER JOIN housing_estate he ON hf.estate_id = he.estate_id 
+					INNER JOIN housing_flat_type hft ON hf.flat_type_id = hft.flat_type_id 
+					INNER JOIN housing_district hd ON he.district_code = hd.district_code
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date < NOW() - INTERVAL '30 days' AND hfo.accept_reject_status is NULL");
+    
+    $result           = $resultIds->fetchAll();
+    $applicationId    = array_column(json_decode(json_encode($result), True), 'a_id');
+    $applicationIdStr = implode(',', $applicationId);
+    $flatId           = array_column(json_decode(json_encode($result), True), 'flat_id');
+    $flatIdStr        = implode(',', $flatId);
+    
+    if (!empty($applicationIdStr)) {
+        db_query("UPDATE housing_flat_occupant SET accept_reject_status='Cancel' WHERE online_application_id IN (" . $applicationIdStr . ")");
+        $contentToWrite .= "Vertical Shifting The updated online application ids are " . $applicationIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Vertical Shifting No online application ids updated." . $lineBreak;
+    }
+    
+    if (!empty($flatIdStr)) {
+        db_query("UPDATE housing_flat SET flat_status_id=1 WHERE flat_id IN (" . $flatIdStr . ")");
+        $contentToWrite .= "Vertical Shifting The updated flat ids are " . $flatIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Vertical Shifting No flat ids updated." . $lineBreak;
+    }
+    ///set the housing_flat_occupant status=Cancel For Vertical Shifting End//
+    
+    
+    ////////////////Set the housing_flat_occupant status=Cancel For Category Shifting Start//////////////////
+    $resultIds = db_query("SELECT hoa.online_application_id AS a_id, hfo.flat_id AS flat_id
+						FROM housing_applicant_official_detail haod 
+						INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+						INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+						INNER JOIN housing_cs_application hca ON hca.online_application_id = hoa.online_application_id 
+						INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id 
+						INNER JOIN housing_flat hf ON hf.flat_id = hfo.flat_id
+						INNER JOIN housing_estate he ON hf.estate_id = he.estate_id 
+						INNER JOIN housing_flat_type hft ON hf.flat_type_id = hft.flat_type_id 
+						INNER JOIN housing_district hd ON he.district_code = hd.district_code 
+						WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date < NOW() - INTERVAL '30 days' AND hfo.accept_reject_status is NULL");
+    
+    $result           = $resultIds->fetchAll();
+    $applicationId    = array_column(json_decode(json_encode($result), True), 'a_id');
+    $applicationIdStr = implode(',', $applicationId);
+    $flatId           = array_column(json_decode(json_encode($result), True), 'flat_id');
+    $flatIdStr        = implode(',', $flatId);
+    
+    if (!empty($applicationIdStr)) {
+        db_query("UPDATE housing_flat_occupant SET accept_reject_status='Cancel' WHERE online_application_id IN (" . $applicationIdStr . ")");
+        $contentToWrite .= "Category Shifting The updated online application ids are " . $applicationIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Category Shifting No online application ids updated." . $lineBreak;
+    }
+    
+    if (!empty($flatIdStr)) {
+        db_query("UPDATE housing_flat SET flat_status_id=1 WHERE flat_id IN (" . $flatIdStr . ")");
+        $contentToWrite .= "Category Shifting The updated flat ids are " . $flatIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Category Shifting No flat ids updated." . $lineBreak;
+    }
+    ////////////////set the housing_flat_occupant status=Cancel For Category Shifting End//////////////////
+	
+	
+    ///Send email on 15days For New Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_new_allotment_application hnaa ON hnaa.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '14 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 15 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 15 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "New Allotment On 15 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "New Allotment On 15 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 15days For New Allotment End//
+	
+	
+	///Send email on 25days For New Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_new_allotment_application hnaa ON hnaa.online_application_id = hoa.online_application_id 
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '24 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Final Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 5 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 5 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "New Allotment On 25 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "New Allotment On 25 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 25days For New Allotment End//
+	
+	
+	///Send email on 15days For Vertical Shifting Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_vs_application hva ON hva.online_application_id = hoa.online_application_id
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '14 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 15 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 15 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "Vertical Shifting On 15 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Vertical Shifting On 15 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 15days For Vertical Shifting Allotment End//
+	
+	
+	///Send email on 25days For Vertical Shifting Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_vs_application hva ON hva.online_application_id = hoa.online_application_id
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '24 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Final Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 5 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 5 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "Vertical Shifting On 25 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Vertical Shifting On 25 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 25days For Vertical Shifting Allotment End//
+	
+	
+	///Send email on 15days For Category Shifting Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_cs_application hca ON hca.online_application_id = hoa.online_application_id
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '14 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 15 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 15 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "Category Shifting On 15 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Category Shifting On 15 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 15days For Category Shifting Allotment End//
+	
+	
+	///Send email on 25days For Category Shifting Allotment Start//
+    $resultUidsEmails = db_query("SELECT u.uid as user_id, u.mail as email
+					FROM housing_applicant_official_detail haod
+					INNER JOIN users u ON u.uid = haod.uid
+					INNER JOIN housing_applicant ha ON ha.uid = haod.uid 
+					INNER JOIN housing_online_application hoa ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id 
+					INNER JOIN housing_cs_application hca ON hca.online_application_id = hoa.online_application_id
+					INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+					WHERE hoa.status = 'allotted_approved' AND hfo.allotment_approve_or_reject_date = current_date - INTERVAL '24 days' AND 
+					hfo.accept_reject_status is NULL");
+    
+    $result         = $resultUidsEmails->fetchAll();
+    $emailId		= array_column(json_decode(json_encode($result), True), 'email');
+	
+    $userId   	    = array_column(json_decode(json_encode($result), True), 'user_id');
+    $userIdStr      = implode(',', $userId);
+    
+    if(!empty($userIdStr)) {
+        
+		$email_subject = 'Final Reminder for Offer of Allotment Accept';
+		$message = '<html><body>Dear Applicant,<br><br>		
+		We want to remind you that a flat has been allotted to you and 5 days are left to accept the offer of allotment. Please login to your account and accept the Offer of Allotment within next 5 days to avoid cancellation of the flat allotment.
+		<br><br>			
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+				
+		sendmail_remainder_offer_allotment($emailId, $email_subject, $message);
+		
+		
+        $contentToWrite .= "Category Shifting On 25 Days The User Ids where Emails are sent " . $userIdStr . $lineBreak;
+    } else {
+        $contentToWrite .= "Category Shifting On 25 Days No Email sent to any User Id." . $lineBreak;
+    }
+    
+    ///Send email on 25days For Category Shifting Allotment End//
+	
+	
+    //////////Cron output Write on file/////////
+    $file = drupal_get_path('module', 'cronjobs') . '/temp/cron.log';
+    file_put_contents($file, $contentToWrite, FILE_APPEND | LOCK_EX);
+}

@@ -1,0 +1,84 @@
+<?php
+
+ function view_allotment_letter_menu() {
+
+	$items['view_proposed_rhe'] = array(
+	  'title' => 'View Proposed RHE',
+	  'page callback' => 'drupal_get_form',
+      'page arguments' => array('view_allotment_letter_form'),
+	  'file' => 'view_allotment_letter.inc',
+	  'access arguments' => array('View Allotment Letter List'),
+    );
+	$items['update_allotment/%/%'] = array(
+	  'title' => 'Allot Applicant',	
+      'page callback' => 'allot_applicant_page',
+	  'page arguments' => array(1,2),
+	  'access arguments' => array('View Allotment Letter List'),
+    );
+	
+	 return $items;
+  }
+  
+  function view_allotment_letter_form($form, &$form_state) {
+	 
+	   $flat_type_val =  !empty($form_state['values']['flat_type']) ? $form_state['values']['flat_type'] : 0;
+	 
+	   $form['flat_type'] = array(
+		'#title' => t('RHE Flat Type'),
+		'#type' => 'select',
+		'#options' => rhe_flat_type(),
+		'#required' => TRUE,
+		 '#prefix' => '<div class="four ">',
+ 		'#suffix' => '</div>',
+		'#weight' =>2
+	  );
+	  $form['search'] = array(
+		'#value' => t('Search'),
+		'#type' => 'submit',
+		 '#prefix' => '<div class="four " style="margin-top:43px;height: 30px;">',
+ 		'#suffix' => '</div>',
+		'#weight' =>3
+	  );
+	
+	  if($flat_type_val != 0) {
+		  
+			 $output = generate_allotment_letter_page(trim($flat_type_val));
+			 $form['breadcrumb'] = array(
+			   '#type' => 'markup',
+			   '#markup' => $output,
+				'#weight' => 5
+			);
+		 // $form['pager'] = array('#markup' => theme('pager'));
+
+	  }
+	  
+	  	  return $form;
+  }
+	function allot_applicant_page($online_application_id = '', $status = '') {
+		$online_application_id = decrypt_url($online_application_id);
+		$status = decrypt_url($status);
+		if($status == 'allot')
+			update_allotment_submit($online_application_id);
+		else if($status == 'cancel')
+			cancel_allotment($online_application_id);
+		
+		drupal_goto('view_proposed_rhe');
+	}
+
+  function view_allotment_letter_form_submit($form, &$form_state) {
+
+	$form_state['rebuild'] = TRUE;
+
+  }
+  
+ 
+ function view_allotment_letter_permission() {
+  return array(
+    'View Allotment Letter List' => array(
+      'title' => t('View Allotment Letter List'),
+      'description' => t('Perform View Allotment Letter List.'),
+    ),
+  );
+}
+require_once('view_allotment_letter_fetch_data.inc');
+require_once('view_allotment_letter_add_data.inc');

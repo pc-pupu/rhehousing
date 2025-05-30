@@ -1,0 +1,35 @@
+<?php
+
+	function flat_roaster_details_menu() {
+	
+		$items['flat_roaster_details'] = array(
+		  'title' => 'Flat Roaster Details',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('flat_roaster_details_form'),
+		  'file' => 'include/flat_roaster_details_page.inc',
+		  'access arguments' => array('administer flat roaster details'),
+		);
+		
+		$items['flat_roaster_details_pdf/%/%/%'] = array(
+		  'title' => 'Flat Roaster Details',
+		  'page callback' => 'flat_roaster_details_pdf_page',
+		  'page arguments' => array(1, 2, 3),
+		  'file' => 'include/flat_roaster_details_pdf.inc',
+		  'access arguments' => array('administer flat roaster details'),
+		);
+		
+		return $items;
+		
+	}
+		
+		
+function flat_roaster_details_permission() {
+	  return array(
+		'administer flat roaster details' => array(
+		  'title' => t('Administer administer flat roaster details'),
+		  'description' => t('Perform administer administer flat roaster details.'),
+		),
+		
+	);
+  
+}		

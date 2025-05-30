@@ -1,0 +1,6 @@
+name = View Allotment Letter
+decsription = View Allotment Letter Module
+core = 7.x
+package = eallotment RHE Allotment Module
+stylesheets[all][] = css/view_allotment_letter.css
+scripts[] = js/view_allotment_letter.js

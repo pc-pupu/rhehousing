@@ -1,0 +1,753 @@
+<?php
+	global $entities;
+	
+	$entities = array();
+
+	function common_application_init() {
+		global $base_url;
+		global $base_root;
+		global $base_path;
+		
+		//echo $base_path.'<br>'.$base_root.'<br>'.$base_url.'<br>'.current_path();
+		
+		$path = current_path();
+    	if(!drupal_valid_path($path))
+        	drupal_goto($base_root.$base_path);
+		
+		//comment off these 3 lines for live
+		global $custom_url;		
+			
+		$arr = explode('/',$base_url);
+		
+		for ($i=3; $i < count($arr); $i++) { 
+            $custom_url .= '/'.$arr[$i];
+        }
+		
+		drupal_add_library('system','ui.datepicker');
+		
+		//drupal_add_js('js/common_application.js');
+		/*drupal_add_js('
+						function isNumberKey(e) {
+							var unicode = e.charCode ? e.charCode : e.keyCode
+							if (unicode!=8){
+								if (unicode<48 || unicode>57)
+									return false
+							}
+						}   
+					','inline'
+		);*/
+			
+		global $user;
+		
+		
+		$query = db_select('housing_applicant', 'ha');
+		$query->fields('ha', array('applicant_name'));
+		
+		$query->condition('ha.uid', $user->uid, '=');
+		
+		$result = $query->execute();
+		$row_count = $result->rowCount();
+		if($row_count > 0) {
+			$data = $result->fetchObject();
+			global $user_info;
+			$user_info = $data->applicant_name;
+		}
+	}	
+	
+ 	function common_application_menu() {
+		$items['application-status/%'] = array(
+			'title' => 'Application Status',	
+			'page callback' => 'application_status_page',
+			'page arguments' => array(1),
+			'access arguments' => array('access content'),
+		);
+		return $items;
+  	}
+    
+	function application_status_page($status = '') {
+		if(!empty($status))
+		$msg = 'Your status: '.$status;
+		return $msg;
+	}
+  
+	function application_form($form, &$form_state) {
+		// echo'1st';
+		//echo "<pre>";print_r($form_state['values']);die;
+		global $user;
+		
+		/*if($user->name != 'housing' && $user->name != 'admin') {
+			$query = db_select('users', 'u');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+			$query->addField('ha', 'date_of_birth');
+			$query->condition('u.uid', $user->uid, '=');
+			$result=$query->execute();
+			$data=$result->fetchObject();
+			
+			$dob = $data->date_of_birth;
+			$date = new DateTime($dob);
+			$date->modify('+60 year');
+			$date->modify('-1 day');
+			
+			$date2 = $date->format('d/m/Y');
+		}
+		else {
+			$date2 = '';
+		}*/
+		
+		$query = db_select('housing_applicant', 'ha');
+		$query->fields('ha');
+		$query->condition('ha.uid', $user->uid, '=');
+		$result = $query->execute();
+		$row_count = $result->rowCount();
+		if($row_count > 0) {
+			$applicant_info = $result->fetchObject();
+		}
+		
+		
+		$district = isset($form_state['values']['district']) && !empty($form_state['values']['district']) ? $form_state['values']['district'] : '';
+		
+		$designation = isset($form_state['values']['designation']) && !empty($form_state['values']['designation']) ? $form_state['values']['designation'] : '';
+		$dob = isset($form_state['values']['dob']) && !empty($form_state['values']['dob']) ? $form_state['values']['dob'] : '';
+		
+		//$chk_permanent_address = isset($form_state['values']['chk_permanent_address'][1]) && !empty($form_state['values']['chk_permanent_address'][1]) ? $form_state['values']['chk_permanent_address'][1] : $applicant_info->permanent_present_same;
+		$chk_permanent_address = isset($form_state['values']['chk_permanent_address']) ? $form_state['values']['chk_permanent_address'] : $applicant_info->permanent_present_same;
+	
+		
+		$form['form_begin'] = array(
+			'#type' => 'markup',
+			'#markup' => '<div class="online_application">',
+			'#weight' => -2
+		);
+		
+		//personal information
+		// $form['prrsonal_info'] = array(
+		// 	'#type' => 'fieldset',
+		// 	'#title' => t('Personal Information(According to Service Book)'),
+		// 	'#collapsible' => TRUE, // Added
+		// 	'#collapsed' => FALSE,  // Added
+		// );
+		
+		
+		
+		
+		/*$form['prrsonal_info']['online_app_id'] = array(
+			'#type' => 'hidden',
+			'#default_value' => get_online_appid($user->uid),
+			//'#validated' => TRUE,
+		);*/
+		/*$form['prrsonal_info']['online_app_id'] = array(
+			'#type' => 'textfield',
+			'#default_value' => 0,
+			//'#validated' => TRUE,
+		);*/
+		
+		$form['prrsonal_info']['header_part1'] = array(
+			'#type' => 'markup',
+			'#markup' =>'<div class="row"><div class="row g-3">Personal Information (According to Service Book)'
+		);
+		
+		$form['prrsonal_info']['applicant_name'] = array(
+			'#title' => t('Applicant\'s Name'),
+			'#type' => 'textfield',
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_fullstop'), 
+			'#required' => TRUE,
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()", 'class'=>array('form-control form-control-sm')), 
+		);
+		
+		$form['prrsonal_info']['applicant_father_name'] = array(
+			'#title' => t('Father\'s / Husband\'s Name'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_fullstop'), 
+			'#required' => TRUE,
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+		);
+
+		$form['prrsonal_info']['footer_part1'] = array(
+			'#type' => 'markup',
+			'#markup' =>'</div></div>'
+		);
+		
+		//Permanent Address
+		// $form['prrsonal_info']['permanent_address'] = array(
+		// 	'#type' => 'fieldset',
+		// 	'#title' => t('Permanent Address'),
+		// 	'#collapsible' => FALSE, // Added
+		// 	'#collapsed' => FALSE,  // Added
+		// );
+
+		$form['prrsonal_info']['permanent_address']['permanent_street'] = array(
+			'#title' => t('Address'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two-one">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_streetaddress'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['prrsonal_info']['permanent_address']['permanent_city_town_village'] = array(
+			'#title' => t('City / Town / Village'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['prrsonal_info']['permanent_address']['permanent_post_office'] = array(
+			'#title' => t('Post Office'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['prrsonal_info']['permanent_address']['permanent_district'] = array(
+			'#title' => t('District'),
+			'#type' => 'select',
+			'#options' => district_list(),
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#select2' => array(
+				'width' => '500',
+				//'placeholder' => '- Select -',
+				'allowClear' => TRUE
+        	)
+		);
+		$form['prrsonal_info']['permanent_address']['permanent_pincode'] = array(
+			'#title' => t('Pincode'),
+			'#type' => 'textfield',
+			'#maxlength' => 6,
+			'#required' => TRUE,
+			'#element_validate' => array('element_validate_numeric_positive'), 
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#attributes' => array('class' => array('numeric_positive')),
+		);
+		//end
+		
+		$form['prrsonal_info']['chk_permanent_address'] = array(
+			/*'#type' => 'checkboxes',
+			'#title' => '',
+			'#options' => array(1 => t('Check if Your Present Address is same as Your Permanent Address.')),*/
+			
+			'#type' => 'checkbox',
+			'#title' => 'Check if Your Present Address is same as Your Permanent Address.',
+			'#default_value' => $applicant_info->permanent_present_same,
+			'#disabled' =>TRUE,
+			//'#attributes' => array('id' => 'edit-chk-permanent-address','readonly' => 'readonly'),     //for this ajax callback not working.
+			'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_present_address',
+					   'wrapper' => 'replace_present_address',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						), 
+			 ),
+	    );
+		
+		if($chk_permanent_address != 1) {
+		//Present Address
+			$form['prrsonal_info']['`present_address`'] = array(
+				'#type' => 'fieldset',
+				'#title' => t('Present Address'),
+				'#collapsible' => FALSE, // Added
+				'#collapsed' => FALSE,  // Added
+				'#prefix' => '<div id="reload_present_address">',
+				'#suffix' => '</div>',
+				
+			);
+			$form['prrsonal_info']['present_address']['present_street'] = array(
+				'#title' => t('Address'),
+				'#type' => 'textfield',
+				'#required' => TRUE,
+				'#prefix' => '<div class="two-one" id="reload_present_street">',
+				'#suffix' => '</div>',
+				'#element_validate' => array('element_validate_streetaddress'), 
+				'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"), //'id' => 'present_street',
+				
+			);
+			$form['prrsonal_info']['present_address']['present_city_town_village'] = array(
+				'#title' => t('City / Town / Village'),
+				'#type' => 'textfield',
+				'#required' => TRUE,
+				'#prefix' => '<div class="three" id="reload_present_city_town_village">',
+				'#suffix' => '</div>',
+				'#element_validate' => array('element_validate_alphabatic_text'), 
+				'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"), //'id' => 'present_city_town_village', 
+				
+			);
+			$form['prrsonal_info']['present_address']['present_post_office'] = array(
+				'#title' => t('Post Office'),
+				'#type' => 'textfield',
+				'#required' => TRUE,
+				'#prefix' => '<div class="three" id="reload_present_post_office">',
+				'#suffix' => '</div>',
+				'#element_validate' => array('element_validate_alphabatic_text'), 
+				'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"), //'id' => 'present_post_office', 
+				
+			);
+			$form['prrsonal_info']['present_address']['present_district'] = array(
+				'#title' => t('District'),
+				'#type' => 'select',
+				'#options' => district_list(),
+				'#required' => TRUE,
+				'#prefix' => '<div class="three" id="reload_present_district">',
+				'#suffix' => '</div>',
+				//'#attributes' => array('id' => 'present_district'),
+				'#select2' => array(
+					'width' => '500',
+					//'placeholder' => '- Select -',
+					'allowClear' => TRUE
+				),
+			);
+			$form['prrsonal_info']['present_address']['present_pincode'] = array(
+				'#title' => t('Pincode'),
+				'#type' => 'textfield',
+				'#maxlength' => 6,
+				'#required' => TRUE,
+				'#element_validate' => array('element_validate_numeric_positive'), 
+				'#prefix' => '<div class="four" id="reload_present_pincode">',
+				'#suffix' => '</div>',
+				'#attributes' => array('class' => array('numeric_positive')), //'id' => 'present_pincode', 
+				
+			);
+		} else {
+			$form['prrsonal_info']['present_address'] = array(
+				'#prefix' => '<div id="reload_present_address">',
+				'#suffix' => '</div>',
+			);
+			/*$form['prrsonal_info']['present_address']['present_street'] = array(
+				'#prefix' => '<div id="reload_present_street">',
+				'#suffix' => '</div>',
+			);
+			$form['prrsonal_info']['present_address']['present_city_town_village'] = array(
+				'#prefix' => '<div id="reload_present_city_town_village">',
+				'#suffix' => '</div>',
+			);
+			$form['prrsonal_info']['present_address']['present_post_office'] = array(
+				'#prefix' => '<div id="reload_present_post_office">',
+				'#suffix' => '</div>',
+			);
+			$form['prrsonal_info']['present_address']['present_district'] = array(
+				'#prefix' => '<div id="reload_present_district">',
+				'#suffix' => '</div>',
+			);
+			$form['prrsonal_info']['present_address']['present_pincode'] = array( 
+				'#prefix' => '<div id="reload_present_pincode">',
+				'#suffix' => '</div>',
+			);*/
+		}
+		//end
+	
+		$form['prrsonal_info']['mobile'] = array(
+			'#title' => t('Mobile no'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#maxlength' => 10,
+			'#required' => TRUE,
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_mobile', 'mobile_no_validate'),
+			'#attributes' => array('id' => 'mobile_no'),
+			
+		);
+		
+		$form['prrsonal_info']['email'] = array(
+			'#title' => t('Email ID'),
+			'#type' => 'textfield',
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_email', 'email_id_validate'),
+			// '#default_value' => $user->mail,
+			'#default_value' => '',
+			'#required' => TRUE,
+			//'#attributes' => array('oninput'=>"this.value=this.value.toLowerCase()"),
+			
+		);
+		
+		if (empty($user->mail)) {
+			$form['prrsonal_info']['email']['#attributes'] = array('oninput'=>"this.value=this.value.toLowerCase()");
+		}
+		
+		$form['prrsonal_info']['dob'] = array(
+			'#title' => t('Date of Birth(According to Service Book)'),
+			'#type' => 'textfield',
+			//'#attributes' => array('readonly' => 'readonly', 'id' => 'edit-dob'),
+			'#attributes' => array('id' => 'edit-dob'),
+			'#required' => TRUE,
+			'#disabled'=>TRUE,
+			//'#validated' => TRUE,
+			/*'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_dor',
+					   'wrapper' => 'replace_dor',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						),
+			),*/
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_date', 'element_validate_age'),
+		);
+		
+		$form['prrsonal_info']['gender'] = array(
+			'#title' => t('Gender'),
+			'#type' => 'radios',
+			'#options' => array('M' => 'Male', 'F' => 'Female'),
+			'#attributes' => array('class' => array('gender')),
+			'#default_value' => '',
+			// '#default_value' => 'M',
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#required' => TRUE,
+			
+		);
+		
+		
+		// applicant's official information
+		$form['official_info'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Applicant\'s Official Information'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => FALSE,  // Added
+		);
+		$form['official_info']['hrms_id'] = array(
+			'#title' => t('Employee HRMS ID'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#maxlength' => 10,
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_hrms_id', 'hrms_id_validate'),
+			'#attributes' => array('class' => array('numeric_positive')),
+		);
+		$form['official_info']['app_designation'] = array(
+			'#title' => t('Designation'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_textarea'),
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			//'#attributes' => array('id' => 'edit-app-designation', 'oncopy' => "return false", 'onpaste' => "return false"),
+			
+		);
+		$form['official_info']['pay_band'] = array(
+			'#title' => t('Basic Pay Range'),
+			'#type' => 'select',
+			'#options' => pay_band_list(),
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#validated' => TRUE,
+			
+		);
+		$form['official_info']['pay_in'] = array(
+		 	'#title' => t('Basic Pay'),
+			'#type' => 'textfield',
+		 	'#required' => TRUE,
+		 	'#element_validate' => array('element_validate_numeric_positive'), 
+		 	'#prefix' => '<div class="four">',
+		 	'#suffix' => '</div>',
+		 	'#attributes' => array('class' => array('numeric_positive')),
+		);
+		
+		// $form['official_info']['grade_pay'] = array(
+		// 	'#title' => t('Grade Pay'),
+		// 	'#type' => 'textfield',
+		// 	'#required' => TRUE,
+		// 	'#element_validate' => array('element_validate_numeric_positive'), 
+		// 	'#prefix' => '<div class="four">',
+		// 	'#suffix' => '</div>',
+		// 	'#attributes' => array('class' => array('numeric_positive')),
+		// );
+		
+		/*$form['official_info']['gpf_no'] = array(
+			'#title' => t('GPF No.'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#element_validate' => array('gpf_no_validate'), 
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+		);*/
+		
+		$form['official_info']['app_posting_place'] = array(
+			'#title' => t('Place of Posting'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			//'#element_validate' => array('element_validate_alphabatic_text'),
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"), 
+			
+		); 
+		$form['official_info']['app_headquarter'] = array(
+			'#title' => t('Headquarter'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'),
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"), 
+			
+		);
+		$form['official_info']['doj'] = array(
+			'#title' => t('Date of Joining'),
+			'#type' => 'textfield',
+			//'#attributes' => array('readonly' => 'readonly', 'id' => 'edit-doj'),
+			'#attributes' => array('id' => 'edit-doj'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_date', 'element_validate_joining_age'),
+			
+		);
+		
+		$form['official_info']['dor'] = array(
+			'#title' => t('Date of Retirement(According to Service Book)'),
+			'#type' => 'textfield',
+			//'#value' => $date2,
+			//'#attributes' => array('readonly' => 'readonly', 'id' => 'edit-dor'),
+			'#attributes' => array('id' => 'edit-dor'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			//#prefix' => '<div class="four" id="replace_dor">',
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_date'),
+			
+		);
+		
+		/*$dor =  dor_reload($dob);
+		if($dor)
+			$form['official_info']['dor']['#value'] = $dor;*/
+		
+		
+		// applicant's office address
+		$form['office_add'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Name and Address of the Office'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => FALSE,  // Added
+		);
+		$form['office_add']['office_name'] = array(
+			'#title' => t('Name of the Office'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two-one">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_textarea'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		
+		$form['office_add']['office_street'] = array(
+			'#title' => t('Address'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two-one">',
+			'#suffix' => '</div>',
+			//'#element_validate' => array('element_validate_streetaddress'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['office_add']['office_city'] = array(
+			'#title' => t('City / Town / Village'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['office_add']['office_post_office'] = array(
+			'#title' => t('Post Office'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'), 
+			'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			
+		);
+		$form['office_add']['office_district'] = array(
+			'#title' => t('District'),
+			'#type' => 'select',
+			'#options' => district_list(),
+			'#required' => TRUE,
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#select2' => array(
+				'width' => '500',
+				//'placeholder' => '- Select -',
+				'allowClear' => TRUE
+        	)
+		);
+		$form['office_add']['office_pincode'] = array(
+			'#title' => t('Pincode'),
+			'#type' => 'textfield',
+			'#maxlength' => 6,
+			'#required' => TRUE,
+			'#element_validate' => array('element_validate_numeric_positive'), 
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#attributes' => array('class' => array('numeric_positive')),
+			
+		);
+		$form['office_add']['office_phone_no'] = array(
+			'#title' => t('Phone No.(With STD Code)'),
+			'#type' => 'textfield',
+			'#maxlength' => 15,
+			'#required' => TRUE,
+			'#element_validate' => array('element_validate_telephoneno'), 
+			'#prefix' => '<div class="three">',
+			'#suffix' => '</div>',
+			'#attributes' => array('class' => array('numeric_positive')),
+			
+		);
+		
+		// ddo details
+		$form['ddo'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('DDO with full address'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => FALSE,  // Added
+		);
+		$form['ddo']['district'] = array(
+			'#title' => t('DDO District'),
+			'#type' => 'select',
+			'#options' => district_list(),
+			'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_ddo_designation',
+					  	'wrapper' => 'replace_designation',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						), 
+			 ),
+			'#required' => TRUE,
+			'#validated' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#select2' => array(
+				'width' => '500',
+				//'placeholder' => '- Select -',
+				'allowClear' => TRUE
+        	)
+		);
+		
+		
+		$form['ddo']['designation'] = array(
+			'#title' => t('DDO Designation'),
+			'#type' => 'select',
+			//'#options' => array('- Select -'),
+			'#options' => ddo_desig_list($district),
+			'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_ddo_address',
+					   'wrapper' => 'replace_ddo_address',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						 ),
+			 ),
+			'#default_value' => $designation,
+			'#required' => TRUE,
+			'#validated' => TRUE,
+			'#prefix' => '<div id="replace_designation" class="two">',
+			'#suffix' => '</div>',
+			'#select2' => array(
+				'width' => '500',
+				//'placeholder' => '- Select -',
+				'allowClear' => TRUE
+        	)
+		);
+		
+		$form['ddo']['address'] = array(
+			'#title' => t('DDO Address'),
+			'#type' => 'textarea',
+			'#prefix' => '<div id="replace_ddo_address" >',
+			'#suffix' => '</div>',
+			//'#required' => TRUE,
+			//'#validated' => TRUE,
+		);
+		
+		//$form['#attributes'] = array('onsubmit' => 'return validate_common_application_form()');
+		
+		/* $form['draft'] = array(
+			'#value' => t('Save as Draft'),
+			'#type' => 'submit',
+			'#weight' => 50
+		); */
+		
+		$form['submit'] = array(
+			'#value' => t('Apply'),
+			'#type' => 'submit',
+			'#weight' => 51,
+			'#attributes' => array('onclick' => 'if(!confirm("Are you sure you want to submit the form? Once the form submitted the data can\'t be edited.")){return false;}'),
+		);
+		$form['form_end'] = array(
+			'#type' => 'markup',
+			'#markup' => '</div>',
+		);
+		
+		//fetch_applicant_personal_info($form);// turned off 14-06-2024
+		
+		// $form['#submit']= array('new_license_submit','new_application_submit');
+		
+		return $form;
+	}
+	
+	
+  
+	require_once('common_application_fetch_data.form.inc');
+	require_once('common_application_add_data.form.inc');
+	require_once('common_application_update_data.form.inc');
+	require_once('common_application_validate.form.inc');
+	
+	
+	
+	/*function get_online_appid($uid) { 
+		$online_app_id = 0;
+		
+		$data = db_query("select t1.online_application_id from {housing_online_application} as t1
+							inner join {housing_applicant_official_detail} as t2
+							on t1.applicant_official_detail_id = t2.applicant_official_detail_id
+							where t2.uid = :uid", array(':uid' => $uid))->fetchAssoc();
+	
+	   $online_app_id = $data['online_application_id'];
+	   return $online_app_id;
+	}*/
+	
+//code needed if drupal_mail() used	
+	/*function common_application_mail($key, &$message, $params) {
+		switch($key) {
+
+			case 'registration_approve':
+				$message['subject'] = $params['subject']; 
+				$message['body'][] = $params['message'];
+				$message['headers'] += $params['headers'];
+			break;
+		}
+		
+	}*/

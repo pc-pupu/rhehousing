@@ -1,0 +1,6 @@
+name = Shifting Allotment List
+decsription = Shifting Allotment List Module
+core = 7.x
+package = eallotment RHE Shifting Allotment Module
+stylesheets[all][] = css/shifting_allotment_list.css
+scripts[] = js/shifting_allotment_list.js

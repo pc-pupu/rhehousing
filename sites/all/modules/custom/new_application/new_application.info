@@ -1,0 +1,7 @@
+name = New Application
+decsription = New Application Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/new_application.css
+scripts[] = js/new_application.js
+dependencies[] =common_application

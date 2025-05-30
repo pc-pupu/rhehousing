@@ -1,0 +1,189 @@
+#
+# Apache/PHP/Drupal settings:
+#
+
+# Protect files and directories from prying eyes.
+<FilesMatch "\.(engine|inc|info|install|make|module|profile|test|po|sh|.*sql|theme|tpl(\.php)?|xtmpl)(~|\.sw[op]|\.bak|\.orig|\.save)?$|^(\.(?!well-known).*|Entries.*|Repository|Root|Tag|Template|composer\.(json|lock)|web\.config)$|^#.*#$|\.php(~|\.sw[op]|\.bak|\.orig|\.save)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+  </IfModule>
+</FilesMatch>
+
+# Don't show directory listings for URLs which map to a directory.
+Options -Indexes
+
+# Follow symbolic links in this directory.
+Options +FollowSymLinks
+
+# Make Drupal handle any 404 errors.
+ErrorDocument 404 /index.php
+
+ErrorDocument 404 /rhewbhousing/404.html
+
+ErrorDocument 403 /error_redirection.php
+ErrorDocument 404 /rhewbhousing/error_404.html
+
+
+# Set the default handler.
+DirectoryIndex index.php index.html index.htm
+
+# <Limit DELETE DEBUG OPTIONS PUT>
+#     Deny from all
+# </Limit>
+
+<LimitExcept GET POST>
+    Order Deny,Allow
+    Deny from all
+</LimitExcept>
+
+# Override PHP settings that cannot be changed at runtime. See
+# sites/default/default.settings.php and drupal_environment_initialize() in
+# includes/bootstrap.inc for settings that can be changed at runtime.
+
+# PHP 5, Apache 1 and 2.
+<IfModule mod_php5.c>
+  php_flag magic_quotes_gpc                 off
+  php_flag magic_quotes_sybase              off
+  php_flag register_globals                 off
+  php_flag session.auto_start               off
+  php_value mbstring.http_input             pass
+  php_value mbstring.http_output            pass
+  php_flag mbstring.encoding_translation    off
+</IfModule>
+
+# Requires mod_expires to be enabled.
+<IfModule mod_expires.c>
+  # Enable expirations.
+  ExpiresActive On
+
+  # Cache all files for 2 weeks after access (A).
+  ExpiresDefault A1209600
+
+  <FilesMatch \.php$>
+    # Do not allow PHP scripts to be cached unless they explicitly send cache
+    # headers themselves. Otherwise all scripts would have to overwrite the
+    # headers set by mod_expires if they want another caching behavior. This may
+    # fail if an error occurs early in the bootstrap process, and it may cause
+    # problems if a non-Drupal PHP file is installed in a subdirectory.
+    ExpiresActive Off
+  </FilesMatch>
+</IfModule>
+
+# Various rewrite rules.
+<IfModule mod_rewrite.c>
+  RewriteEngine on
+
+  # ----------------------------------------------------------------------
+  # Allow existing files and directories to load normally
+  # ----------------------------------------------------------------------
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # ----------------------------------------------------------------------
+  # Let Drupal handle all requests (including admin and user pages)
+  # ----------------------------------------------------------------------
+  RewriteCond %{REQUEST_URI} !^/rhewbhousing/404.html$
+  RewriteRule ^ index.php [L]
+
+  # ----------------------------------------------------------------------
+  # Custom 404 page for truly missing URLs
+  # ----------------------------------------------------------------------
+  ErrorDocument 404 /rhewbhousing/404.html
+
+  # ----------------------------------------------------------------------
+  # Ensure HTTPS flag is set for later use in redirection rules
+  # ----------------------------------------------------------------------
+  RewriteRule ^ - [E=protossl]
+  RewriteCond %{HTTPS} on
+  RewriteRule ^ - [E=protossl:s]
+
+  # ----------------------------------------------------------------------
+  # Ensure Authorization HTTP header is available for PHP (CGI/FastCGI)
+  # ----------------------------------------------------------------------
+  RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # ----------------------------------------------------------------------
+  # Block access to hidden files & directories (e.g., .git, .svn, etc.)
+  # ----------------------------------------------------------------------
+  RewriteRule "/\.|^\.(?!well-known/)" - [F]
+
+  # ----------------------------------------------------------------------
+  # Block dangerous HTTP methods
+  # ----------------------------------------------------------------------
+  RewriteCond %{REQUEST_METHOD} ^(HEAD|TRACE|TRACK|OPTIONS|DELETE|PUT|PATCH|UPDATE|DEBUG)
+  RewriteRule .* - [R=404,L]
+
+  # ----------------------------------------------------------------------
+  # Redirect users to preferred domain (Choose one option: with or without 'www.')
+  # ----------------------------------------------------------------------
+
+  # Redirect users to the 'www.' version (uncomment to enable)
+  # RewriteCond %{HTTP_HOST} . 
+  # RewriteCond %{HTTP_HOST} !^www\. [NC]
+  # RewriteRule ^ http%{ENV:protossl}://www.%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # Redirect users to the non-'www.' version (uncomment to enable)
+  # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  # RewriteRule ^ http%{ENV:protossl}://%1%{REQUEST_URI} [L,R=301]
+
+  # ----------------------------------------------------------------------
+  # Modify RewriteBase if using Drupal in a subdirectory
+  # ----------------------------------------------------------------------
+  # Example: If the site is at http://example.com/drupal uncomment and modify:
+  # RewriteBase /drupal
+
+  # If using a VirtualDocumentRoot (e.g., http://example.com/), uncomment:
+  # RewriteBase /
+
+  # ----------------------------------------------------------------------
+  # Pass all non-static requests to Drupal
+  # ----------------------------------------------------------------------
+  RewriteCond %{REQUEST_URI} !=/favicon.ico
+  RewriteRule ^ index.php [L]
+
+  # ----------------------------------------------------------------------
+  # Serve Gzip compressed CSS and JS files (requires mod_headers)
+  # ----------------------------------------------------------------------
+  <IfModule mod_headers.c>
+    # Serve compressed CSS files
+    RewriteCond %{HTTP:Accept-encoding} gzip
+    RewriteCond %{REQUEST_FILENAME}\.gz -s
+    RewriteRule ^(.*)\.css $1\.css\.gz [QSA]
+
+    # Serve compressed JS files
+    RewriteCond %{HTTP:Accept-encoding} gzip
+    RewriteCond %{REQUEST_FILENAME}\.gz -s
+    RewriteRule ^(.*)\.js $1\.js\.gz [QSA]
+
+    # Set correct content type and avoid double compression
+    RewriteRule \.css\.gz$ - [T=text/css,E=no-gzip:1,E=no-brotli:1]
+    RewriteRule \.js\.gz$ - [T=text/javascript,E=no-gzip:1,E=no-brotli:1]
+
+    <FilesMatch "(\.js\.gz|\.css\.gz)$">
+      Header set Content-Encoding gzip
+      Header append Vary Accept-Encoding
+    </FilesMatch>
+  </IfModule>
+
+</IfModule>
+
+# Various header fixes.
+<IfModule mod_headers.c>
+  # Disable content sniffing, since it's an attack vector.
+  Header always set X-Content-Type-Options nosniff
+  # Disable Proxy header, since it's an attack vector.
+  RequestHeader unset Proxy
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "same-origin"
+  Header set Content-Security-Policy "script-src'self object-src"
+  Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  Header always set Access-Control-Allow-Credentials "true"
+  Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+  Header always unset X-Powered-By
+  Header unset X-Powered-By
+</IfModule>
+

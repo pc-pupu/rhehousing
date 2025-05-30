@@ -1,0 +1,4 @@
+name = User Tagging Module
+description = Module for User Tagging
+core = 7.x
+package = User Tagging

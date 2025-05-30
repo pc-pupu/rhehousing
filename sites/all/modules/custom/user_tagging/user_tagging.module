@@ -1,0 +1,24 @@
+<?php
+// Done by Subham dt.28-05-2025
+function user_tagging_menu() {
+  $items = array();
+
+  $items['user-tagging'] = array(
+    'title' => 'Form For User Tagging',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_tagging_form'),
+    'file' => 'user_tagging_form.inc',
+    'access arguments' => array('administer User Tagging'),
+	);
+
+  return $items;
+}
+
+function user_tagging_permission() {
+  return array(
+    'administer User Tagging' => array(
+      'title' => t('administer User Tagging'),
+      'description' => t('perform administer for User Tagging.')
+    )
+  );	
+}

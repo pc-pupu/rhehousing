@@ -1,0 +1,5 @@
+name = Auto Updation 
+description = Form for auto updation
+core = 7.x
+package = Centralized Auto Updation
+dependencies[] = system

@@ -1,0 +1,7 @@
+name = Application for VS Licence
+decsription = VS Licence Application Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/vs_licence.css
+scripts[] = js/vs_licence.js
+dependencies[] =common_application

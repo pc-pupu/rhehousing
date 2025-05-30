@@ -1,0 +1,642 @@
+<?php
+
+
+
+
+ function vertical_shifting_init() {
+	global $custom_url;	//comment off for live
+	if($_SERVER['REQUEST_URI'] == $custom_url.'/vs'){	//delete $custom_url. for live
+		$result = fetch_vs_app_status(array('draft'));
+		$row_count = $result->rowCount();
+		if($row_count > 0) {
+			$data = $result->fetchObject();
+			drupal_goto('view-application/'.encrypt_url($data->online_application_id));
+		}
+	} 
+ }
+ function vertical_shifting_menu() {
+    $items['vs'] = array(
+	  'title' => 'Application for Floor Shifting',
+	  'page callback' => 'drupal_get_form',
+      'page arguments' => array('application_form'),
+	  'access arguments' => array('Administer Application for Vertical Shifting'),
+    );
+    return $items;
+  }
+  
+function vertical_shifting_form_application_form_alter(&$form, &$form_state, $form_id) {
+	//echo 'dddqqq';die;
+	global $user;
+	fetch_vs_data1($form);
+	
+	
+	$occupation_estate_default = isset($form['current_occupation']['occupation_estate']['#default_value']) && !empty($form['current_occupation']['occupation_estate']['#default_value']) ? $form['current_occupation']['occupation_estate']['#default_value'] : '';
+	
+	$occupation_block_default = isset($form['current_occupation']['occupation_block']['#default_value']) && !empty($form['current_occupation']['occupation_block']['#default_value']) ? $form['current_occupation']['occupation_block']['#default_value'] : '';
+	
+	$occupation_estate = isset($form_state['values']['occupation_estate']) && !empty($form_state['values']['occupation_estate']) ? $form_state['values']['occupation_estate'] : $occupation_estate_default;
+	
+	$occupation_block = isset($form_state['values']['occupation_block']) && !empty($form_state['values']['occupation_block']) ? $form_state['values']['occupation_block'] : $occupation_block_default;
+	
+	
+	
+
+	
+	global $custom_url;	//comment off for live
+	if($form['#action'] == $custom_url.'/vs'){		//delete $custom_url. for live
+		
+		////////debaleena 14.06.24///////
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 
+		'hfo.online_application_id = hoa.online_application_id');
+		
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
+		$query->innerJoin('housing_block', 'hb', 'hf.block_id = hb.block_id');
+		$query->addField('hf', 'flat_id');
+		$query->addField('hft', 'flat_type_id');
+		$query->addField('he', 'estate_id');
+		$query->addField('hb', 'block_id');
+		$query->addField('hb', 'block_name');
+		$query->addField('he', 'estate_name');
+		$query->addField('hf', 'flat_no');
+		
+		$query->addField('hfo', 'flat_occupant_id');
+		$query->condition('haod.uid', $user->uid, '=');
+
+		$fetch_data = $query->execute();
+		$fetch_data = $fetch_data->fetchObject();
+		
+
+		$housing_estate_arr_1[$fetch_data->estate_id]=$fetch_data->estate_name;
+		$housing_block_arr_1[$fetch_data->block_id]=$fetch_data->block_name;
+		$housing_flat_arr_1[$fetch_data->flat_id]=$fetch_data->flat_no;
+		//print_r($housing_estate_arr_1);
+		//print_r($housing_block_arr_1);
+		//print_r($housing_flat_arr_1);die;
+
+		//////end///////
+
+
+
+
+		$form['prrsonal_info']['online_vs_id'] = array(
+			'#type' => 'hidden',
+			'#default_value' => '0',
+			//'#validated' => TRUE,
+		);
+			
+	  
+		$form['current_occupation'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Current Occupation Specification'),
+			'#collapsible' => FALSE, // Added
+			'#collapsed' => FALSE,  // Added
+		);
+		//echo $occupation_estate;die;
+		$form['current_occupation']['occupation_estate'] = array(
+			'#title' => t('Select Housing'),
+			'#type' => 'select',
+			//'#options' => get_housing_estate(),
+			'#options' => $housing_estate_arr_1,
+			'#default_value' => $occupation_estate,
+			'#required' => TRUE,
+			'#ajax' => array(
+						   'event' => 'change',
+						   'callback' => '_reload_block_no_vs',
+						   'effect' => 'fade',
+						   'progress' => array(
+							  'type' => '',
+							  'message' => '',
+							),
+				),
+			'#prefix' => '<div class="row"><div class="col-md-6"><div class="form-floating">',
+			'#suffix' => '</div></div>',
+			'#validated' => TRUE,
+			'#attributes' => array('class' => array('form-select')),
+			// '#select2' => array(
+			// 	'width' => '500',
+			// 	//'placeholder' => '- Select -',
+			// 	'allowClear' => TRUE
+			// )
+		);
+		
+		$form['current_occupation']['occupation_block'] = array(
+			'#title' => t('Select Block'),
+			'#type' => 'select',
+			'#options' => array('' => '-- Select --'),
+			'#default_value' => $occupation_block,
+			'#required' => TRUE,
+			'#prefix' => '<div class="col-md-6" id="block_replace"><div class="form-floating">',
+			'#suffix' => '</div></div></div>',
+			'#attributes' => array('class' => array('form-select')),
+			'#validated' => TRUE,
+			// '#select2' => array(
+			// 	'width' => '500',
+			// 	//'placeholder' => '- Select -',
+			// 	'allowClear' => TRUE
+			// )
+		);
+		
+		if($fetch_data->estate_id != '') {
+			$form['current_occupation']['occupation_block'] = array(
+				'#title' => t('Select Block'),
+				'#type' => 'select',
+				//'#options' => get_housing_block($occupation_estate),
+				'#default_value' => $occupation_block,
+				'#options' => $housing_block_arr_1,
+				'#required' => TRUE,
+				'#ajax' => array(
+							   'event' => 'change',
+							   'callback' => '_reload_flat_no',
+							   'effect' => 'fade',
+							   'progress' => array(
+								  'type' => '',
+								  'message' => '',
+								),
+					),
+				'#prefix' => '<div class="col-md-6" id="block_replace"><div class="form-floating">',
+				'#suffix' => '</div></div>',
+				'#attributes' => array('class' => array('form-select')),
+				'#validated' => TRUE,
+				// '#select2' => array(
+				// 	'width' => '500',
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);	
+		}
+		
+		
+		$form['current_occupation']['occupation_flat'] = array(
+			'#title' => t('Flat No'),
+			'#type' => 'select',
+			'#options' => array('' => '-- Select --'),
+			'#default_value' => isset($form_state['values']['occupation_flat']) ? $form_state['values']['occupation_flat'] : '',
+			'#required' => TRUE,
+			'#prefix' => '<div class="row" id="flat_no_replace"><div class="col-md-6"><div class="form-floating">',
+			'#suffix' => '</div></div>',
+			'#attributes' => array('class' => array('form-select')),
+			'#validated' => TRUE,
+			// '#select2' => array(
+			// 	'width' => '500',
+			// 	//'placeholder' => '- Select -',
+			// 	'allowClear' => TRUE
+			// )
+		);
+			
+		if($fetch_data->estate_id != '' && $fetch_data->block_id != '') {
+			$form['current_occupation']['occupation_flat'] = array(
+				'#title' => t('Flat No'),
+				'#type' => 'select',
+				//'#options' => get_housing_flat($occupation_estate, $occupation_block),
+				'#default_value' => isset($form_state['values']['occupation_flat']) ? $form_state['values']['occupation_flat'] : '',
+				'#options' => $housing_flat_arr_1,
+				'#required' => TRUE,
+				'#prefix' => '<div class="row" id="flat_no_replace"><div class="col-md-6"><div class="form-floating">',
+				'#suffix' => '</div></div>',
+				'#validated' => TRUE,
+				'#attributes' => array('class' => array('form-select')),
+				// '#select2' => array(
+				// 	'width' => '500',
+				// 	//'placeholder' => '- Select -',
+				// 	'allowClear' => TRUE
+				// )
+			);
+		}
+		
+		$form['current_occupation']['possession_date'] = array(
+			'#title' => t('Date of Possession'),
+			'#type' => 'textfield',
+			'#required' => TRUE,
+			'#attributes' => array('readonly' => 'readonly', 'id' => 'dop_vs', 'class' => array('form-control form-control-sm')),
+			'#default_value' => '',
+			//'#validated' => TRUE,
+			'#prefix' => '<div class="col-md-6"><div class="form-floating">',
+			'#suffix' => '</div></div></div>',
+			'#element_validate' => array('element_validate_date'),
+		);
+		
+		$form['current_occupation']['file_licence'] = array(
+			'#title' => t('Upload Current Licence'),
+			'#type' => 'managed_file',
+			'#description' => t('<b>Allowed Extension: pdf<br>Maximum File Size: 1 MB</b>'),
+			'#progress_message' => t('Please wait...'),
+			'#progress_indicator' => 'bar',
+			'#default_value' => variable_get('Upload File', ''),
+			//'#theme' => 'common_application_thumb_upload',
+			'#upload_validators' => array(
+										 'file_validate_extensions' => array("pdf"),
+										//'file_validated_size' => array(MAX_FILE_SIZE*1024*1024),
+			
+									),
+			'#upload_location' => 'public://doc/',
+			'#required' => TRUE,
+			'#process' => array('vertical_shifting_element_process'),
+		);
+		
+													 
+		fetch_vs_data($form);
+		#krumo($form);
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_vs_application_form()');
+		$form['#validate']= array('vertical_shifting_validate');
+		$form['#submit']= array('vertical_shifting_submit');
+		
+	}
+	$form['#clientside_validation_settings']['settings']['validate_options']['validate_before_ajax'] = 0 ;
+	
+	
+	if(isset($form) > 0 && isset($form['current_occupation']['file_licence']) && $form['current_occupation']['file_licence']["#type"] == "managed_file") {
+		$form['current_occupation']['file_licence']["#upload_validators"]["file_upload_validation"] = array($form['current_occupation']['file_licence']["#upload_validators"]["file_validate_extensions"][0]);
+	}
+  }
+  
+  function vertical_shifting_validate(&$form, &$form_state) {	
+	
+	if($form_state['values']['possession_date'] != '') {
+		$date = DateTime::createFromFormat('d/m/Y', $form_state['values']['possession_date']);
+		$date_errors = DateTime::getLastErrors();
+		if($date_errors['warning_count'] + $date_errors['error_count'] == 0) {
+				
+			$possession_date = trim( implode('-', array_reverse(explode('/', $form_state['values']['possession_date']))));
+			$current_date = date('Y-m-d');
+			
+			$d1 = new DateTime($possession_date);
+			$d2 = new DateTime($current_date);
+	
+			$diff = $d2->diff($d1);
+			
+			$result = fetch_current_occupantion_detail();
+			if($result->rowcount() > 0) {
+				$data = $result->fetchObject();
+				$d3 = new DateTime($data->license_issue_date);
+				$diff1 = $d1->diff($d3);
+				
+				if($d1 > $d2) {
+					form_set_error('possession_date', t('Possession date can not be after current date.'));
+				}
+				else {
+					if($d1 < $d3) {
+						form_set_error('possession_date', t('Possession date can not be before licence issue date.'));
+					}
+					else {
+						if($diff->y < 3) {
+							//echo $diff1->y;
+							form_set_error('possession_date', t('You are not eligible for shifting because shifting criteria not fulfilling.'));
+						}
+					}
+				}
+			}
+			else {
+				if($d1 > $d2) {
+					form_set_error('possession_date', t('Possession date can not be after current date.'));
+				}
+			}
+		
+		}
+	}
+	//echo "<pre>";print_r($form_state);die;
+	
+/*	if($form_state['values']['pay_band'] == '') {
+		form_set_error('pay_band', t('Please select payband.'));
+	}
+	if($form_state['values']['district'] == '') {
+		form_set_error('district', t('Please select district.'));
+	}
+	
+	if($form_state['values']['designation'] == '') {
+			form_set_error('designation', t('Please select ddo designation.'));
+	}
+	
+	if($form_state['values']['occupation_estate'] == '') {
+		form_set_error('occupation_estate', t('Please select the housing'));
+	}
+	  
+	if($form_state['values']['occupation_block'] == '') {
+		form_set_error('occupation_block', t('Please select the block'));
+	}
+	  
+	if($form_state['values']['occupation_flat'] == '') {
+		form_set_error('occupation_flat', t('Please select the flat no.'));
+	}
+	
+	if($form_state['values']['pay_band'] == 1) {
+		if($form_state['values']['pay_in'] < 0 || $form_state['values']['pay_in'] > 7999) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 2) {
+		if($form_state['values']['pay_in'] < 8000 || $form_state['values']['pay_in'] > 12499) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 3) {
+		if($form_state['values']['pay_in'] < 12500 || $form_state['values']['pay_in'] > 15999) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 4) {
+		if($form_state['values']['pay_in'] < 16000) {
+			form_set_error('pay_in', t('Please enteryuiyui proper Pay in the Pay Band.'));	
+		}
+		else {
+			if($form_state['values']['grade_pay'] < 0 || $form_state['values']['grade_pay'] > 7599) {
+				form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+			}		
+		}
+	}
+	else if($form_state['values']['pay_band'] == 5) {
+		if($form_state['values']['pay_in'] < 16000) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+		else {
+			if($form_state['values']['grade_pay'] < 7600) {
+				form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+			}		
+		}
+	} 
+	*/
+
+	if($form_state['values']['pay_band'] == '') {
+		form_set_error('pay_band', t('Please select payband.'));
+	}
+	if($form_state['values']['district'] == '') {
+		form_set_error('district', t('Please select district.'));
+	}
+	
+	if($form_state['values']['designation'] == '') {
+			form_set_error('designation', t('Please select ddo designation.'));
+	}
+	
+	if($form_state['values']['occupation_estate'] == '') {
+		form_set_error('occupation_estate', t('Please select the housing'));
+	}
+	  
+	if($form_state['values']['occupation_block'] == '') {
+		form_set_error('occupation_block', t('Please select the block'));
+	}
+	  
+	if($form_state['values']['occupation_flat'] == '') {
+		form_set_error('occupation_flat', t('Please select the flat no.'));
+	}
+	
+	if($form_state['values']['pay_band'] == 1) {
+		if($form_state['values']['pay_in'] < 0 || $form_state['values']['pay_in'] > 25999) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 2) {
+		if($form_state['values']['pay_in'] < 26000 || $form_state['values']['pay_in'] > 39999) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 3) {
+		if($form_state['values']['pay_in'] < 40000 || $form_state['values']['pay_in'] > 51999) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 4) {
+		if($form_state['values']['pay_in'] < 52000 || $form_state['values']['pay_in'] > 95099) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	else if($form_state['values']['pay_band'] == 5) {
+		if($form_state['values']['pay_in'] < 95100 ) {
+			form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+		}
+	}
+	// else if($form_state['values']['pay_band'] == 5) {
+	// 	if($form_state['values']['pay_in'] < 16000) {
+	// 		form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+	// 	}
+	// 	else {
+	// 		if($form_state['values']['grade_pay'] < 7600) {
+	// 			form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+	// 		}		
+	// 	}
+	// } 
+
+
+
+
+
+
+	
+	$file_licence = file_load($form_state['values']['file_licence']);
+	if($file_licence->filesize > 1048576) {
+		form_set_error('licence_file_size', 'The file '.$file_licence->filename.' could not be uploaded, because it exceeds 1 MB, the maximum allowed size for uploads.');	
+	}
+	
+  }
+  
+  	function vertical_shifting_element_process($element, &$form_state, $form) {
+		$element = file_managed_file_process($element, $form_state, $form);
+		$element['upload_button']['#access'] = FALSE;
+		return $element;
+	}
+  
+  	function vertical_shifting_submit($form, &$form_state) {
+		$action = 'draft';
+		if($form_state['input']['op'] == 'Apply'){
+			$action = 'applied';
+		}
+		
+		$online_application_id = trim($form_state['values']['online_vs_id']);
+		
+		
+		if($online_application_id == 0) {
+			$online_application_id = add_online_application($action,'VS',$form,$form_state);
+			add_vertical_shifting_application($form,$form_state,$online_application_id);
+		}
+		else {
+			update_online_application($action,$form,$form_state,$online_application_id);
+			update_vertical_shifting_application($form,$form_state,$online_application_id);
+		}
+		
+		if($action == 'draft') {
+			drupal_set_message('Application save as draft.');
+		}
+		else if($action == 'applied') {
+			drupal_set_message('You have successfully applied.');
+		}
+		
+   }
+  
+    
+function vertical_shifting_permission() {
+  return array(
+    'Administer Application for Vertical Shifting' => array(
+      'title' => t('Administer Application for Vertical Shifting'),
+      'description' => t('Perform Administer Application for Vertical Shifting.'),
+    ),
+  );
+}
+
+require_once('vertical_shifting_schema.inc');
+require_once('vertical_shifting_fetch_data.form.inc');
+require_once('vertical_shifting_add_update_data.form.inc');
+
+
+
+function get_housing_estate() {
+	
+	$housing_estate_arr = array(''=>'-- Select --');
+	
+	$query=db_select('housing_estate','he');
+	$query->fields('he',array('estate_id','estate_name'));
+	$query->orderBy('estate_name', 'ASC');
+	$result=$query->execute();
+	
+	foreach($result as $val) {
+		$housing_estate_arr[$val->estate_id] = $val->estate_name;
+	}
+	
+	return $housing_estate_arr;
+	
+}
+
+// debaleena 14-06-2024 start
+// function get_existing_occupant_housing_estate($flat_id='') {
+	
+// 	$housing_estate_arr = array(''=>'-- Select --');
+	
+// 	$query=db_select('housing_flat','hf');
+// 	//$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+// 	$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+// 	$query->condition('hf.flat_id', $flat_id, '=');
+// 	$query->addField('he', 'estate_id');
+// 	$query->addField('he', 'estate_name');
+// 	$query->addField('hb', 'block_name');
+	
+// 	$result=$query->execute();
+	
+// 	foreach($result as $val) {
+// 		$housing_estate_arr[$val->estate_id] = $val->estate_name;
+// 	}
+	
+// 	return $housing_estate_arr;
+	
+// }
+
+//end
+
+
+
+/*function get_housing_block() {
+	
+	$housing_block_arr = array();
+	
+	$query=db_select('housing_block','hb');
+	$query->fields('hb',array('block_id','block_name'));
+	$query->orderBy('block_name', 'ASC');
+	$result=$query->execute();
+	
+	foreach($result as $val) {
+		$housing_block_arr[$val->block_id] = $val->block_name;
+	}
+	
+	return $housing_block_arr;
+	
+}*/
+
+function get_housing_block($occupation_estate = '') {
+	
+	$housing_block_arr = array(''=>'-- Select --');
+	
+	$query=db_select('housing_flat','hf');
+	$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+	$query->distinct();
+	$query->fields('hb',array('block_id', 'block_name'));
+	$query->condition('hf.estate_id', $occupation_estate, '=');
+	$query->orderBy('hb.block_name', 'ASC');
+	$result=$query->execute();
+	
+	foreach($result as $val) {
+		$housing_block_arr[$val->block_id] = $val->block_name;
+	}
+	
+	return $housing_block_arr;
+	
+}
+
+function get_housing_flat($occupation_estate = '', $occupation_block = '') {
+	
+	
+	$housing_flat_arr = array('' => '-- Select --');
+	if(!empty($occupation_estate) && !empty($occupation_block)) {
+	$query=db_select('housing_flat','hf');
+	$query->fields('hf',array('flat_id','flat_no'));
+	$query->condition('hf.estate_id', $occupation_estate);
+	$query->condition('hf.block_id', $occupation_block);
+	
+	$query->condition('hf.flat_status_id', 2);
+	$query->orderBy('flat_id', 'ASC');
+	$result=$query->execute();
+	
+	foreach($result as $val) {
+		$housing_flat_arr[$val->flat_id] = $val->flat_no;
+	}
+	}
+	
+	return $housing_flat_arr;
+	
+}
+
+function _reload_block_no_vs($form, &$form_state) {
+	$commands = array();
+	
+	$commands[] = ajax_command_replace('#block_replace', drupal_render($form['current_occupation']['occupation_block']));
+	$commands[] = ajax_command_replace('#flat_no_replace', drupal_render($form['current_occupation']['occupation_flat']));
+	return array('#type' => 'ajax', '#commands' => $commands);	
+}
+
+function _reload_flat_no($form, &$form_state) {
+	$commands = array();
+	
+	$commands[] = ajax_command_replace('#flat_no_replace', drupal_render($form['current_occupation']['occupation_flat']));
+	return array('#type' => 'ajax', '#commands' => $commands);
+ 
+}
+
+
+function fetch_current_occupantion_detail() {
+		global $user;
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 
+		'hfo.online_application_id = hoa.online_application_id');
+		
+		$query->innerJoin('housing_occupant_license', 'hol', 
+		'hol.flat_occupant_id = hfo.flat_occupant_id');
+		$query->innerJoin('housing_license_application', 'hla', 
+		'hla.license_application_id = hol.license_application_id');
+		
+		$query->innerJoin('housing_flat', 'hf', 
+		'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 
+		'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 
+		'hf.flat_type_id = hft.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 
+		'he.district_code = hd.district_code');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hfo', 'allotment_no');
+		$query->addField('hfo', 'allotment_date');
+		$query->addField('hf', 'flat_no');
+		$query->addField('hft', 'flat_type');
+		$query->addField('he', 'estate_name');
+		$query->addField('hd', 'district_name');
+		$query->addField('hol', 'license_issue_date');
+		$query->addField('hfo', 'flat_occupant_id');
+		$query->condition('haod.uid', $user->uid, '=');
+		//echo $query;die;
+		//print_r($query->execute()->fetchObject());die;
+		return $query->execute();   
+	}
+
+

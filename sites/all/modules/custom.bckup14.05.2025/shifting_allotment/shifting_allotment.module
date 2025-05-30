@@ -1,0 +1,34 @@
+<?php
+
+	function shifting_allotment_menu() {
+	
+		$items['vs_allotment'] = array(
+		  'title' => 'RHE Vertical Shifting Allotment',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('vs_allotment_form'),
+		  'file' => 'include/vs_allotment_page.inc',
+		  'access arguments' => array('administer shifting allotment'),
+		);
+		
+		$items['cs_allotment'] = array(
+		  'title' => 'RHE Category Shifting Allotment',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('cs_allotment_form'),
+		  'file' => 'include/cs_allotment_page.inc',
+		  'access arguments' => array('administer shifting allotment'),
+		);
+		
+		return $items;
+		
+	}
+		
+		
+	function shifting_allotment_permission() {
+		  return array(
+			'administer shifting allotment' => array(
+			  'title' => t('Administer shifting allotment'),
+			  'description' => t('Perform administer shifting allotment.'),
+			),
+			
+		);
+	}

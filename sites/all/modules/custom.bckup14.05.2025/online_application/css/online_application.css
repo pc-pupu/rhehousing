@@ -1,0 +1,97 @@
+
+.breadcrumb_links{
+	display: block;
+	line-height: 24px;
+	padding: 0 25px 25px 80px;
+}
+.main-tab{
+	
+}
+.child-tab{
+	padding: 7px 22px;
+	display:block;
+	float:left;
+	margin-right:1%;
+	margin-bottom:1%;
+	color: #fff !important;
+	text-shadow: 0 -1px 0 #888 !important;
+	border: 1px solid #2F709B !important;
+	
+}
+.child-tab span{
+	
+	color: white !important;
+	padding: 0.5px 3px;
+	margin-left: 9px;
+	
+}
+.child-span-blue{
+	background: rgb(0, 97, 162);
+	box-shadow: 0 0 22px 0 rgb(0, 97, 162);
+}
+.child-span-sea{
+	background: rgb(85, 155, 200);
+	box-shadow: 0 0 22px 0 rgb(85, 155, 200);
+}
+
+.child-color-sea{
+	background:rgb(85, 155, 200);
+}
+.child-color-blue{
+	background:rgb(0, 97, 162);
+}
+.child-tab:hover{
+	background:rgb(0, 97, 162);
+	box-shadow: 0 2px 9px 0 rgb(157, 206, 223);
+}
+.ideabox{
+	background: url(../images/idea.png) no-repeat scroll 15px 15px #E1EBEB;
+	border: 1px solid #5996d9;
+	color: #596C26;
+	display: block;
+	font-size: 16px;
+	line-height: 24px;
+	margin-bottom: 20px;
+	margin-top: 20px;
+	padding: 25px 25px 25px 80px;
+	box-shadow: 0 19px 22px 0;
+	text-align:justify;
+
+}
+.ideabox:hover{
+	background: url(../images/idea-lt.png) no-repeat scroll 15px 15px #E1EBEB;
+
+}
+
+
+
+.child-color-red {
+	background: #F00;
+}
+.child-color-green {
+	background: #090;
+}
+.child-color-yellow {
+	background: #E1BB36;
+}
+
+.child-span-red{
+	background: #F00;
+	box-shadow: 0 0 22px 0 #F00;
+}
+.child-span-green{
+	background: #090;
+	box-shadow: 0 0 22px 0 #090;
+}
+.child-span-yellow{
+	background: #E1BB36;
+	box-shadow: 0 0 22px 0 #E1BB36;
+}
+
+#go_to_app_page {
+	color: #6363B1;
+	font-size: 17px;
+}
+#go_to_app_page:hover {
+	color: #5996d9;
+}

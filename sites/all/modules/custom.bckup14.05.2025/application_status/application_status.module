@@ -1,0 +1,147 @@
+<?php
+
+	function application_status_menu() {
+		
+		$items=array();
+		
+		$items['application_status']=array(
+			'title' => 'Check Application Status',
+			//'page callback' => 'application_stat_page',
+			'page callback' => 'drupal_get_form',
+      		'page arguments' => array('application_status_form'),
+			'file' => 'application_stat_page.inc',
+			'access arguments' => array('administer Application Status'),
+		);
+		
+		return $items;
+			
+	}
+	
+	
+	function application_status_permission() {
+		return array(
+			'administer Application Status' => array(
+				'title' => t('administer Application Status'),
+      			'description' => t('Perform administer Application Status.'),
+			),
+		);	
+	}
+	
+	function application_detail_fetch($online_application_id = 0, $application_no = ''){
+		
+		//echo $application_no.'hello'; die();
+		global $user;
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_ddo', 'hd',
+		'hd.ddo_id = haod.ddo_id');
+		$query->innerJoin('housing_pay_band', 'hpb',
+		'hpb.pay_band_id = haod.pay_band_id');
+		$query->leftJoin('housing_new_allotment_application', 'hna',
+		'hna.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm',
+		'fm.fid = hna.document');
+		$query->leftJoin('file_managed', 'fm1',
+		'fm1.fid = hna.extra_doc');
+		$query->leftJoin('housing_flat_type', 'hft',
+		'hna.flat_type_id = hft.flat_type_id');
+		$query->leftJoin('housing_vs_application', 'hva',
+			'hva.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm_vs',
+		'fm_vs.fid = hva.file_licence');
+		$query->leftJoin('housing_cs_application', 'hca',
+			'hca.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm_cs',
+		'fm_cs.fid = hca.file_licence');
+		$query->leftJoin('housing_license_application', 'hla',
+			'hla.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm_licence',
+		'fm_licence.fid = hla.document');
+		$query->addField('hft', 'flat_type_id');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'application_no');
+		$query->addField('hd', 'district_code');
+		$query->addField('hd', 'ddo_designation');
+		$query->addField('hd', 'ddo_address');
+		$query->addField('haod', 'applicant_designation');
+		$query->addField('haod', 'applicant_headquarter');
+		$query->addField('haod', 'applicant_posting_place');
+		$query->addField('hpb', 'payband');
+		$query->addField('hpb', 'scale_from');
+		$query->addField('hpb', 'scale_to');
+		$query->addField('haod', 'uid');
+		$query->addField('haod', 'pay_in_the_pay_band');
+		$query->addField('haod', 'grade_pay');
+		$query->addField('haod', 'date_of_joining');
+		$query->addField('haod', 'date_of_retirement');
+		$query->addField('haod', 'office_name');
+		$query->addField('haod', 'office_street');
+		$query->addField('haod', 'office_city_town_village');
+		$query->addField('haod', 'office_post_office');
+		$query->addField('haod', 'office_pin_code');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'date_of_verified');
+		$query->addField('hoa', 'computer_serial_no');
+		$query->addField('fm', 'uri', 'uri_doc');
+		$query->addField('fm1', 'uri', 'uri_extra_doc');
+		$query->addField('fm_vs', 'uri', 'uri_vs');
+		$query->addField('fm_cs', 'uri', 'uri_cs');
+		$query->addField('fm_licence', 'uri', 'uri_licence');
+		$query->condition('hoa.application_no', $application_no);
+		if($online_application_id == 0){
+			$query->condition('haod.uid', $user->uid, '=');
+		}
+		else{
+			$query->condition('hoa.online_application_id', $online_application_id, '=');
+		}
+		
+		//echo $query; die();
+		return $query->execute();
+	}
+	
+
+	// added by deboleena 11-06-2024
+	function fetch_full_application_status($application_no = ''){
+		
+		// echo $application_no.'hello'. $online_application_id; die();
+		global $user;
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->leftJoin('housing_new_allotment_application', 'hna','hna.online_application_id = hoa.online_application_id');
+		$query->leftJoin('housing_vs_application', 'hva','hva.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm_vs','fm_vs.fid = hva.file_licence');
+		$query->leftJoin('housing_cs_application', 'hca','hca.online_application_id = hoa.online_application_id');
+		$query->leftJoin('housing_license_application', 'hla','hla.online_application_id = hoa.online_application_id');
+		$query->leftJoin('file_managed', 'fm_licence','fm_licence.fid = hla.document');
+
+		$query->leftJoin('housing_process_flow', 'hpf','hpf.online_application_id = hoa.online_application_id');
+		$query->leftJoin('housing_allotment_status_master', 'hasm','hasm.short_code = hpf.short_code');
+
+	
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'application_no');
+		$query->addField('haod', 'uid');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'date_of_verified');
+		$query->addField('hoa', 'computer_serial_no');
+		$query->addField('fm_licence', 'uri', 'uri_licence');
+		$query->condition('hoa.application_no', $application_no);
+		$query->condition('haod.uid', $user->uid);
+		$query->addField('hpf', 'short_code');
+		$query->addField('hpf', 'created_at');
+		$query->addField('hasm', 'status_description');
+		//$query->orderBy('hasm.status_id', 'ASC');
+		//echo $query;die;
+		
+		// $query->condition('hoa.online_application_id', $online_application_id, '=');
+		
+		return $result=$query->execute();
+		//$result=$query->execute();
+		//print_r($result->fetchAll());die;
+	}
+	
+	

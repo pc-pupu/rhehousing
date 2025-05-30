@@ -1,0 +1,6 @@
+name = Vacancy List
+decsription = Vacancy List Module
+core = 7.x
+package = eallotment RHE Allotment Module
+stylesheets[all][] = css/vacancy_list.css
+scripts[] = js/vacancy_list.js

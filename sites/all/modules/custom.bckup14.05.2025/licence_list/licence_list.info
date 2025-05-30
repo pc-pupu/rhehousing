@@ -1,0 +1,6 @@
+name = Licence List
+decsription = Licence List Module
+core = 7.x
+package = eallotment RHE License Module
+stylesheets[all][] = css/licence_list.css
+scripts[] = js/licence_list.js

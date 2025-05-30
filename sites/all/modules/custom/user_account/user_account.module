@@ -1,0 +1,242 @@
+<?php
+function user_account_block_info() {
+
+	$blocks['divn_level_work'] = array(
+		'info' => t('Division Level Work Block'),
+	);
+	
+	$blocks['sub-divn_level_work'] = array(
+		'info' => t('Sub-Division Level Work Block'),
+	);
+	
+	$blocks['user_account-id'] = array(
+		'info' => t('User Account Blocks'),
+	);
+	
+	$blocks['user_complaint_management'] = array(
+		'info' => t('User Complaint Management Block'),
+	);
+	
+	$blocks['dept_complaint_management'] = array(
+		'info' => t('Dept Complaint Management Block'),
+	);
+	
+	return $blocks;
+}
+
+function user_account_block_view($delta='') {
+	global $user_role;
+	$block = array();
+	
+	if($user_role == 8) {
+		switch ($delta) {
+		
+			case 'divn_level_work':
+				$block['content'] = divn_level_contents();
+				break;
+				
+			case 'dept_complaint_management':
+				$block['content'] = dept_complaint_management_contents();
+				break;
+			
+			case 'user_account-id':
+				$block['content'] = user_account_contents();
+				break;
+		}	
+	} else if($user_role == 7) {
+		switch ($delta) {
+			
+			case 'sub-divn_level_work':
+				$block['content'] = sub_divn_level_contents();
+				break;
+				
+			case 'dept_complaint_management':
+				$block['content'] = dept_complaint_management_contents();
+				break;
+			
+			case 'user_account-id':
+				$block['content'] = user_account_contents();
+				break;
+		}	
+	} else if($user_role == 4 || $user_role == 5) {
+		$result = fetch_flat_occupant_list();
+		if($result->rowCount() > 0) {
+			switch ($delta) {
+				
+				case 'user_complaint_management':
+					$block['content'] = user_complaint_management_contents();
+					break;
+			
+				case 'user_account-id':
+					$block['content'] = user_account_contents();
+					break;
+			}
+		} else {
+			switch ($delta) {
+		
+				case 'user_account-id':
+					$block['content'] = user_account_contents();
+					break;
+			}	
+		}
+	} else if($user_role == 6) {
+		switch ($delta) {
+				
+			case 'dept_complaint_management':
+				$block['content'] = dept_complaint_management_contents();
+				break;
+			
+			case 'user_account-id':
+				$block['content'] = user_account_contents();
+				break;
+		}	
+	} else {
+		switch ($delta) {
+		
+			case 'user_account-id':
+				$block['content'] = user_account_contents();
+				break;
+		}	
+	}
+	
+	return $block;
+}
+
+//for division role
+function divn_level_contents() {
+	global $user;
+	global $user_role;
+	$content = '';
+	
+	if(user_is_logged_in()){
+	$content = '
+	<div class="block-menu">
+    	<h2>Division Level Work</h2>
+  		<div class="content" style="font-size: 14px">
+    		<ul class="menu">
+				<li class="first leaf">'.l('Add RHE Block Name','add_block').'</li>
+				<li class="leaf">'.l('Update RHE Flat Master Data','update_flat').'</li>	
+				<li class="leaf">'.l('RHE Wise Flat List','rhe_wise_flat_list').'</li>
+				<li class="leaf">'.l('RHE Wise Occupant List','rhewise_occupantlist').'</li>
+				<!--<li class="last leaf">'.l('RHE Wise Licensee List','rhewise_licensee_list').'</li> -->
+			</ul>  
+		</div>
+	</div>';
+	}
+
+	
+	return $content;
+	
+}
+
+//for sub-division role
+function sub_divn_level_contents() {
+	global $user;
+	global $user_role;
+	$content = '';
+	
+	if(user_is_logged_in()){
+	$content = '
+	<div class="block-menu">
+    	<h2>Sub-Division Level Work</h2>
+  		<div class="content" style="font-size: 14px">
+    		<ul class="menu">
+				<li class="first leaf">'.l('Add RHE Block Name','add_block').'</li>
+				<li class="leaf">'.l('Update RHE Flat Master Data','update_flat').'</li>	
+				<li class="leaf">'.l('RHE Wise Flat List','rhe_wise_flat_list').'</li>
+				<li class="leaf">'.l('Select RHE For Occupant Entry','rhewise_flatlist').'</li>
+				<!-- <li class="last leaf">'.l('RHE Wise Licensee List','rhewise_licensee_list').'</li> -->
+			</ul>  
+		</div>
+	</div>';
+	}
+
+	
+	return $content;
+	
+}
+
+//for all roles
+function user_account_contents() {
+	global $user;
+	global $user_role;
+	$content = '';
+	
+	if(user_is_logged_in()){
+	$content = '
+	<div class="block-menu">
+    	<h2>User Account</h2>
+  		<div class="content" style="font-size: 14px">
+    		<ul class="menu">
+				<li class="first leaf">'.l('My Profile','user').'</li>';
+			if($user_role == 3) {
+				$content .= '<li class="leaf">'.l('Edit Profile','user/'.$user->uid.'/edit').'</li>';		
+			} else if($user_role == 7 || $user_role == 8 || $user_role == 6 || $user_role == 9 || $user_role == 10) {
+				$content .= '<li class="leaf">'.l('Edit Profile','user_profile_edit/'.encrypt_url($user->uid)).'</li>';
+				$content .= '<li class="leaf">'.l('Change Password','user/'.$user->uid.'/edit').'</li>';
+			} else {
+				$content .= '<li class="leaf">'.l('Change Password','user/'.$user->uid.'/edit').'</li>';	
+			}
+				$content .= '<li class="last leaf">'.l('Log Out','user/logout').'</li>
+			</ul>  
+		</div>
+	</div>';
+	}
+
+	
+	return $content;
+	
+}
+
+//for appilicant and occupant complaint management
+function user_complaint_management_contents() {
+	global $user;
+	global $user_role;
+	$content = '';
+	
+	if(user_is_logged_in()){
+	$content = '
+	<div class="block-menu">
+    	<h2>Online Complaint Management</h2>
+  		<div class="content" style="font-size: 14px">
+    		<ul class="menu">
+				<li class="first leaf">'.l('Submit New Complaint','complaint_form').'</li>
+				<li class="last leaf">'.l('Complaint List','complaint_list').'</li>
+			</ul>  
+		</div>
+	</div>';
+	}
+
+	
+	return $content;
+	
+}
+
+//for division and sub-division complaint management
+function dept_complaint_management_contents() {
+	global $user;
+	global $user_role;
+	$content = '';
+	
+	// if(user_is_logged_in()){
+	// $content = '
+	// <div class="block-menu">
+ //    	<h2>Complaint Management</h2>
+ //  		<div class="content" style="font-size: 14px">
+ //    		<ul class="menu">';
+	// 			if($user_role == 7 || $user_role == 8) {
+	// 				//$content .= '<li class="first leaf">'.l('RHE Wise Complaint List','rhewise_complaint_list').'</li>';
+	// 			} else if($user_role == 6) {
+	// 				$content .= '<li class="first leaf">'.l('Sub-Division and RHE Wise Complaint List','subdivn_rhewise_complaint_list').'</li>';
+	// 				$content .= '<li class="last leaf">'.l('Sub Division Wise No. of Complaints','subdivnwise_no_of_complaint').'</li>';
+	// 			}
+	// 		$content .= '</ul>  
+	// 	</div>
+	// </div>';
+	// }
+
+	
+	return $content;
+	
+}
+

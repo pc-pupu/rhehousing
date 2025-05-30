@@ -1,0 +1,245 @@
+/*		 $str = '<div class="breadcrumb_links"><center>';
+		 $options['attributes']['class'] = array('button','small','round','link-button','blue');
+		$options1['attributes']['class'] = array('button','small','round','link-button','steel_blue');
+		$str.=l('New Allotment', 'new-apply',$options1);
+		$str.='  '.l('Vertical Shifting', 'vs',$options);
+		$str.=' '.l('Category Shfting', 'cs',$options1);
+		$str.='  '.l('New License', 'new_license',$options1);
+		$str.='</center></div>';
+		$form['breadcrumb'] = array(
+		   '#type' => 'markup',
+		   '#markup' => $str,
+			'#weight' => -1
+		);*/
+	  // shifting specification
+
+
+
+
+
+
+
+/*$form['current_occupation']['floor'] = array(
+		'#title' => t('Specify Floor'),
+		'#type' => 'select',
+		'#options' => array('Ground floor ' => 'Ground floor ', '1st floor ' => '1st floor ', '2nd floor ' => '2nd floor ', '3rd floor ' => '3rd floor ', '1st / 2nd floor ' => '1st / 2nd floor '),
+		'#validated' => TRUE,
+		'#prefix' => '<div class="four">',
+ 		'#suffix' => '</div>',
+	  );*/
+	  
+	   // define flat
+	   /*$form['define_flat'] = array(
+		'#type' => 'fieldset',
+		'#title' => t('Flat with up to four choices ( optional )'),
+		'#collapsible' => TRUE, // Added
+		'#collapsed' => TRUE,  // Added
+		);
+	  $form['define_flat']['choice_1'] = array(
+		'#title' => t('Choice 1'),
+		'#type' => 'select',
+		'#options' => array('1' => 'one'),
+		'#validated' => TRUE,
+		'#prefix' => '<div id="replace_choice1" class="four">',
+ 		'#suffix' => '</div>',
+		'#ajax' => array(
+				   'event' => 'change',
+				   'callback' => '_reload_flat_choice2',
+				   'effect' => 'fade',
+				   'progress' => array(
+					  'type' => '',
+					  'message' => '',
+					 ),
+		 ),
+	  );
+	   $form['define_flat']['choice_2'] = array(
+		'#title' => t('Choice 2'),
+		'#type' => 'select',
+		'#options' => array('2' => 'two'),
+		'#validated' => TRUE,
+		'#prefix' => '<div id="replace_choice2" class="four">',
+ 		'#suffix' => '</div>',
+			'#ajax' => array(
+				   'event' => 'change',
+				   'callback' => '_reload_flat_choice3',
+				   'effect' => 'fade',
+				   'progress' => array(
+					  'type' => '',
+					  'message' => '',
+					 ),
+		 ),
+	  );
+	  $form['define_flat']['choice_3'] = array(
+		'#title' => t('Choice 3'),
+		'#type' => 'select',
+		'#options' => array('3' => 'three'),
+		'#validated' => TRUE,
+		'#prefix' => '<div id="replace_choice3" class="four">',
+ 		'#suffix' => '</div>',
+			'#ajax' => array(
+				   'event' => 'change',
+				   'callback' => '_reload_flat_choice4',
+				   'effect' => 'fade',
+				   'progress' => array(
+					  'type' => '',
+					  'message' => '',
+					 ),
+		 ),
+	  );
+	   $form['define_flat']['choice_4'] = array(
+		'#title' => t('Choice 4'),
+		'#type' => 'select',
+		'#options' => array('4' => 'four'),
+		'#validated' => TRUE,
+		'#prefix' => '<div id="replace_choice4" class="four">',
+ 		'#suffix' => '</div>',
+	  );
+	  	$form['official_info']['pay_band']['#ajax'] = array(
+														   'event' => 'change',
+														   'callback' => '_reload_vs_allotment_category',
+														   'effect' => 'fade',
+														   'progress' => array(
+																				  'type' => '',
+																				  'message' => '',
+																				 )
+														 );*/
+
+
+
+
+
+
+
+
+/************************************************ AJAX **************************************************************/
+
+/*reload Allotment Category and Choice 1 (Ajax Call)*/
+function _reload_vs_allotment_category($form, &$form_state) {
+
+	$pay_band_id = isset($form_state['values']['pay_band']) && !empty($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : 0;
+	$rhe_flat_type = rhe_flat_type_rst_pay_band_id($pay_band_id);
+	$commands = array();
+	if($rhe_flat_type!=''){
+		$form['current_occupation']['rhe_flat_type']['#value'] = $rhe_flat_type;
+		$form['current_occupation']['category']['#options'] = allotment_category_list(trim($rhe_flat_type));
+		$flat = array(0);
+		$form['define_flat']['choice_1']['#options'] = flat_choice_list($rhe_flat_type,$flat);
+	}else{
+		$form['current_occupation']['rhe_flat_type']['#value'] = '';
+		$form['current_occupation']['category']['#options'] = array(''=>'- Select -');
+		$form['define_flat']['choice_1']['#options'] = array(''=>'- Select -');
+	}
+	$form['define_flat']['choice_2']['#options'] = array(''=>'- Select -');
+	$form['define_flat']['choice_3']['#options'] = array(''=>'- Select -');
+	$form['define_flat']['choice_4']['#options'] = array(''=>'- Select -');
+	$commands[] = ajax_command_replace('#replace_rhe_flat_type', drupal_render($form['current_occupation']['rhe_flat_type']));
+	$commands[] = ajax_command_replace('#replace_vs_allotment_category', drupal_render($form['current_occupation']['category']));
+	$commands[] = ajax_command_replace('#replace_choice1', drupal_render($form['define_flat']['choice_1']));
+	$commands[] = ajax_command_replace('#replace_choice2', drupal_render($form['define_flat']['choice_2']));
+	$commands[] = ajax_command_replace('#replace_choice3', drupal_render($form['define_flat']['choice_3']));
+	$commands[] = ajax_command_replace('#replace_choice4', drupal_render($form['define_flat']['choice_4']));
+	return array('#type' => 'ajax', '#commands' => $commands);
+ 
+}
+
+/*fetch Flat Choice  list based on RHE flat type*/
+function flat_choice_list($rhe_flat_type = '', $flat) {
+	
+	$flat_choice_options = array('' => '-- Choose Flat --');
+		
+	$query = db_select('housing_flat', 'hf');
+	$query->innerJoin('housing_estate', 'he',
+	'he.estate_id = hf.estate_id');
+	$query->innerJoin('housing_flat_type', 'hft',
+	'hft.flat_type_id = hf.flat_type_id');
+	$query->innerJoin('housing_block', 'hb',
+	'hb.block_id = hf.block_id');
+	$query->innerJoin('housing_flat_status', 'hfs',
+	'hfs.flat_status_id = hf.flat_status_id');
+	$query->addField('hb', 'block_name');
+	$query->addField('hf', 'flat_id');
+	$query->addField('hf', 'flat_no');
+	$query->addField('hf', 'floor');
+	$query->addField('he', 'estate_name');
+	$db_and = db_and();
+	$db_and->condition('hfs.availability', TRUE, '=');
+	$db_and->condition('hf.flat_id', $flat, 'NOT IN');
+	$db_and->condition('hft.flat_type', $rhe_flat_type, '=');
+	$query->condition($db_and);
+	$result = $query->execute();
+	$i = 0;
+	foreach($result as $val) {
+		$i++;
+		$flat_choice_options[$val->flat_id] = $val->estate_name.'/ '.$val->block_name.'-'.$val->flat_no;
+	}
+	if($i == 0){
+		$flat_choice_options = array(''=>'- Select -');
+	}
+	
+	
+	return $flat_choice_options;
+}
+
+/*reload Choice 2 (Ajax Call)*/
+function _reload_flat_choice2($form, &$form_state) {
+
+	$pay_band_id = isset($form_state['values']['pay_band']) && !empty($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : 0;
+	$rhe_flat_type = rhe_flat_type_rst_pay_band_id($pay_band_id);
+	$choice1 = isset($form_state['values']['choice_1']) && !empty($form_state['values']['choice_1']) ? $form_state['values']['choice_1'] : 0;
+	$flat = array($choice1);
+	$commands = array();
+	if($rhe_flat_type!=''){
+		$form['define_flat']['choice_2']['#options'] = flat_choice_list($rhe_flat_type,$flat);
+	}else{
+		$form['define_flat']['choice_2']['#options'] = array(''=>'- Select -');
+	}
+	$form['define_flat']['choice_3']['#options'] = array(''=>'- Select -');
+	$form['define_flat']['choice_4']['#options'] = array(''=>'- Select -');
+	$commands[] = ajax_command_replace('#replace_choice2', drupal_render($form['define_flat']['choice_2']));
+	$commands[] = ajax_command_replace('#replace_choice3', drupal_render($form['define_flat']['choice_3']));
+	$commands[] = ajax_command_replace('#replace_choice4', drupal_render($form['define_flat']['choice_4']));
+	return array('#type' => 'ajax', '#commands' => $commands);
+ 
+}
+/*reload Choice 3 (Ajax Call)*/
+function _reload_flat_choice3($form, &$form_state) {
+
+	$pay_band_id = isset($form_state['values']['pay_band']) && !empty($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : 0;
+	$rhe_flat_type = rhe_flat_type_rst_pay_band_id($pay_band_id);
+	$choice1 = isset($form_state['values']['choice_1']) && !empty($form_state['values']['choice_1']) ? $form_state['values']['choice_1'] : 0;
+	$choice2 = isset($form_state['values']['choice_2']) && !empty($form_state['values']['choice_2']) ? $form_state['values']['choice_2'] : 0;
+	$flat = array($choice1,$choice2);
+	$commands = array();
+	if($rhe_flat_type!=''){
+		$form['define_flat']['choice_3']['#options'] = flat_choice_list($rhe_flat_type,$flat);
+	}else{
+		$form['define_flat']['choice_3']['#options'] = array(''=>'- Select -');
+	}
+	$form['define_flat']['choice_4']['#options'] = array(''=>'- Select -');
+	$commands[] = ajax_command_replace('#replace_choice3', drupal_render($form['define_flat']['choice_3']));
+	$commands[] = ajax_command_replace('#replace_choice4', drupal_render($form['define_flat']['choice_4']));
+	return array('#type' => 'ajax', '#commands' => $commands);
+ 
+}
+
+/*reload Choice 4 (Ajax Call)*/
+function _reload_flat_choice4($form, &$form_state) {
+
+	$pay_band_id = isset($form_state['values']['pay_band']) && !empty($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : 0;
+	$rhe_flat_type = rhe_flat_type_rst_pay_band_id($pay_band_id);
+	$choice1 = isset($form_state['values']['choice_1']) && !empty($form_state['values']['choice_1']) ? $form_state['values']['choice_1'] : 0;
+	$choice2 = isset($form_state['values']['choice_2']) && !empty($form_state['values']['choice_2']) ? $form_state['values']['choice_2'] : 0;
+	$choice3 = isset($form_state['values']['choice_3']) && !empty($form_state['values']['choice_3']) ? $form_state['values']['choice_3'] : 0;
+	$flat = array($choice1,$choice2,$choice3);
+	$commands = array();
+	if($rhe_flat_type!=''){
+		$form['define_flat']['choice_4']['#options'] = flat_choice_list($rhe_flat_type,$flat);
+	}else{
+		$form['define_flat']['choice_4']['#options'] = array(''=>'- Select -');
+	}
+	$commands[] = ajax_command_replace('#replace_choice4', drupal_render($form['define_flat']['choice_4']));
+	return array('#type' => 'ajax', '#commands' => $commands);
+ 
+}
+/*-------END---------*/
+

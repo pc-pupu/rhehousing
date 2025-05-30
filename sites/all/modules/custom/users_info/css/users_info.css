@@ -1,0 +1,55 @@
+.password-strength {
+	display:none;
+}
+
+
+.username {
+	width: 300px !important;
+}
+
+.password-field {
+	width: 300px !important;
+}
+.password-confirm {
+	width: 300px !important;
+}
+
+#edit-mail {
+	width: 300px;
+}
+
+#edit-division {
+	width: 310px !important;	
+}
+
+.form-item-subdiv #subdivision_entry {
+	width: 310px;	
+}
+
+/*#edit-full-name, #edit-designation, #mobile_no {
+	width: 300px;
+}*/
+#edit-full-name, #user_mobile_no, #office_phone_no {
+	width: 300px;
+}
+
+.password-suggestions {
+	display:none !important;
+	
+}
+
+
+#user-profile-form #edit-timezone {
+	display:none;
+	
+}
+
+#user-profile-form #edit-ckeditor {
+	display:none;
+	
+}
+
+#user-profile-form #edit-cancel {
+	display:none;
+	
+}

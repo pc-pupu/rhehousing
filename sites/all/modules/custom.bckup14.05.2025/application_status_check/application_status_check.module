@@ -1,0 +1,674 @@
+<?php
+function application_status_check_menu() {
+  $items = array();
+
+  $items['application_status_check'] = array(
+    'title' => 'Application Details Check',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('application_status_check_form'),
+    'file' => 'application_status_check.inc',
+    'access arguments' => array('common_allotment_view'),
+  );
+//turned off by debaleena 12-11-2024
+  // $items['common-application-view/%/%'] = array(
+  //   'title' => 'View Allotment Information',
+  //   'page callback' => 'common_applicant_data_fetch',
+  //   'page arguments' => array(1,2),
+  //   'access arguments' => array('common_allotment_view'),
+  // );
+  /// debaleena 12-11-2024//
+  $items['common-application-view/%/%'] = array(
+    'title' => 'View Allotment Information',
+    'page callback' => 'search_common_data_fetch',
+    'page arguments' => array(1,2),
+    'access arguments' => array('common_allotment_view'),
+  );
+  $items['common-application-view-det/%/%'] = array(
+    'title' => 'View Allotment Information',
+    'page callback' => 'common_applicant_data_fetch',
+    'page arguments' => array(1,2),
+    'access arguments' => array('common_allotment_view'),
+  );
+  $items['add-possession-det/%/%'] = array(
+    'title' => 'Add Possession Details',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('add_possession_det_form',1,2),
+    'file' => 'include/application_add_possession.inc',
+    'access arguments' => array('common_allotment_view'),
+   
+  );
+  $items['add-release-date/%/%'] = array(
+    'title' => 'Add Flat Release Date',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('add_release_date_form',1,2),
+    'file' => 'include/application_flat_release.inc',
+    'access arguments' => array('common_allotment_view'),
+   
+  );
+  ///end//
+
+  // Done by Subham 06-12-2024
+  $items['request-for-license-extension/%/%/%/%'] = array(
+    'title' => 'Request for License Extension',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('request_for_license_extension_form',1,2,3,4),
+    'file' => 'include/request_for_license_extension.inc',
+    'access arguments' => array('common_allotment_view'),
+  );
+
+  $items['request-for-offer-letter-extension/%/%/%/%/%'] = array(
+    'title' => 'Request for Offer Letter Extension',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('request_for_offer_letter_extension_form',1,2,3,4,5),
+    'file' => 'include/request_for_offer_letter_extension.inc',
+    'access arguments' => array('common_allotment_view'),
+  );
+  // End
+  return $items;
+}
+
+
+function application_status_check_permission() {
+  return array(
+    'common_allotment_view' => array(
+			'title' => t('Common Allotment View'),
+			'description' => t('Common Allotment View from housing official end')
+		)
+  );
+}
+/////////debaleena 12-11-2024/////
+
+function search_common_data_fetch($app_id = '', $app_status = ''){
+  global $user,$user_role;
+// print_r($user_role);die;
+  $enc_app_id = decrypt_url($app_id);
+  // echo $enc_app_id;die;
+  $enc_app_status = decrypt_url($app_status);
+  
+  global $base_root, $base_path;
+  $output = '';
+  
+  if (db_table_exists('housing_online_application')) {
+   
+    $query = db_select('housing_online_application', 'hoa');
+    $query->innerJoin('housing_allotment_status_master', 'hasm', 'hasm.short_code = hoa.status');
+    $query->innerJoin('housing_applicant_official_detail', 'haod', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+    //$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid'); turned off by debaleena 05-12-2024
+    $query->innerJoin('housing_applicant', 'ha','ha.housing_applicant_id = haod.housing_applicant_id'); //added by debaleena 05-12-2024
+    $query->leftJoin('housing_license_application', 'hla', 'hla.online_application_id = hoa.online_application_id');
+    $query->leftJoin('housing_occupant_license', 'hol', 'hol.license_application_id = hla.license_application_id');
+    $query->addField('ha', 'applicant_name');
+    $query->addField('hoa', 'application_no');
+    $query->addField('hoa', 'online_application_id');
+    $query->addField('haod', 'applicant_official_detail_id');
+    $query->addField('hoa', 'status');
+    $query->addField('hoa', 'date_of_verified');
+    $query->addField('hasm', 'status_description');
+    $query->addField('hol', 'license_no');
+    $query->addField('hol', 'possession_date');
+    $query->addField('haod', 'uid');
+    $query->addField('hol', 'release_date');
+    //$query->addField('hol', 'existing_occupant_license_no');
+    
+    $query->condition('hoa.online_application_id',$enc_app_id,'=');
+    //$query->condition('haod.is_active','1','=');  // added 05-12-2024
+
+    $result = $query->execute();
+    // $data = $result->fetchAll();
+    
+   
+    $header['applicant_name'] = array('data' => 'Name');
+    $header['application_no'] = array('data' => 'Application Number');
+    $header['Status'] = array('data' => 'Status');
+    $header['action'] = array('data' => 'Action', 'width'=>'40%');
+   
+		$rows =array();
+		$output = '';
+		
+		while($data = $result->fetchObject()) {
+     // echo "<pre>";print_r($data);die;
+			$fields = array();
+			$fields[] = $data->applicant_name;
+			$fields[] = $data->application_no;
+      $fields[] = $data->status_description;
+
+      if($user_role == 7){
+        // print_r($data);die;
+        if($data->license_no != '' && $data->possession_date != '' && $data->release_date){
+          $fields[] = l(
+            'View',
+            'common-application-view-det/'. $app_id.'/'.$app_status,
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+          ).' '.
+          l(
+            ' Possession Date Updated',
+            'common-application-view/'. $app_id.'/'.$app_status, 
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn bg-success btn-sm px-4 fa fa-check rounded-pill text-white fw-bolder')),
+            )
+          ).''.
+          l(
+            'Release Date Updated',
+            'common-application-view/'. $app_id.'/'.$app_status,
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn bg-secondary fa fa-check btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+          );
+        }else if($data->license_no != '' && $data->possession_date != ''){
+          $fields[] = l(
+            'View',
+            'common-application-view-det/'. $app_id.'/'.$app_status,
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+          ).' '.
+          l(
+            ' Possession Date Updated',
+            'common-application-view/'. $app_id.'/'.$app_status, 
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn bg-success btn-sm px-4 fa fa-check rounded-pill text-white fw-bolder')),
+            )
+          ).''.
+          l(
+            'Add Release Date',
+            'add-release-date/'. $app_id.'/'.$app_status,
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn fa fa-plus bg-secondary btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+          );
+        }else if(($data->license_no != '' || $data->license_no == '')   && ($data->status == 'offer_letter_cancel' || $data->status == 'license_cancel')){ // Done by Subham 06-12-2024
+          if($data->status == 'offer_letter_cancel'){
+            // Query for fetching count online application id; Done by Subham 10-12-2024
+            $query = db_select('housing_auto_cancellation', 'hac')
+                                  ->fields('hac', array())
+                                  ->condition('hac.online_application_id', $data->online_application_id, '=')
+                                  ->condition('hac.cancellation_type', 'offer-letter')
+                                  ->countQuery();
+            $count = $query->execute()->fetchField();
+            //echo $count;die;
+            if($count < 2){
+              $fields[] = l(
+                ' View',
+                'common-application-view-det/'. $app_id.'/'.$app_status,
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+                ).' '.
+               l(
+                ' Extend Offer Letter',
+                'request-for-offer-letter-extension/'. $app_id.'/'.$app_status.'/'.encrypt_url($data->uid).'/'.encrypt_url($data->applicant_official_detail_id).'/'. encrypt_url($data->date_of_verified), //
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-history bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+              );
+            }else{
+              $fields[] = l(
+                'View',
+                'common-application-view-det/'. $app_id.'/'.$app_status, //
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+              );
+            }
+          }else if($data->status == 'license_cancel'){
+            // Query for fetching count online application id; Done by Subham 10-12-2024
+            $query = db_select('housing_auto_cancellation', 'hac')
+                                  ->fields('hac', array())
+                                  ->condition('hac.online_application_id', $data->online_application_id, '=')
+                                  ->condition('hac.cancellation_type', 'license')
+                                  ->countQuery();
+            $count = $query->execute()->fetchField();
+            //echo $count;die;
+            if($count < 2){
+              $fields[] = l(
+                'View',
+                'common-application-view-det/'. $app_id.'/'.$app_status,
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+                ).' '.
+               l(
+                ' Extend License',
+                'request-for-license-extension/'. $app_id.'/'.$app_status.'/'.encrypt_url($data->uid).'/'.encrypt_url($data->applicant_official_detail_id), //
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-history bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+              );
+            }else{
+              $fields[] = l(
+                'View',
+                'common-application-view-det/'. $app_id.'/'.$app_status, //
+                array(
+                    'html'=>TRUE,
+                    'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+                )
+              );
+            }
+          } /// End by Subham 06-12-2024
+        }else if($data->license_no != '' ){
+          $fields[] = l(
+            'View',
+            'common-application-view-det/'. $app_id.'/'.$app_status, 
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+            )
+            .' '.
+    
+          l(
+            '  Add possession Details',
+            'add-possession-det/'. $app_id.'/'.$app_status, 
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn bg-success btn-sm px-4 fa fa-plus rounded-pill text-white fw-bolder')),
+            )
+            );
+
+        }else{
+          // echo 'hiii';die;
+          $fields[] = l(
+            'View',
+            'common-application-view-det/'. $app_id.'/'.$app_status, //
+            array(
+                'html'=>TRUE,
+                'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+            )
+            );
+        }
+      }else if($user_role == 6 || $user_role == 10 || $user_role == 13){
+        $fields[] = l(
+          'View',
+          'common-application-view-det/'. $app_id.'/'.$app_status, //
+          array(
+              'html'=>TRUE,
+              'attributes'=> array('class'=>array('btn fa fa-eye bg-primary btn-sm px-4 rounded-pill text-white fw-bolder')),
+          )
+          );
+
+      }
+        
+
+      
+      
+			$rows[] = $fields;
+		}
+
+		
+
+		$variables = array(
+			'attributes' => array('class'=>array('table table-list table-striped')),
+			'header' => $header,
+			'rows' => $rows,
+			'sticky' => true,
+			'empty' => t("No data found!") // The message to be displayed if table is empty
+		  );
+  		//end
+		//sd turned off 21-06-2024
+		if(count($rows) > 0) {
+			// Render using Drupal's render API.
+			$build['datatable'] = array(
+			  '#theme' => 'datatable',
+			  '#header' => $header,
+			  '#rows' => $rows,
+			  '#attributes' => array(),
+			);
+			
+			// Or, render using a theme function.
+			$variables = array(
+			  'attributes' => array('class'=>array('table table-list table-striped')),
+			  'header' => $header,
+			  'rows' => $rows,
+			);
+			
+			$output = theme('datatable', $variables);
+		}
+		else {
+			$output = '<div>
+							<table class="datatable_no_data_found table table-list">
+								<tr class="tr_no_data_found">
+									<th class="th_no_data_found"></th>
+								</tr>
+								<tr class="tr_no_data_found">
+									<td class="td_no_data_found">No data found!</td>
+								</tr>
+							</table>
+						</div>';
+		}
+	
+	return $output;
+  }
+}
+
+
+
+
+
+///////end//////
+
+function common_applicant_data_fetch($app_id = '', $app_status = '') {
+    $enc_app_id = decrypt_url($app_id);
+    $enc_app_status = decrypt_url($app_status);
+    // echo $enc_app_id.'<br>'.$enc_app_status;die;
+    $esate_pref = fetch_application_estate_preference($enc_app_id);
+
+    $query1 = "SELECT 
+              hoa.online_application_id, hft.flat_type_id, hft.flat_type, hoa.online_application_id, hoa.application_no, hd.district_code, hd.ddo_designation, hd.ddo_address, hds.district_name, haod.applicant_designation, haod.applicant_headquarter, haod.applicant_posting_place, hpb.scale_from,
+              hpb.scale_to, haod.uid, haod.pay_in_the_pay_band, haod.grade_pay, haod.gpf_no, haod.date_of_joining, haod.date_of_retirement, haod.office_name, haod.office_street, haod.office_city_town_village, haod.office_post_office, haod.office_pin_code, haod.office_district, 
+              haod.office_phone_no, haod.hrms_id, hoa.status, hoa.date_of_application, hoa.date_of_verified, ha.gender, ha.permanent_street, ha.permanent_city_town_village, ha.permanent_post_office, ha.permanent_pincode, ha.guardian_name, ha.applicant_name, ha.present_street, ha.present_city_town_village, ha.present_post_office, ha.present_pincode, ha.date_of_birth, u.mail, hna.allotment_category,hasm.status_description
+              FROM 
+              housing_online_application hoa
+              INNER JOIN housing_applicant_official_detail haod ON hoa.applicant_official_detail_id = haod.applicant_official_detail_id
+              INNER JOIN housing_ddo hd ON hd.ddo_id = haod.ddo_id
+              INNER JOIN housing_district hds ON hds.district_code = hd.district_code
+              INNER JOIN housing_pay_band_categories hpb ON hpb.pay_band_id = haod.pay_band_id
+              INNER JOIN housing_applicant ha ON ha.uid = haod.uid
+              INNER JOIN users u ON u.uid = haod.uid
+              INNER JOIN housing_allotment_status_master hasm ON hasm.short_code = hoa.status
+              LEFT JOIN housing_new_allotment_application hna ON hna.online_application_id = hoa.online_application_id
+              LEFT JOIN housing_flat_type hft ON hpb.flat_type_id = hft.flat_type_id
+              LEFT JOIN housing_vs_application hva ON hva.online_application_id = hoa.online_application_id
+              LEFT JOIN housing_cs_application hca ON hca.online_application_id = hoa.online_application_id
+            
+              WHERE hoa.online_application_id = :enc_app_id";
+
+    $result1 = db_query($query1, [':enc_app_id' => $enc_app_id]);
+    $output = $result1->fetchAssoc();
+
+    
+
+    // Display Application Type
+    if ($output) {
+      $application_no_test = $output['application_no'];
+      if (strpos($application_no_test, 'NA') !== false) {
+          $display_app_type = 'New Application';
+      } elseif (strpos($application_no_test, 'VS') !== false) {
+          $display_app_type = 'Floor Shifting';
+      } elseif (strpos($application_no_test, 'CS') !== false) {
+          $display_app_type = 'Category Shifting';
+      } elseif (strpos($application_no_test, 'PA') !== false) {
+          $display_app_type = 'Physical Application';
+      }elseif (strpos($application_no_test, 'EO') !== false) {
+          $display_app_type = 'Existing Occupant Application';
+      }
+
+    // Display Gender
+    if (isset($output['gender'])) {
+        if ($output['gender'] === 'M') {
+            $display_gender = 'Male';
+        } elseif ($output['gender'] === 'F') {
+            $display_gender = 'Female';
+        }
+    }
+
+    $output['application_type'] = $display_app_type;
+    $output['gender'] = $display_gender;
+
+    // Payband selection condition
+    if($output['scale_from'] == 0 && $output['scale_to']!= 0){
+      //$str =  $common_data->payband.' (Below Rs '.$common_data->scale_to.'/-)';
+      $str =  $output['flat_type'].' (Below Rs. '.$output['scale_to'].'/-)';
+    }else if($output['scale_from'] != 0 && $output['scale_to'] == 0){
+      //$str =  $common_data->payband.' (Rs '.$common_data->scale_from.'/- and above)';
+      $str =  $output['flat_type'].' (Rs. '.$output['scale_from'].'/- and above)';
+    }else{
+      //$str = $common_data->payband.' (Rs '.$common_data->scale_from.'/- to Rs '.$common_data->scale_to.'/-)';
+      $str = $output['flat_type'].' (Rs. '.$output['scale_from'].'/- to Rs. '.$output['scale_to'].'/-)';
+    }
+
+    
+
+    if ($enc_app_status == 'allotted' || $enc_app_status == 'housing_official_approved' || $enc_app_status == 'housing_official_reject' || $enc_app_status == 'offer_letter_generate' || $enc_app_status == 'applicant_acceptance' || $enc_app_status == 'applicant_reject' || $enc_app_status == 'ddo_verified_2' || $enc_app_status == 'ddo_rejected_2' || $enc_app_status == 'housing_sup_approved_2' || $enc_app_status == 'housing_sup_reject_2' || $enc_app_status == 'license_generate' || $enc_app_status == 'existing_occupant' || $enc_app_status == 'applied' || $enc_app_status == 'offer_letter_cancel' || $enc_app_status == 'license_cancel' || $enc_app_status == 'applicant_acceptance') {
+
+      $query_get = db_select('housing_occupant_license', 'hol');
+      $query_get->innerjoin('housing_license_application','hla','hla.license_application_id = hol.license_application_id');
+      $query_get->addField('hol', 'possession_date');
+      $query_get->condition('hla.online_application_id', $enc_app_id, '=');
+      $result_get=$query_get->execute();
+      $result_get = $result_get->fetchObject();
+
+      // print_r($result_get);die;
+      $quer_str = '';
+      $select_str = '';
+      if($result_get != ''){
+        $select_str = ", hol.possession_date";
+        $quer_str = " INNER JOIN housing_license_application hla ON hla.online_application_id = hoa.online_application_id
+        INNER JOIN housing_occupant_license hol ON hol.license_application_id = hla.license_application_id";
+   
+      }
+
+
+        $query2 = "SELECT he.estate_name, he.estate_address, hft.flat_type, hf.floor, hf.flat_no, hf.block_id, hb. block_name ".$select_str."
+                  FROM housing_online_application hoa
+                  INNER JOIN housing_applicant_official_detail haod ON haod.applicant_official_detail_id = hoa.applicant_official_detail_id
+                  INNER JOIN housing_flat_occupant hfo ON hfo.online_application_id = hoa.online_application_id
+                  INNER JOIN housing_flat hf ON hf.flat_id = hfo.flat_id
+                  INNER JOIN housing_estate he ON he.estate_id = hf.estate_id
+                  INNER JOIN housing_flat_type hft ON hft.flat_type_id = hf.flat_type_id
+                  INNER JOIN housing_block hb ON hf.block_id = hb.block_id
+                  ".$quer_str."                  
+                  WHERE hoa.online_application_id = :enc_app_id";
+                  // echo $query2;die;
+                  // ----debaleena 13-11-2024------
+                  //  --INNER JOIN housing_license_application hla ON hla.online_application_id = hoa.online_application_id
+                  //  --INNER JOIN housing_occupant_license hol ON hol.license_application_id = hla.license_application_id."
+                  // ------------end--------------
+        $result2 = db_query($query2, [':enc_app_id' => $enc_app_id]);
+        $extra_query = $result2->fetchAssoc();
+    } else {
+        $extra_query = array();
+        if (isset($query2)) {
+          $result2 = db_query($query2, [':enc_app_id' => $enc_app_id]);
+          $extra_query = $result2->fetchAssoc();
+        }
+    }
+
+
+
+    // For print estate preference data
+    if(!empty($esate_pref)){
+      $pref_1 = $esate_pref[0]->estate_name;
+      $pref_2 = $esate_pref[1]->estate_name;
+      $pref_3 = $esate_pref[2]->estate_name;
+    }else{
+      $pref_1 = $pref_2 = $pref_3 = 'N/A';
+    }
+    //print_r($extra_query);die;
+    if($extra_query != ''){
+      $output = array_merge($output, $extra_query);
+    }else{
+      $output = $output;
+    }
+    
+    // print_r($extra_query);die;
+    $display_output = '
+      <div class="table-bottom">
+        <table class="table table-list">
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Application Information</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000" width="50%">Application Type:</th>
+            <td width="50%"> Applied for <b>'.$output['application_type'].'<b></td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000" width="50%">Application Number:</th>
+            <td width="50%">'.$output['application_no'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Date of Application:</th>
+            <td>'.(isset($output['date_of_application']) ? $output['date_of_application'] : 'Not Avalaible').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Application Status:</th>
+            <td>'.$output['status_description'].'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Personal Information (According to Service Book)</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Applicant\'s Name:</th>
+            <td>'.$output['applicant_name'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Father\'s / Husband\'s Name:</th>
+            <td>'.$output['guardian_name'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Permanent Address:</th>
+            <td>'.$output['permanent_street'].', '.$output['permanent_city_town_village'].', P.O - '.$output['permanent_post_office'].', '.$output['permanent_city_town_village'].'- '.$output['permanent_pincode'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Present Address:</th>
+            <td>'.$output['present_street'].', '.$output['present_city_town_village'].', P.O - '.$output['present_post_office'].', '.$output['present_city_town_village'].'- '.$output['present_pincode'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Gender:</th>
+            <td>'.$output['gender'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Date of Birth:</th>
+            <td>'.implode('/', array_reverse(explode('-', $output['date_of_birth']))).'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Mobile Number:</th>
+            <td>'.$output['office_phone_no'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Email ID:</th>
+            <td>'.$output['mail'].'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Official Information</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Employee HRMS ID:</th>
+            <td>'.$output['hrms_id'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Designation:</th>
+            <td>'.$output['applicant_designation'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Office Headquarter:</th>
+            <td>'.$output['applicant_headquarter'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Place of Posting:</th>
+            <td>'.$output['applicant_posting_place'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Pay Band:</th>
+            <td>'.$str.'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Basic Pay:</th>
+            <td>'.$output['pay_in_the_pay_band'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Date of Joining:</th>
+            <td>'.implode('/', array_reverse(explode('-', $output['date_of_joining']))).'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Date of Retirement (According to Service Book):</th>
+            <td>'.implode('/', array_reverse(explode('-', $output['date_of_retirement']))).'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Office Name and Address</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Name of the office:</th>
+            <td>'.$output['office_name'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Office Address:</th>
+            <td>'.$output['office_street'].', '.$output['office_city_town_village'].', '.$output['office_post_office'].'- '.$output['office_pin_code'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Office Phone Number:</th>
+            <td>'.$output['office_phone_no'].'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant DDO Information</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">DDO District:</th>
+            <td>'.$output['district_name'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">DDO Designation:</th>
+            <td>'.$output['ddo_designation'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">DDO Address:</th>
+            <td>'.$output['ddo_address'].'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant\'s Housing Estate Preference</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">First Preference:</th>
+            <td>'.$pref_1.'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Second Preference:</th>
+            <td>'.$pref_2.'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Third Preference:</th>
+            <td>'.$pref_3.'</td>
+          </tr>
+          <tr>
+            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Information for Allotment</th>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Allotment Reason:</th>
+            <td>'.$output['allotment_category'].'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Estate Name:</th>
+            <td>'.(isset($extra_query['estate_name']) ? $extra_query['estate_name'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Estate Address:</th>
+            <td>'.(isset($extra_query['estate_address']) ? $extra_query['estate_address'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Flat Type:</th>
+            <td>'.(isset($extra_query['flat_type']) ? $extra_query['flat_type'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Floor:</th>
+            <td>'.(isset($extra_query['floor']) ? $extra_query['floor'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Flat Number:</th>
+            <td>'.(isset($extra_query['flat_no']) ? $extra_query['flat_no'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Block Name:</th>
+            <td>'.(isset($extra_query['block_name']) ? $extra_query['block_name'] : 'N/A').'</td>
+          </tr>
+          <tr>
+            <th style="background-color:#00000000">Possession Date:</th>
+            <td>'.(isset($extra_query['possession_date']) ? $extra_query['possession_date'] : 'N/A').'</td>
+          </tr>
+        </table>
+      </div>';
+      
+      return $display_output;
+}
+}

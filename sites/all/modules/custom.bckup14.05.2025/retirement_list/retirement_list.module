@@ -1,0 +1,51 @@
+<?php
+
+	function retirement_list_init() {
+		
+	}
+	
+	function retirement_list_menu() {
+		$items = array();
+		$items['retirement_list'] = array(
+			'title' => 'View Upcoming Retirement List',
+			'page callback' => 'view_retirement_list_page',
+			'file' => 'include/view_retirement_list_page.inc',
+			'access arguments' => array('administer Retirement List'),
+		);
+		
+		$items['retirement_list_pdf/%']=array(
+			'title' => 'List of Upcoming Retirement PDF',
+			'page callback' => 'retirement_list_page_pdf',
+			'page arguments' => array(1),
+			'file' => 'include/retirement_list_page_pdf.inc',
+			'access arguments' => array('administer Retirement List'),
+		);
+		
+		return $items;
+	}
+	
+	function retirement_list_permission() {
+		return array(
+			'administer Retirement List' => array(
+				'title' => t('administer Retirement List'),
+      			'description' => t('Perform administer Retirement List.'),
+			),
+		);
+	}
+	
+	function fetch_retirement_list() {
+		
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_online_application', 'hoa',
+		'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'application_no');
+		$query->addField('haod', 'uid');
+		$query->addField('haod', 'date_of_retirement');
+		$query->addField('hoa', 'status');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'date_of_verified');
+		$query->condition('hoa.status', 'issued', '=');
+		//echo $query; die();
+		return $query->execute();
+	}

@@ -1,0 +1,41 @@
+td h6{
+margin:0;
+font-size:12px;
+font-weight:500;
+}
+table{
+float:left;
+}
+th{
+	font-size:12px;
+}
+td h6 span{
+padding: 3px;
+border: 1px solid #5389AD;
+color: #5389AD;
+font-weight: bold;
+width: 16px;
+border-radius: 3px;
+background: rgba(157, 206, 223, 0.09);
+display: block;
+text-align: center;
+margin: 0 auto;
+}
+td h6 label{
+color:#5389AD;
+display:inline;
+font-weight: 500;
+}
+td h6 b{
+color:/*#00AEEF*/#596C26;
+text-align: center;
+display: block;
+font-weight:500;
+}
+td h6 .label:hover{
+	cursor: pointer;
+	text-decoration: underline;
+}
+td h6 .label:hover > label{
+	cursor: pointer;
+}

@@ -1,0 +1,45 @@
+<?php
+
+	function user_mgmt_block_info() {
+		$blocks['user_mgmt'] = array(
+			'info' => t('User Management'),
+		);
+		return $blocks;
+	}
+	
+	function user_mgmt_block_view($delta = '') {
+	  $block = array();
+	
+	  switch ($delta) {
+		case 'user_mgmt':
+		  $block['subject'] = t('User Management');
+		  $block['content'] = user_mgmt_content();
+		  break;
+	  }
+	  return $block;
+	}
+
+	
+	function user_mgmt_content() {
+		global $user;
+		global $user_role;
+		
+		$output = '';
+		
+		
+		if($user_role == 3) {
+			
+			$link1 = l('Add User', 'admin/people/create');
+			$link2 = l('User List', 'admin/people');
+			$link3 = l('Add Roles', 'admin/people/permissions/roles');
+			$output .= '<ul>';
+			$output .= '<li>'.$link3.'</li>';
+			$output .= '<li>'.$link1.'</li>';
+			$output .= '<li>'.$link2.'</li>';
+			$output .= '</ul>';
+			
+		}
+		
+		return $output;
+	}
+

@@ -1,0 +1,99 @@
+<?php
+
+	function send_sms($receiver_mobile, $ack_sms) {
+		
+		#############################
+		
+		$uid = "epgbsbs.auth";
+		$pass = "Yd%26@83j%24";
+		$send = "PBGSBS";
+		$dest = '91'.$receiver_mobile;
+		$msg = $ack_sms;
+		$url = "https://smsgw.sms.gov.in/failsafe/HttpLink?";
+		if(strlen($msg) > 155) {
+			$data = "username=$uid&pin=$pass&message=$msg&mnumber=$dest&signature=$send&concat=1";
+		}
+		else {
+			$data = "username=$uid&pin=$pass&message=$msg&mnumber=$dest&signature=$send";
+		}
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,1);
+		curl_setopt($ch, CURLOPT_CAINFO,'/etc/pki/tls/certs/ca-bundle.crt');
+		if (curl_errno($ch)) echo 'Curl error: ' . curl_error($ch);
+		else $curl_output = curl_exec($ch);
+		curl_close($ch);
+		
+		//exit($curl_output);
+	}
+	
+	 /*function send_sms($mobile=NULL,$msg=NULL)
+    {
+        if (!empty($mobile) && !empty($msg)) {
+            $uid  = "epgbsbs.auth";
+            $pass = "Yd%26@83j%24";
+            $send = "PBGSBS";
+            $dest = $mobile;
+            $msg  = $msg;
+            $url  = "https://smsgw.sms.gov.in/failsafe/HttpLink?";
+            $data = "username=$uid&pin=$pass&message=$msg&mnumber=$dest&signature=$send";
+            $ch   = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            //curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,1);
+            //curl_setopt($ch, CURLOPT_CAINFO,'/etc/pki/tls/certs/ca-bundle.crt');
+            if (curl_errno($ch)) {
+                exit( 'Curl error: ' . curl_error($ch));
+            } else {
+                $curl_output = curl_exec($ch);
+            }
+            curl_close($ch);
+            $item=array('mobile'=>$mobile,'msg'=>$msg);
+            //$this->save_sms_data($item, $curl_output);
+			exit($curl_output);
+        }else{
+            return('Invaid Request');
+        }
+        
+    }
+    
+     function save_sms_data($item, $curlRes)
+    {
+        $file = drupal_get_path('module', 'custom_common_library') . '/temp/sms.log';
+        if (!empty($curlRes)) {
+            if (preg_match('/Message Accepted for Request ID=\d+/', $curlRes)) {
+                //if (strpos($curlRes, 'Accepted') !== false) {
+                $arr_log = array(
+                    'sent_to' => $item['mobile'],
+                    'sms_content' => $item['msg'],
+                    'curl_response' => $curlRes
+                );
+                CustomCommonStorage::addSmsLog($arr_log);
+                //$id_sms_log = db_insert('pbgsbs_push_sms_log')->fields($arr_log)->execute();
+            } else {
+                $lineBreak      = " \r\n ";
+                $contentToWrite = date('Y-m-d H:i:s') . $lineBreak;
+                $contentToWrite .= "MSG TOTAL--" . $item['mobile'] . "--" . $item['msg'] . $lineBreak;
+                $contentToWrite .= "Sms send Error--" . $curlRes . $lineBreak;
+                //////////Cron output Write on file/////////
+                file_put_contents($file, $contentToWrite, FILE_APPEND | LOCK_EX);   
+            }
+        } else {
+            $lineBreak      = " \r\n ";
+            $contentToWrite = date('Y-m-d H:i:s') . $lineBreak;
+            $contentToWrite .= "MSG TOTAL--" . $item['mobile'] . "--" . $item['msg'] . $lineBreak;
+            $contentToWrite .= "Sms send Error-- Blank Respons" . $lineBreak;
+            //////////Cron output Write on file/////////
+            file_put_contents($file, $contentToWrite, FILE_APPEND | LOCK_EX);
+        }
+        return $curlRes;
+    }*/
