@@ -29,6 +29,7 @@ robots.txt
 sites/all/README.txt
 sites/all/modules/README.txt
 sites/all/themes/README.txt
+sites/all/modules/custom.bckup14.05.2025
 
 # Ignore everything but the "sites" folder ( for non core developer )
 web.config

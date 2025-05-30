@@ -38,20 +38,12 @@ global $user, $user_role,$base_path,$base_root;
 
         if($user_role == 6 || $user_role == 7){ ?>
 
-<<<<<<< HEAD
         <!-- <li class="nav-item">
-=======
-        <li class="nav-item">
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             <a href="<?= $base_root.$base_path.'auto-cancellation-list' ?>" class="nav-link ">
                 <i class="fa fa-calendar-times-o" aria-hidden="true"></i>
                 Auto Cancellation List
             </a>
-<<<<<<< HEAD
         </li> -->
-=======
-        </li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
         <?php }
 
@@ -64,11 +56,10 @@ global $user, $user_role,$base_path,$base_root;
                 </a>
             </li>
 
-            <?php }
+            <?php 
+            }
 
 
-
-<<<<<<< HEAD
         if($user_role == 17){?>
         <li class="nav-item">
             <a href="<?= $base_root.$base_path.'allotment_list_approve' ?>" class="nav-link ">
@@ -76,9 +67,6 @@ global $user, $user_role,$base_path,$base_root;
                 Allotment List Approve
             </a>
         </li>
-=======
-        if($user_role ==6){?>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
         <li class="nav-item has-submenu">
             <a class="nav-link" href="#">
                 <i class="fa fa-hand-pointer-o" aria-hidden="true"></i>  Special Recommendation <i class="fa fa-angle-down fa-lg float-end mt-1" aria-hidden="true"></i>
@@ -258,10 +246,6 @@ global $user, $user_role,$base_path,$base_root;
             </a>
             <ul class="submenu collapse">
                 <li class=""><?= l('Run Allotment','rhe_allotment',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-<<<<<<< HEAD
-=======
-                <li class=""><?= l('Approve Allotment','allotment_list_approve',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
                 <li class=""><?= l('Flat Type Wise Waiting List','flat_type_waiting_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
                 <li class=""><?= l('Vacancy List','vacany_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
                 <li class=""><?= l('Allotment List','allotment_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
@@ -359,22 +343,14 @@ global $user, $user_role,$base_path,$base_root;
         </a>
         <ul class="submenu collapse">
             <?php if($user_role == 7){?>
-<<<<<<< HEAD
                 <li class=""><?= l('Occupant Data Entry (without HRMS)','rhewise_flatlist_draft',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
                 <li class=""><?= l('Occupant Data Entry (with HRMS)','rhewise_flatlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>                
-=======
-                <li class=""><?= l('Occupant Data Entry','rhewise_flatlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             <?php }else if($user_role == 8){?>
                 <li class=""><?= l('Occupant Data Approve','rhewise_occupantlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li> 
             <?php }
             ?>
-<<<<<<< HEAD
             <li class=""><?= l('Existing Occupant List (without HRMS)','rhewise_occupant_draft_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
             <li class=""><?= l('Existing Occupant List (with HRMS)','view-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-=======
-            <li class=""><?= l('Occupant List','view-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
         </ul>
         </li>
 
@@ -406,14 +382,10 @@ global $user, $user_role,$base_path,$base_root;
         </a>
         <ul class="submenu collapse">    
             <li class="nav-item">
-<<<<<<< HEAD
                 <?= l('<i aria-hidden="true"></i> Existing Occupant List (with HRMS)','existing-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
             </li>
             <li class="nav-item">
                 <?= l('<i aria-hidden="true"></i> Existing Occupant List (without HRMS)','existing-occupant-list-draft',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-=======
-                <?= l('<i aria-hidden="true"></i> Existing Occupant List','existing-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             </li>
             <li class="nav-item">
                 <?= l('<i  aria-hidden="true"></i> Physical Applicant List','physical-applicant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>

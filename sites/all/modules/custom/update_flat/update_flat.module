@@ -57,7 +57,6 @@
 			'access arguments' => array('administer RHE wise flat list Master'),
 		);
 
-<<<<<<< HEAD
 		// Done by Subham dt.20-05-2025
 		$items['rhe-wise-flat-list-delete/%'] = array(
 	  		'title' => 'RHE Wise Flat List',
@@ -66,9 +65,6 @@
 	  		'file' => 'rhe_wise_flat_list_page.inc',
 	  		'access arguments' => array('administer RHE wise flat list Master'),
 		);
-=======
-		
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 		/*DDO Estate Mapping Start*/
 	    $items['ddo-estate-mapping-list'] = array(
