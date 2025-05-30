@@ -11,9 +11,9 @@ global $user, $user_role,$base_path,$base_root;
             <small>Housing Department <br/> Government of West Bengal</small>
         </div>
     </a>
-    <ul class="nav nav-pills flex-column mb-auto cus-dashboard">
+    <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item">
-            <a href="<?= $base_root.$base_path.'dashboard' ?>" class="nav-link active">
+            <a href="<?= $base_root.$base_path.'dashboard' ?>" class="nav-link active#">
                 <i class="fa fa-tachometer" aria-hidden="true"></i>
                 Dashboard
             </a>
@@ -21,88 +21,16 @@ global $user, $user_role,$base_path,$base_root;
 
        <?php if($user_role == 10 || $user_role == 6 || $user_role ==13){ ?>
         <li class="nav-item">
-            <a href="<?= $base_root.$base_path.'application_status_check' ?>" class="nav-link">
+            <a href="<?= $base_root.$base_path.'application_status_check' ?>" class="nav-link active#">
                 <i class="fa fa-search" aria-hidden="true"></i>
                 Search Application Details
             </a>
         </li>
-        <?php }else if($user_role == 7){ ?>
-            <li class="nav-item">
-            <a href="<?= $base_root.$base_path.'application_status_check' ?>" class="nav-link ">
-                <i class="fa fa-search" aria-hidden="true"></i>
-                Search Application & Add Possession
-            </a>
-        </li>
-
-      <?php }
-
-        if($user_role == 6 || $user_role == 7){ ?>
-
-<<<<<<< HEAD
-        <!-- <li class="nav-item">
-=======
-        <li class="nav-item">
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
-            <a href="<?= $base_root.$base_path.'auto-cancellation-list' ?>" class="nav-link ">
-                <i class="fa fa-calendar-times-o" aria-hidden="true"></i>
-                Auto Cancellation List
-            </a>
-<<<<<<< HEAD
-        </li> -->
-=======
-        </li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
-
-        <?php }
-
-        if($user_role == 7){ //Done by Subham 08-01-2025 ?>
-
-            <li class="nav-item">
-                <a href="<?= $base_root.$base_path.'view-unauthorised-occupants' ?>" class="nav-link ">
-                    <i class="fa fa-user-times" aria-hidden="true"></i>
-                    Unauthorised Occupant List
-                </a>
-            </li>
-
-            <?php }
+        <?php }?>
 
 
-
-<<<<<<< HEAD
-        if($user_role == 17){?>
-        <li class="nav-item">
-            <a href="<?= $base_root.$base_path.'allotment_list_approve' ?>" class="nav-link ">
-                <i class="fa fa-user-plus" aria-hidden="true"></i>
-                Allotment List Approve
-            </a>
-        </li>
-=======
-        if($user_role ==6){?>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
-        <li class="nav-item has-submenu">
-            <a class="nav-link" href="#">
-                <i class="fa fa-hand-pointer-o" aria-hidden="true"></i>  Special Recommendation <i class="fa fa-angle-down fa-lg float-end mt-1" aria-hidden="true"></i>
-                
-            </a>
-            <!--sd start 20-06-2024---->
-            <ul class="submenu collapse">
-                <li class="nav-item">
-                        <?= l('<i   aria-hidden="true"></i> Add to Special Recommendation List','housing-approver-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-                </li>
-                <li class="nav-item">
-                        <?= l('<i   aria-hidden="true"></i> Edit Special Recommendation','special-recommendation-list-view',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-                </li>
-                <li class="nav-item">
-                        <?= l('<i   aria-hidden="true"></i> Final List of Special Recommendation','special-recommended-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-                </li>
-                
-            </ul>
-        </li>
-
-
-        <?php }
-
-            if($user_role == 10 || $user_role == 11 ||  $user_role == 13){  //remove 6 12-09-2024
+        <?php
+            if($user_role == 10 || $user_role == 11 || $user_role == 6 || $user_role == 13){
                 if($user_role == 11){ //ddo
                     $new_status = 'applied';
                     $next_status_app = 'ddo_verified_1';
@@ -116,13 +44,12 @@ global $user, $user_role,$base_path,$base_root;
                     $new_status = 'housing_sup_approved_1';
                     $next_status_app = 'housingapprover_approved_1';
                     $next_status_rej = 'housingapprover_reject1';
+                }else if($user_role == 6){ // housing official //secy_housing// HCA
+                    $new_status = 'allotted';
+                    $next_status_app = 'housing_official_approved';
+                    $next_status_rej = 'housing_official_reject';
                 }
-        //         else if($user_role == 6){ // housing official //secy_housing// HCA
-        //             $new_status = 'allotted';
-        //             $next_status_app = 'housing_official_approved';
-        //             $next_status_rej = 'housing_official_reject';
-        //         }
-        // ?>
+        ?>
 
         <li class="nav-item has-submenu">
             <a class="nav-link" href="#">
@@ -142,8 +69,10 @@ global $user, $user_role,$base_path,$base_root;
         </li>
         <?php
             }
-            if($user_role == 10 || $user_role == 11 || $user_role == 13){  // user role 13 is added 12-09-2024
+            if($user_role == 10 || $user_role == 11){
+                //echo "kjlkj";die;
                 if($user_role == 11){//ddo
+                   // echo "kjhk";die;
                     $new_status = 'applicant_acceptance';
                     $next_status_app = 'ddo_verified_2';
                     $next_status_rej = 'ddo_rejected_2';
@@ -152,10 +81,6 @@ global $user, $user_role,$base_path,$base_root;
                     $new_status = 'ddo_verified_2';
                     $next_status_app = 'housing_sup_approved_2';
                     $next_status_rej = 'housing_sup_reject_2';
-                }else if($user_role == 13){// housing-Approver     //12-09-2024
-                    $new_status = 'housing_sup_approved_2';
-                    $next_status_app = 'housingapprover_approved_2';
-                    $next_status_rej = 'housingapprover_reject2';
                 }
         ?>
         <li class="nav-item has-submenu">
@@ -258,10 +183,7 @@ global $user, $user_role,$base_path,$base_root;
             </a>
             <ul class="submenu collapse">
                 <li class=""><?= l('Run Allotment','rhe_allotment',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-<<<<<<< HEAD
-=======
                 <li class=""><?= l('Approve Allotment','allotment_list_approve',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
                 <li class=""><?= l('Flat Type Wise Waiting List','flat_type_waiting_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
                 <li class=""><?= l('Vacancy List','vacany_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
                 <li class=""><?= l('Allotment List','allotment_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
@@ -270,7 +192,7 @@ global $user, $user_role,$base_path,$base_root;
         <!------------------------27-08-2024 start-------------------------------->
         <li class="nav-item has-submenu">
             <a class="nav-link" href="#">
-                <i class="fa fa-id-card" aria-hidden="true"></i> License  
+                <i class="fa fa-pie-chart" aria-hidden="true"></i> License  
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down float-end mt-1" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708" />
                 </svg>
@@ -359,22 +281,12 @@ global $user, $user_role,$base_path,$base_root;
         </a>
         <ul class="submenu collapse">
             <?php if($user_role == 7){?>
-<<<<<<< HEAD
-                <li class=""><?= l('Occupant Data Entry (without HRMS)','rhewise_flatlist_draft',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-                <li class=""><?= l('Occupant Data Entry (with HRMS)','rhewise_flatlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>                
-=======
                 <li class=""><?= l('Occupant Data Entry','rhewise_flatlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             <?php }else if($user_role == 8){?>
                 <li class=""><?= l('Occupant Data Approve','rhewise_occupantlist',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li> 
             <?php }
             ?>
-<<<<<<< HEAD
-            <li class=""><?= l('Existing Occupant List (without HRMS)','rhewise_occupant_draft_list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-            <li class=""><?= l('Existing Occupant List (with HRMS)','view-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
-=======
             <li class=""><?= l('Occupant List','view-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?></li>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
         </ul>
         </li>
 
@@ -386,55 +298,11 @@ global $user, $user_role,$base_path,$base_root;
         <!-- <li class="nav-item">
             <?= l('Allotment','#',array('html' =>true, 'attributes' => array('class' => array('nav-link')))); ?>
         </li>  -->
-        <?php if($user_role == 11){   // by debaleena 13-09-2024?>
-        <li class="nav-item">
-            <?= l('<i class="fa fa-list" aria-hidden="true"></i> Applicant List with Flat Possession','view-flat-possession-taken-ddo',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-        </li>
-        <li class="nav-item"> <!-- </Done by Subham 07-01-2025> -->
-            <?= l('<i class="fa fa-share-square-o" aria-hidden="true"></i> Applicant List with Released Flats','view-flat-released-ddo',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-        </li>
-        <?php } ?>
-
-
-
-        <?php if($user_role == 6 || $user_role == 10 || $user_role == 13){   // by debaleena 13-09-2024?>
-
-
-        <li class="nav-item has-submenu">
-        <a class="nav-link" href="#">
-            <i class="fa fa-list" aria-hidden="true"></i> Occupant & Aplicant List
-        </a>
-        <ul class="submenu collapse">    
-            <li class="nav-item">
-<<<<<<< HEAD
-                <?= l('<i aria-hidden="true"></i> Existing Occupant List (with HRMS)','existing-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-            </li>
-            <li class="nav-item">
-                <?= l('<i aria-hidden="true"></i> Existing Occupant List (without HRMS)','existing-occupant-list-draft',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-=======
-                <?= l('<i aria-hidden="true"></i> Existing Occupant List','existing-occupant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
->>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
-            </li>
-            <li class="nav-item">
-                <?= l('<i  aria-hidden="true"></i> Physical Applicant List','physical-applicant-list',array('html'=>true, 'attributes'=>array('class'=>array('nav-link')))); ?>
-            </li>
-        </ul>
-        </li> 
-        <?php } ?>
-
-        <?php if($user_role != 4 && $user_role != 11 ){ ?>
-        <li class="nav-item">
-            <a href="<?= $base_root.$base_path.'password_change' ?>" class="nav-link active#">
-                <i class="fa fa-tachometer" aria-hidden="true"></i>
-                Change Password
-            </a>
-        </li>
-        <?php } ?>
-
-
+        
         <li class="nav-item">
             <?= l('<i class="fa fa-sign-out" aria-hidden="true"></i> Logout','/user/logout',array('html' =>true, 'attributes' => array('class' => array('nav-link')))); ?>
-        </li>        
+        </li>
+                
     </ul>
-    <!-- <img src="<?= $base_root.$base_path ?>sites/all/themes/housingtheme/images/designed-by-nic.png" class="w-100"> -->
+    <img src="<?= $base_root.$base_path ?>sites/all/themes/housingtheme/images/designed-by-nic.png" class="w-100">
 </div>

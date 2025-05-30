@@ -1,19 +1,28 @@
 <?php // Done by Subham 06-12-2024
+<<<<<<< HEAD
 function request_for_offer_letter_extension_form($form,&$form_state, $app_id = '', $app_status = '', $uid = '', $off_detail_id = '', $dov = '') {
   global $user, $user_role;
   
+=======
+function request_for_offer_letter_extension_form($form,&$form_state, $app_id = '', $app_status = '', $uid = '', $off_detail_id = '') {
+  global $user, $user_role;
+  // print_r($user);die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
   $enc_app_id = decrypt_url($app_id);
   $enc_app_status = decrypt_url($app_status);
   
   $enc_uid = decrypt_url($uid);
   $enc_off_detail_id = decrypt_url($off_detail_id);
+<<<<<<< HEAD
   $enc_dov = decrypt_url($dov);
   //print_r($enc_dov);die;
   $date_only = date('Y-m-d', strtotime($enc_dov));
   //echo $date_only;die;
 
   drupal_add_js(array('application_status_check' => array('date_only' => $date_only)), 'setting');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
   $form['offer_letter_extension_reason_dropdown'] = array(
     '#title' => t('Reason for Offer Letter Extension'),

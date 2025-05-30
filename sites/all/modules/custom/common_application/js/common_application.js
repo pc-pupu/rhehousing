@@ -47,6 +47,7 @@ jQuery(document).ready(function() {
 
 /*  end  *//////
 
+<<<<<<< HEAD
 // jQuery(document).ready(function(){
 // 		jQuery("#edit-dob").datepicker({
 // 		dateFormat: "dd/mm/yy",
@@ -71,6 +72,19 @@ jQuery(document).ready(function(){
         maxDate: "-18Y",
         autoSize: true
     }); 
+=======
+jQuery(document).ready(function(){
+		jQuery("#edit-dob").datepicker({
+		dateFormat: "dd/mm/yy",
+		//minDate: minDoj,
+		changeMonth: true,
+		changeYear: true,
+		//yearRange: "-70:-18",
+		yearRange: "-70:-18", //18 years or older up to 70year (oldest person ever, can be sensibly set to something much smaller in most cases)
+	    maxDate: "-18Y", //Will only allow the selection of dates more than 18 years ago, useful if you need to restrict this
+		autoSize: true
+	});	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 });
 
 jQuery(document).ready(function(){
@@ -79,7 +93,11 @@ jQuery(document).ready(function(){
 		//minDate: minDoj,
 		changeMonth: true,
 		changeYear: true,
+<<<<<<< HEAD
 		yearRange: "-80:+0",
+=======
+		yearRange: "-70:+0",
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		maxDate: "0",
 		autoSize: true
 	});	
@@ -97,6 +115,7 @@ jQuery(document).ready(function(){
 	});	
 });
 
+<<<<<<< HEAD
 // jQuery(document).ready(function(){
 // 	jQuery("#edit-dol").datepicker({
 // 	dateFormat: "dd/mm/yy",
@@ -118,6 +137,18 @@ jQuery(document).ready(function(){
         minDate: new Date(1947, 0, 1), // Optional: restricts selection before 1970
         autoSize: true
     }); 
+=======
+jQuery(document).ready(function(){
+	jQuery("#edit-dol").datepicker({
+	dateFormat: "dd/mm/yy",
+	//minDate: minDoj,
+	changeMonth: true,
+	changeYear: true,
+	//yearRange: "-0:+70",
+	//minDate: "0",
+	autoSize: true
+});	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 });
 
 jQuery(document).ready(function(){
@@ -144,6 +175,7 @@ jQuery(document).ready(function(){
 });	
 });
 
+<<<<<<< HEAD
 
 jQuery(document).ready(function () {
 	
@@ -174,6 +206,19 @@ jQuery(document).ready(function () {
 // 	autoSize: true
 // });	
 // });
+=======
+jQuery(document).ready(function(){
+	jQuery("#edit-extension").datepicker({
+	dateFormat: "dd/mm/yy",
+	minDate: "0",
+	maxDate: "14",
+	changeMonth: true,
+	changeYear: true,
+	yearRange: "-0:+70",
+	autoSize: true
+});	
+});
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 //end///
 

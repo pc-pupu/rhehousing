@@ -40,7 +40,11 @@
 			$fields[] = $data->floor;
 			 $fields[] = $data->flat_no;
 
+<<<<<<< HEAD
 			if(!empty($data->remarks)){
+=======
+			if(isset($data->remarks)){
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				$str = $data->flat_status_code."<br>"."(".$data->remarks.")";   //flat_status_code added by debaleena 26-07-2024
 			}else{
 				$str = $data->flat_status_code;   //flat_status_code added by debaleena 26-07-2024

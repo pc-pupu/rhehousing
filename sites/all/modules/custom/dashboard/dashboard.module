@@ -161,11 +161,18 @@ function dashboard_content() {
 
       $output['allotted-apply'] = application_list_fetch('new-apply','housing_sup_approved_2')->rowCount();
       $output['allotted-vs'] = application_list_fetch('vs', 'housing_sup_approved_2')->rowCount();
+<<<<<<< HEAD
 
       $output['allotted-cs'] = application_list_fetch('cs','housing_sup_approved_2')->rowCount();
       
     }else if ($user_role == 6){
       // $output['all-applications'] = pending_app_list_fetch_secy('allotted')->rowCount();
+=======
+      $output['allotted-cs'] = application_list_fetch('cs','housing_sup_approved_2')->rowCount();
+      
+    }else if ($user_role == 6){
+      $output['all-applications'] = pending_app_list_fetch_secy('allotted')->rowCount();
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
       $output['all-license'] = license_list_fetch_secy('housingapprover_approved_2')->rowCount();
     }
     else if ($user_role == 7){
@@ -177,15 +184,27 @@ function dashboard_content() {
     else if ($user_role == 8){
       $output['all-exsting-occupant'] = occupant_list_fetch()->rowCount();
     }
+<<<<<<< HEAD
     else if ($user_role == 17){ // Done by Subham dt.15-05-2025
+=======
+    else if ($user_role == 17){ // Done by Subham dt.19-05-2025
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
       $output['all-applications'] = pending_app_list_fetch_secy('allotted')->rowCount();
       $output['special-recommendation-list-data'] = fetch_special_recommendation_list_data()->rowCount();
     }
     ////end////
+<<<<<<< HEAD
   // print_r($output['all-exsting-occupant']);die;
   }
     return theme('custom_dashboard_template', array('output' => $output));
 }
+=======
+  }
+  // print_r($output['all-exsting-occupant']);die;
+  return theme('custom_dashboard_template', array('output' => $output));
+}
+
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 function dashboard_theme() {
     return array(
       'custom_dashboard_template' => array(
@@ -363,6 +382,10 @@ function auto_cancellation_applicant_list_fetch(){
   }
   return $results;
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 function fetch_withouthrms_data_count(){
     $query = db_query("select count(housing_existing_occupant_draft_id) as data_count from housing_existing_occupant_draft");
     $result = $query->fetchObject();
@@ -374,6 +397,10 @@ function fetch_withouthrms_data_count(){
     
 }
 
+<<<<<<< HEAD
+=======
+// Done by Subham dt.19-05-2025
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 function fetch_special_recommendation_list_data() {
     $query = db_select('housing_special_recommended', 'hsr');
 
@@ -382,8 +409,11 @@ function fetch_special_recommendation_list_data() {
 }
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 // function fetch_latest_applicant($uid)
 // {
 //   global $user, $user_role;

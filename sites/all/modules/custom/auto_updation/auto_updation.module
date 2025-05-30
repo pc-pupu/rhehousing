@@ -45,6 +45,7 @@ function auto_updation_menu() {
     'access arguments' => array('access content'),
   );
 
+<<<<<<< HEAD
   // $items['auto-updation-offer-final-cancel'] = array(
   //   'title' => 'Auto Updation Exceed Offer Letter extended Date',
   //   'page callback' => 'auto_updation_offer_final_cancel',
@@ -52,6 +53,8 @@ function auto_updation_menu() {
   //   'access arguments' => array('access content'),
   // );
 
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
   return $items;
 }
 
@@ -574,6 +577,7 @@ function auto_transfer_checking(){
   }
 }
 
+<<<<<<< HEAD
 //not done//
 function auto_updation_offer_final_cancel(){
   
@@ -661,6 +665,8 @@ function auto_updation_offer_final_cancel(){
 
 }
 
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 
 

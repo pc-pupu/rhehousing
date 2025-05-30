@@ -9,8 +9,14 @@ global $user, $user_role,$base_path,$base_root;
          <div class="col-md-9">
          <h4 class="title-lg">Welcome to e-Allotment of Rental Housing Estate</h4><br>
          <!--<h4 class="mt-4">Welcome  <?= $output['user_info']['applicantName'] ?></h4> -->
+<<<<<<< HEAD
          <h6>Designation: <?= $output['user_info']['applicantDesignation'] ?></h6>
          <h6>Mobile Number: <?= $output['user_info']['mobileNo'] ?></h6>
+=======
+         <h6>Designation: <?= !empty($output['user_info']['applicantDesignation']) ? $output['user_info']['applicantDesignation'] : 'Data not found'; ?></h6>  
+         <h6>Office: <?= !empty($output['user_info']['officeName']) ? $output['user_info']['officeName'] : 'Data not found'; ?></h6>
+         <h6>Mobile Number: <?= !empty($output['user_info']['mobileNo']) ? $output['user_info']['mobileNo'] : 'Mobile No. not found'; ?></h6>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
          <h6>Email: <?= $output['user_info']['email'] ?></h6>
          <?php if(isset($output['user_status']) && $output['user_status'] == 'offer_letter_cancel'){ ?>
                   <p style="color:red;">** Your offer letter has been marked as inactive by the system due to non-acceptance within the 15-day timeline. Please contact your Sub-Divisional Asst. Engineer within 5 days to request an offer letter extension. Otherwise, Your application will be cancelled 15 days after the offer letter becomes inactive. </p> <!-- Done by Subham 09-12-2024 -->
@@ -175,7 +181,11 @@ global $user, $user_role,$base_path,$base_root;
    </div>
    <?php } ?>
    <?php if($user_role == 7){ // For Sub-divison ?> 
+<<<<<<< HEAD
    <!-- </Done by Subham bt. 30-12-2024> -->
+=======
+   <!-- </Done by Subham dt. 30-12-2024> -->
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
    <div class="col-md-12">
       <div class="row">
          <div class="col-md-4 ">
@@ -209,7 +219,11 @@ global $user, $user_role,$base_path,$base_root;
    </div>
    <?php } ?>
    <?php if($user_role == 8){ // For Divison ?> 
+<<<<<<< HEAD
    <!-- </Done by Subham bt. 31-12-2024> -->
+=======
+   <!-- </Done by Subham dt. 31-12-2024> -->
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
    <div class="col-md-12">
       <div class="row">
          <div class="col-md-6 ">
@@ -295,6 +309,24 @@ global $user, $user_role,$base_path,$base_root;
    <div class="col-md-12">
       <div class="row">
          <div class="col-md-4">
+<<<<<<< HEAD
+=======
+
+            <!-- <TURNED OFF BY Subham dt.19-05-2025 AS THIS SECTION IS FOR HoD LOGIN> -->
+            <!-- <div class="row">
+               <div class="col-md-12">
+                  <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box1"> -->
+                     <!-- <i class="fa fa-group"></i> -->
+                     <!-- <span class="counter"><?php //echo $output['all-applications']?></span>
+                     <p>All Pending Application</p>
+                     <a href="<?php //echo $base_root.$base_path.'allotment_list_approve/'?>" class="badge rounded-pill text-bg-success">View Details</a>
+                     <img src="<?php //echo $base_root.$base_path?>sites/all/themes/housingtheme//images/icon-allotment.png"
+                     class="position-absolute end-0 counter-box-icon top-0 mt-2 me-2" />
+                  </div>
+               </div>
+            </div> -->
+
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             <div class="row">
                <div class="col-md-12">
                   <div class="counter-box p-3 rounded mb-3 position-relative shadow-sm color-box4">
@@ -355,6 +387,10 @@ global $user, $user_role,$base_path,$base_root;
       </div>
    </div>
    <?php } ?>
+<<<<<<< HEAD
+=======
+   <!-- </Done by Subham dt. 19-05-2025> -->
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
    <?php if($user_role == 17 ){ //For Head of the Department ?>
    <div class="col-md-12">
       <div class="row">

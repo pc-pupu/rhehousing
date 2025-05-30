@@ -8,6 +8,7 @@ cache/
 files/
 sites/default/files
 sites/*/private
+#sites/*/private
 
 #Ignore Contrib Modules
 sites/all/modules/contrib
@@ -44,6 +45,15 @@ xmlrpc.php
 /profiles
 /scripts
 /themes
+clrcache.php
+/hrms-test-api
+/old
+/script-txt
+/script
+/tmp
+curl.php.php
+htaccess_old
+.editorconfig
 #Ignore ALL ZIP files
 *.zip
 #Ignore pg-SQL DB Backup Files

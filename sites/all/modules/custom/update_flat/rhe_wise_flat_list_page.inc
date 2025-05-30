@@ -82,17 +82,27 @@
 		global $base_path;
 		
 		$output = '';
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$result = rhe_wise_flat_list_detail($rhe_name);
 		
 		$result1 = rhe_wise_flat_list_detail($rhe_name);
 		$data1 = $result1->fetchObject();
+<<<<<<< HEAD
 
 		// echo $rhe_name; die;
 		// print_r($data1);die;
 		
 		$header = array(); // sd 24-06-2024 turned off
 		$rows =array(); // sd 24-06-2024 turned off
+=======
+		
+		//$header = array(); // sd 24-06-2024 turned off
+		//$rows =array(); // sd 24-06-2024 turned off
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 		$header[] = array('data' => 'Sl. No.');
 		$header[] = array('data' => 'District');
@@ -103,10 +113,17 @@
 		$header[] = array('data' => 'Floor');
 		$header[] = array('data' => 'Flat No');
 		$header[] = array('data' => 'Flat Status');
+<<<<<<< HEAD
 		$header[] = array('data' => 'Action');
 
 		$i = 1;
 		// if($result->rowCount() > 0){
+=======
+
+
+		
+		$i = 1;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		while($data = $result->fetchObject()) {
 			
 			 $fields = array();
@@ -129,13 +146,18 @@
 			$fields[] = $data->floor;
 			$fields[] = $data->flat_no;
 			// $fields[] = $data->flat_status;   //turned off by debaleena 26-07-2024
+<<<<<<< HEAD
 			if(!empty($data->remarks)){
+=======
+			if(isset($data->remarks)){
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				
 				$fields[] = $data->flat_status_code."<br>"."(".$data->remarks.")"; //added by debaleena 26-07-2024
 			}else{
 				
 			 	$fields[] = $data->flat_status_code;
 			}
+<<<<<<< HEAD
 			$fields[] = l('<i class="fa fa-trash"></i> Delete', 'rhe-wise-flat-list-delete/'.encrypt_url($data->flat_id), array('html' => true, 'attributes' => array('class' => array('btn btn-sm bg-primary px-3 rounded-pill text-white fw-bolder mb-4'))));
 			 
 			$rows[]  = $fields;
@@ -143,6 +165,14 @@
 			$i++;
 		}
 		// }
+=======
+			 	
+			 
+			 $rows[]  = $fields;
+			 
+			 $i++;
+		 }
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 		/*$output = theme_table(
 			array(
@@ -156,7 +186,11 @@
 			)
 		).theme('pager');*/
 		
+<<<<<<< HEAD
 		if($result->rowCount() > 0) { 
+=======
+		if($result->rowCount() > 0) {
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			// Render using Drupal's render API.
 			$build['datatable'] = array(
 			  '#theme' => 'datatable',
@@ -174,7 +208,12 @@
 			);
 			
 			$output = theme('datatable', $variables);
+<<<<<<< HEAD
 		}else { 
+=======
+		}
+		else {
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$output = '<div>
 							<table class="datatable_no_data_found table table-list table-striped">
 								<tr class="tr_no_data_found">
@@ -194,7 +233,10 @@
 			
 			//sd 24-06-2024 turned off
 			//return l('<img height="18" width="18" src="'.$base_path.drupal_get_path('module', 'update_flat').'/images/pdf_icon.png" title="Download Flat List" alt="PDF Icon">Download Flat List Of '.$data1->estate_name,'rhe_wise_flat_list_pdf/'.encrypt_url($rhe_name).'/'.$file_name, array('html'=>TRUE, 'attributes' => array('target' => '_blank', 'style' => 'color: #0090C7;font-weight: 400;text-decoration: none; font-size:14px'))).$output;
+<<<<<<< HEAD
 			
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$url = l('Download Flat List of '.$data1->estate_name,'rhe_wise_flat_list_pdf/'.encrypt_url($rhe_name).'/'.$file_name,array('html' => true, 'attributes' => array('target' => '_blank','class' => array('btn bg-primary  px-5 rounded-pill text-white fw-bolder mb-4'))));
 
 			return $url.'<div class="mb-5 pb-3">'.$output.'</div>';//sd 24-06-2024
@@ -203,8 +245,11 @@
 			return $output;
 		}
 	}
+<<<<<<< HEAD
 
 	function rhe_wise_flat_list_delete($flat_id) {
 		$flat_id = decrypt_url($flat_id);
 		echo $flat_id ;die;
 	}
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92

@@ -8,21 +8,33 @@ function special_recommendation_menu() {
     'title' => 'List of Applications Approved by Housing Approver',
     'page callback' => 'housing_approver_list',
     'page arguments' => array(),
+<<<<<<< HEAD
     'access arguments' => array('administer recommendation list'),
+=======
+    'access arguments' => array('access content'),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
   );
 
   $items['special-recommended-list'] = array(
     'title' => 'Final List of Special Recomendation',
     'page callback' => 'fetch_special_recommended_list',
     'page arguments' => array(),
+<<<<<<< HEAD
     'access arguments' => array('administer recommendation list'),
+=======
+    'access arguments' => array('access content'),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
   );
 
   $items['special-recommendation/%/%'] = array(
     'page callback' => 'special_recommendation',
     'page arguments' => array(1,2),
+<<<<<<< HEAD
     'access arguments' => array('administer recommendation list'),
+=======
+    'access arguments' => array('access content'),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
   );
 
@@ -36,7 +48,11 @@ function special_recommendation_menu() {
   $items['special-recommendation-remove/%'] = array( //added 30-10-2024
     'page callback' => 'special_recommendation_remove',
     'page arguments' => array(1),
+<<<<<<< HEAD
     'access arguments' => array('administer recommendation list'),
+=======
+    'access arguments' => array('access content'),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
   );
 
@@ -166,11 +182,17 @@ function special_recommendation_list_view_form($form, &$form_state){
 
     $form = array();
 
+<<<<<<< HEAD
     if (count($rows) > 0) {
       $form['note'] = array(
         '#markup' => '<span style="font-size:18px; color:blue;">*Drag applicant\'s name up or down to edit the list</span>',
       );
     }
+=======
+    $form['note'] = array(
+      '#markup' => '<span style="font-size:18px; color:blue;">*Drag applicant\'s name up or down to edit the list</span>',
+    );
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
     $form['output'] = array(
       '#type'     => 'markup',
@@ -195,6 +217,7 @@ function special_recommendation_list_view_form($form, &$form_state){
       '#attributes' => array('class'=>array('btn bg-info btn-sm px-5 rounded-pill text-white fw-bolder'),'id' => array('savebtn'))
     );*/
 
+<<<<<<< HEAD
     if (count($rows) > 0) {
       $form['submit'] = array(
         '#type' => 'submit',
@@ -205,6 +228,16 @@ function special_recommendation_list_view_form($form, &$form_state){
         // '#submit' => array('special_recommendation_form_submit')
       );
     }
+=======
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit'),
+      '#prefix' => '<div class="col-md-6"><div class="form-floating">',
+      '#suffix' => '</div></div></div>',
+      '#attributes' => array('class'=>array('btn bg-primary btn-sm px-5 rounded-pill text-white fw-bolder'),'id' => array('savebtn')),
+      // '#submit' => array('special_recommendation_form_submit')
+    );
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
   return $form;
   }        
 }
