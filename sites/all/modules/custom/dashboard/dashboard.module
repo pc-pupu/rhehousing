@@ -402,3 +402,10 @@ function fetch_special_recommendation_list_data() {
 //   // print_r($results);die;
 //   return $results;
 // }
+
+function fetch_info_by_id($id = 0){
+
+  echo 'check'; echo $id;
+  return 0;
+
+}
