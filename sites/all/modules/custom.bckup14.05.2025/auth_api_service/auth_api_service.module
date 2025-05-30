@@ -1,0 +1,271 @@
+<?php
+drupal_session_start();
+function auth_api_service_services_resources() {
+
+    $resources = auth_api_service_resource();
+
+    return $resources;
+
+}
+
+function auth_api_service_resource() {
+ //echo 'dd';die();
+    $api 	=	array(
+        /* HRMS Login API */
+        'login-hrms' => array(
+            'operations' => array(
+                'create' => array(
+                    'help' => 'Applicant Login',
+                    'callback' => 'applicant_login',
+                    'access callback' 	=> 'user_access',
+                    'access arguments' 	=> array('access content'), 
+                    'args' => array(
+                        array(
+                            'hrms_id' => 'hrms_id',
+                            'type' => 'integer',
+                            'description' => 'The HRMS ID.',
+                            'source' => 'data',
+                            'optional' => true,
+                        ),
+                        array(
+                            'encdata' => 'encdata',
+                            'type' => 'string',
+                            'description' => 'Enc Data.',
+                            'source' => 'data',
+                            'optional' => false,
+                        ),
+                        array(
+                            'cs' => 'cs',
+                            'type' => 'string',
+                            'description' => 'Check Sum.',
+                            'source' => 'data',
+                            'optional' => false,
+                        )
+                    ),
+                ),
+            ),
+        ),
+        'login-ddo' => array(
+            'operations' => array(
+                'create' => array(
+                    'help' => 'DDO Login',
+                    'callback' => 'ddo_login',
+                    'access callback'   => 'user_access',
+                    'access arguments'  => array('access content'), 
+                    'args' => array(
+                        array(
+                            'encdata' => 'encdata',
+                            'type' => 'string',
+                            'description' => 'Enc Data.',
+                            'source' => 'data',
+                            'optional' => false,
+                        ),
+                        array(
+                            'cs' => 'cs',
+                            'type' => 'string',
+                            'description' => 'Check Sum.',
+                            'source' => 'data',
+                            'optional' => false,
+                        )
+                    ),
+                ),
+            ),
+        )
+    );
+
+    return $api;
+
+}
+
+function decrypt($data){
+    // echo gettype($data);die;
+    $encrptedString = base64_decode($data);
+	$cipher='aes-256-cbc';//to be shared with HRMS team
+    $secret = "3652874125963346";//uat////to be shared with HRMS team
+	$iv = "plkygtwsersuytvb";//uat//to be shared with HRMS team
+	//$decryptedString = openssl_decrypt($encrptedString, $cipher, $secret, $option, $iv );  
+		
+	$decryptedString= openssl_decrypt($encrptedString,$cipher,$secret,OPENSSL_RAW_DATA,$iv);
+		 
+
+	return $decryptedString; 
+}
+
+function applicant_login($data){
+    // echo 'debolina';die;
+   
+
+    // $decrypted_data=decrypt($data);
+    // echo '<pre>'; print_r($decrypted_data);
+    //ob_start();
+    //$bufferedOutput = ob_get_contents();
+    //file_put_contents('debug_output.txt', $bufferedOutput);
+    //print_r($bufferedOutput);
+    //ob_end_clean();
+    //die();
+    
+    set_time_limit(10); // Limit execution to 10 seconds
+
+    // Send timeout response if script takes too long
+    if (time() - $_SERVER['REQUEST_TIME'] > 10) {
+        // drupal_json_output(array('status'  => 'error','message' => 'Request timed out.',));
+        drupal_json_output(array('error' => 'Request timed out. Please try again.'), 408);
+        drupal_exit();
+    }
+    
+    $encdata = $data['encdata'];
+    $cs =  $data['cs']; 
+
+    $decrypted_data = decrypt($encdata);
+    $dataObj = json_decode($decrypted_data);
+
+    $cksm = checksum_validation($decrypted_data);
+    if($cs == $cksm){
+        
+        if(empty($dataObj->hrmsid)){
+            drupal_json_output(array('error' => 'Missing required data'), 400);
+            drupal_exit();
+        }else{
+            
+            //*by dg 07-01-2025 */
+            $hrms_json_log = array();
+            $hrms_json_log['hrms_id'] = $dataObj->hrmsid;
+            $hrms_json_log['json_encrypted_data'] = $encdata;
+            $hrms_json_log['json_decrypted_data'] = $decrypted_data;
+            $hrms_json_log['created_at'] = date('Y-m-d H:i:s');
+            db_insert('housing_hrms_applicant_login_log')
+            ->fields($hrms_json_log)
+            ->execute();
+
+            //*end *//
+
+            drupal_goto('/user/sso/' . base64_encode($dataObj->hrmsid));
+            
+            //** new code written for api not providing redirect_url in header but it is turned off cz it might be solved by whitelisting **//
+            // Generate redirect URL (absolute URL is best here)
+            /*$url = 'http://172.25.142.221/user/sso/' . base64_encode($dataObj->hrmsid);
+
+            // Debug log
+            //access_log("Redirect URL: $url");
+
+            // Check for output before headers
+            if (headers_sent($file, $line)) {
+                error_log("Headers already sent at $file:$line — cannot redirect.");
+            } else {
+                // Clean all output buffers
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+
+                // Send the redirect
+                header('Location: ' . $url, true, 302);
+                exit;
+            }*/
+            
+
+        }
+    }else{
+        drupal_json_output(array('error' => 'Error: Checksum mismatch'), 400);
+    }
+}
+
+function ddo_login($data){
+    global $user;
+    //print_r($data); die;
+
+    $encdata = $data['encdata'];
+    $cs =  $data['cs']; 
+
+    $decrypted_data = decrypt($encdata);
+    $dataObj = json_decode($decrypted_data);
+
+    // echo '<pre>'; print_r($dataObj); die;
+
+    set_time_limit(10); // Limit execution to 10 seconds
+
+    // Send timeout response if script takes too long
+    if (time() - $_SERVER['REQUEST_TIME'] > 10) {
+        // drupal_json_output(array('status'  => 'error','message' => 'Request timed out.',));
+        drupal_json_output(array('error' => 'Request timed out. Please try again.'), 408);
+        drupal_exit();
+    }
+
+    $cksm = checksum_validation($decrypted_data);
+    if($cs == $cksm){
+        if(empty($dataObj->ddo_code)){
+            drupal_json_output(array('error' => 'Missing required data'), 400);
+            drupal_exit();
+        }else{
+            
+            // check before insert 
+            $result = db_query("select ddo_code, hrms_id, is_active from  housing_ddo_hrms_mapping where  ddo_code=:ddo_code and hrms_id=:hrms_id and is_active = 'Y' ", array(':ddo_code'=> $dataObj->ddo_code, ':hrms_id' => $dataObj->hrmsid));
+            
+            if($result->rowCount() == 0){
+                // update previous DDO entry by is_active = N
+                $update = db_update('housing_ddo_hrms_mapping')->fields(array('is_active'=>'N'))->condition('ddo_code',$dataObj->ddo_code, '=')->execute();
+
+
+                // insert into housing_ddo_hrms_mapping
+
+                $insarr = array(
+                    'ddo_code' => $dataObj->ddo_code,
+                    'hrms_id' => $dataObj->hrmsid,
+                    'created_datetime' => date('Y-m-d H:i:s'),
+                    'is_active'=>'Y'
+                );
+                $ex = db_insert('housing_ddo_hrms_mapping')->fields($insarr)->execute();
+
+                $appUserData = array(
+                    'name' => trim($dataObj->ddo_code) ,
+                    'pass' => trim($dataObj->ddo_code) , // note: do not md5 the password
+                    'mail' => $dataObj->email,
+                    'access' => REQUEST_TIME,
+                    'login' => REQUEST_TIME,
+                    'status' => 1,
+                    //'init' => trim($userData['email']),
+                    'roles' => array(
+                        DRUPAL_AUTHENTICATED_RID => 'authenticated user',
+                        11 => 'DDO'
+                    )
+                );
+
+                // The first parameter is sent blank so a new user is created.
+                $userDetails = user_save(Null, $appUserData); 
+                $user = user_load_by_name($dataObj->ddo_code);
+                $user_id = $user->uid;  
+                drupal_session_regenerate();
+                drupal_goto('dashboard');
+
+            }else{
+
+                //*by dg 07-01-2025 */
+                $hrms_json_log = array();
+                $hrms_json_log['hrms_id'] = $dataObj->hrmsid;
+                $hrms_json_log['ddo_code'] = $dataObj->ddo_code;
+                $hrms_json_log['json_encrypted_data'] = $encdata;
+                $hrms_json_log['json_decrypted_data'] = $decrypted_data;
+                $hrms_json_log['created_at'] = date('Y-m-d H:i:s');
+                db_insert('housing_hrms_ddo_login_log')
+                ->fields($hrms_json_log)
+                ->execute();
+
+                //*end *//
+                drupal_goto('sso/ddo/'.base64_encode($dataObj->ddo_code));
+            }
+        }
+    }else{
+        drupal_json_output(array('error' => 'Error: Checksum mismatch'), 400);
+    }
+}
+
+function validate_token($given_token){
+    
+    $valid_token = variable_get('api_secret_token','');
+    
+    return ($given_token === $valid_token);
+}
+
+function checksum_validation($data = ''){
+    $hmac_secret="8392512033044595";
+    return $checksum=hash_hmac('sha256', mb_convert_encoding($data, "UTF-8"),$hmac_secret);
+}

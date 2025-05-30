@@ -18,7 +18,7 @@
                         title="Housing Department"></div>
                 <div class="col-md-6 text-end mt-5">
                     <a href="<?= $base_root.$base_path.'user/login'?>" target="_self" class="btn-admin-login mx-2">Official Login</a>
-                    <a href="<?= $base_root.$base_path.'hrms-login'?>" target="_self" class="btn-admin-login">Applicant Login</a>
+                     <a href="<?= $base_root.$base_path.'hrms-login'?>" target="_self" class="btn-admin-login">Applicant Login</a> 
                 </div>
             </div>
         </div>

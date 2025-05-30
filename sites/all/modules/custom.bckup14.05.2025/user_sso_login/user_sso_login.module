@@ -1,0 +1,245 @@
+<?php
+
+function user_sso_login_menu() {
+	
+    $items['user/sso/%']   = array(
+        'title' => 'User Single Sign-on Entry',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('user_sso_login', 2),
+        'access callback' => TRUE,
+        //'access arguments' => array('access content'),
+        'file' => 'user_sso_login.inc'
+    );
+	$items['hrms-login'] = array(
+        'title'             => 'HRMS user login',
+        'page callback'     => 'drupal_get_form',
+        'page arguments'    => array('hrms_login_form'),
+        'access arguments'  => array('administer hrms login form'),
+        'access callback'   => TRUE,
+        'file' 				=> 'hrms_login_form.inc'
+    );
+
+    $items['sso/ddo/%']   = array(
+        'title' => 'User Single Sign-on Entry',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('user_ddo_login', 2),
+        'access callback' => TRUE,
+        //'access arguments' => array('access content'),
+        'file' => 'user_sso_login.inc'
+    );
+
+	// get api key value by securly
+	$items['get-key'] = array(
+        'page callback'    => 'get_api_key',
+        'access callback'  => 'user_is_logged_in',
+        'type'             => MENU_CALLBACK,
+        'delivery callback' => 'drupal_json_output', // Ensures JSON response
+    );
+	
+	
+	return $items;
+}
+
+function user_sso_login_permission() {
+    return array(
+        'administer hrms login form' => array(
+            'title' => t('Administer hrms login form'),
+            'description' => t('Perform administration tasks for administer hrms login form.')
+        ),
+    );
+}
+	
+	/*function application_registration($usrid = '') {
+		
+		$uid = decrypt_url($usrid);
+		
+		$output = array();
+		if($uid !== '' && (!is_numeric($uid) || $uid <= 0)) {
+			$output[] = false;
+		}
+		else{	
+			$output[] = true;
+			
+			$output[] = $usrid;
+			
+			$query = db_select('users', 'u');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'u.uid = haod.uid');
+			$query->addField('u', 'mail');
+			$query->addField('ha', 'applicant_name');
+			$query->addField('ha', 'gender');
+			$query->addField('ha', 'mobile_no');
+			$query->addField('ha', 'date_of_birth');
+			$query->addField('haod', 'applicant_designation');
+			$query->addField('haod', 'office_name');
+			$query->addField('haod', 'hrms_id');
+			$query->condition('u.uid', $uid, '=');
+			$result = $query->execute();
+			
+			$output[] = $result->fetchObject();
+		}
+		return theme('application_registration_template', array('output' => $output));
+		
+	}*/
+	
+	/*function user_registration_theme() {
+		
+		return array(
+			'application_registration_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be custom-page.tpl.php
+				'template' => 'application_registration',
+			),
+		);
+	}
+	
+  
+	function user_registration_permission() {
+		return array(
+			'Administer Applicant Registration' => array(
+			  'title' => t('Administer Applicant Registration'),
+			  'description' => t('Perform Administer Applicant Registration.'),
+			),
+		);
+	}
+	
+	
+	
+	
+	function element_validate_username($element, &$form_state){
+		$value = trim($element['#value']);
+		if(substr($value, 0, 1) == '_' or substr($value, 0, 1) == '.' or substr($value, -1) == '_' or substr($value, -1) == '.') {
+			form_error($element, t('" %name " doesnot begin or end with "_" or "."', array('%name' => $element['#title'])));
+		}
+		else {
+			if($value !== '' && !preg_match('/^[a-zA-Z0-9_.]{5,20}$/', $value)) {
+				form_error($element, t('" %name " must be 5-20 characters and username only contains "a-z" or "A-Z" or "0-9" or "_" or "."', array('%name' => $element['#title'])));
+				$form_state['rebuild'] = TRUE;
+			}
+		}
+	}
+ 	
+	function validateAge($birthday, $age = 18)
+	{
+		// $birthday can be UNIX_TIMESTAMP or just a string-date.
+		if(is_string($birthday)) {
+			$birthday = strtotime($birthday);
+		}
+	
+		// check
+		// 31536000 is the number of seconds in a 365 days year.
+		if(time() - $birthday < $age * 31536000)  {
+			return false;
+		}
+	
+		return true;
+	}*/
+	
+	
+	/*function sendmail_registration($receiver_email, $email_subject, $ack_email_msg){
+		
+		$to = $receiver_email;
+		$subject = $email_subject;
+		$message = $ack_email_msg;*/
+		
+		//$bcc = 'subhabrata.mukherjee@ymail.com';
+		
+	//code for drupal_mail()
+		//Sample drupal_mail() //drupal_mail('testmail', 'testing', $to, language_default(), $params, $from, TRUE);
+		
+		/*$from = 'subhabrata.mukherjee31@gmail.com';
+		
+		$params = array(
+			'subject' => $subject,
+			'message' => $message,
+			'headers' => array(
+				//'Cc' => $header_cc,
+				//'Bcc' => $bcc,
+				'MIME-Version' => "1.0",
+				'Content-Type' => "text/html; charset=UTF-8; format=flowed",
+			)
+		);
+		
+		drupal_mail('common_application', 'registration_approve', $to, language_default(), $params, $from, TRUE);*/
+		
+	//code for mail()
+		/*$headers = "MIME-Version: 1.0" . "\r\n";
+		$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+		$headers .= "From: eallotment-rhe@rhe.wbhousing.gov.in\r\n";
+		//$headers .= "From: subhabrata.mukherjee31@gmail.com\r\n";
+		//$headers .= "Bcc: ".$bcc."\r\n";
+		
+		mail($to, $subject, $message, $headers);
+		
+	}*/
+
+
+function customJsonValidator($data) {
+	if (!empty($data)) { 
+		@json_decode($data); 
+		return (json_last_error() === JSON_ERROR_NONE); 
+	} 
+	return false; 
+}
+
+function getHRMSUserData($hrmsID= NULL)
+{
+	$userDataArr = array();
+	if (!empty($hrmsID)) { 
+		$userDataJson = fetchHRMSUserAPIData($hrmsID); // print_r($userDataJson); die;
+		if(!empty($userDataJson) && customJsonValidator($userDataJson)){
+			$userDataArrTemp = json_decode($userDataJson,true);
+			if (isset($userDataArrTemp['resp']['status']) && !empty($userDataArrTemp['resp']['status']) && strtolower($userDataArrTemp['resp']['status']) == 's') {
+				$userDataArr = $userDataArrTemp['resp']['data'][0];
+			}else{
+				exit('User data Fetch error.');
+			}
+		}
+	}
+	return $userDataArr;
+}
+#1999002754,1995002970,1981000029
+function fetchHRMSUserAPIData($hrmsID= NULL)
+{
+	if (!empty($hrmsID)) {
+		$ch = curl_init();
+		$url="http://172.17.2.53/hrms-External/housing/fetchEmployeeDetails";
+		// $url="https://www.google.co.in";
+		// echo 'hitting curl url';die;
+
+		$data = array("req" => array ("hrmsId" => $hrmsID));
+		$postdata = json_encode($data);
+		
+		curl_setopt($ch, CURLOPT_URL, $url);
+		//curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,2);
+		if (curl_errno($ch)) {
+			echo 'Curl error: ' . curl_error($ch);die;
+			return false;
+		}
+		else {
+			$curl_output =curl_exec($ch);
+			//echo 'curl returns' . $curl_output;die;
+		}
+		curl_close($ch);
+		//save_sms_data($item,$curl_output);
+		return $curl_output;
+	}
+}
+
+function get_api_key(){
+	if (!user_is_logged_in()) {
+        drupal_json_output(['error' => 'Unauthorized access']);
+        drupal_exit();
+    }
+
+    $api_key = variable_get('api_secret_token', '');
+    
+    drupal_json_output(['key' => $api_key]);
+    drupal_exit();
+}

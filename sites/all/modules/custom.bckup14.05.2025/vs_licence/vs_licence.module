@@ -1,0 +1,264 @@
+<?php
+
+ function vs_licence_init() {
+	global $custom_url;	//comment off for live
+	if($_SERVER['REQUEST_URI'] == $custom_url.'/vs_licence'){	//delete $custom_url. for live
+		//$result = fetch_vs_flat_occupant_detail();
+		//$row_count = $result->rowCount();
+		/*if($row_count == 0) {
+			drupal_goto('application-status/not-applied');
+		}else{*/		
+			$result = fetch_vs_licence_app_status(array('draft'));
+			$row_count = $result->rowCount();
+			if($row_count > 0) {
+				$data = $result->fetchObject();
+				drupal_goto('view-application/'.encrypt_url($data->online_application_id));
+			}
+		//}
+	}
+ }
+ function vs_licence_menu() {
+    $items['vs_licence'] = array(
+	  'title' => 'PRESCRIBED FORM OF APPLICATION',	
+	  'page callback' => 'drupal_get_form',
+      'page arguments' => array('application_form'),
+	  'access arguments' => array('administer Application for VS Licence'),
+    );
+    return $items;
+  }
+  
+  function vs_licence_form_application_form_alter(&$form, &$form_state, $form_id) {
+	  global $custom_url;	//comment off for live
+	  
+	  //$chk_extra_doc = isset($form_state['values']['chk_extra_doc'][1]) && !empty($form_state['values']['chk_extra_doc'][1]) ? $form_state['values']['chk_extra_doc'][1] : 0;
+	  if($form['#action'] == $custom_url.'/vs_licence'){		//delete $custom_url. for live
+	  //allotment details
+	//$form['prrsonal_info']['#collapsed'] = 1;
+		$form['prrsonal_info']['online_vs_licence_id'] = array(
+			'#type' => 'hidden',
+			'#default_value' => '0',
+			//'#validated' => TRUE,
+		);
+		
+		$form['office_add']['office_name']['#title'] = t('Name of the Department/Directorate/Office');
+	
+		$form['document_upload'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Upload Documents'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+		);
+		
+		$form['document_upload']['file'] = array(
+			'#title' => t('Upload Necessary Document(Latest Payslip)'),
+			'#type' => 'managed_file',
+			'#description' => t('<b>Allowed Extension: pdf<br>Maximum File Size: 1 MB</b>'),
+			'#progress_message' => t('Please wait...'),
+			'#progress_indicator' => 'bar',
+			'#default_value' => variable_get('Upload File', ''),
+			//'#default_value' => '',
+			'#theme' => 'common_application_thumb_upload',
+			'#upload_validators' => array(
+										 'file_validate_extensions' => array("pdf"),
+										//'file_validated_size' => array(MAX_FILE_SIZE*1024*1024),
+			
+									),
+			'#upload_location' => 'public://doc/',
+			'#required' => TRUE,
+			'#process' => array('vs_licence_element_process'),
+		
+		);
+		
+		$form['allotment_info'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Allotment Information'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+			//'#weight' => -10
+		);
+		 $form['allotment_info']['allotment_no'] = array(
+			'#title' => t('Allotment No'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#attributes' => array('readonly' => 'readonly'),
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+ 			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_allotmentno'),
+		  );
+		  $form['allotment_info']['allotment_date'] = array(
+			'#title' => t('Allotment Date'),
+			'#type' => 'textfield',
+			'#attributes' => array('readonly' => 'readonly'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+ 			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_date'),
+		  );
+		  $form['allotment_info']['allotment_district'] = array(
+			'#title' => t('District'),
+			//'#type' => 'select',
+			'#type' => 'textfield',
+			//'#options' => district_list(),
+			'#attributes' => array('readonly' => 'readonly'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			'#prefix' => '<div class="two">',
+ 			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_alphabatic_text'),
+		  );
+		  
+		  $form['allotment_info']['allotment_estate'] = array(
+			'#title' => t('Housing'),
+			'#type' => 'textfield',
+			//'#type' => 'select',
+			//'#options' => array('1'=>'1'),
+			'#attributes' => array('readonly' => 'readonly'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			//'#validated' => TRUE,
+			'#prefix' => '<div class="two">',
+ 			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_streetaddress'),
+		  );
+		  
+		  $form['allotment_info']['allotment_address'] = array(
+			'#title' => t('Housing Address.'),
+			'#type' => 'textarea',
+			//'#required' => TRUE,
+			//'#validated' => TRUE,
+			'#attributes' => array('readonly' => 'readonly'),
+			'#default_value' => '',
+			'#prefix' => '<div class="one">',
+ 			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_streetaddress'),
+		  );
+		   
+		  $form['allotment_info']['allotment_flat_id'] = array(
+			'#type' => 'hidden',
+			'#default_value' => '0',
+			//'#validated' => TRUE,
+		  );
+		   
+		  fetch_vs_allotment_detail($form);
+		  
+		$form['#attributes'] = array('onsubmit' => 'return validate_vs_licence_form()');
+		$form['#validate']= array('vs_licence_validate');
+		$form['#submit']= array('vs_licence_submit');
+	  
+  	}
+	
+	if(isset($form['document_upload']['file']) > 0 && $form['document_upload']['file']["#type"] == "managed_file") {
+		$form['document_upload']['file']["#upload_validators"]["file_upload_validation"] = array($form['document_upload']['file']["#upload_validators"]["file_validate_extensions"][0]);
+	}
+  }
+  
+  	function vs_licence_validate(&$form, &$form_state) {
+		
+		if($form_state['values']['pay_band'] == '') {
+			form_set_error('pay_band', t('Please select payband.'));
+		}
+		if($form_state['values']['district'] == '') {
+			form_set_error('district', t('Please select district.'));
+		}
+		if($form_state['values']['designation'] == '') {
+  			form_set_error('designation', t('Please select ddo designation.'));
+		}
+		
+		if($form_state['values']['pay_band'] == 1) {
+			if($form_state['values']['pay_in'] < 0 || $form_state['values']['pay_in'] > 7999) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 2) {
+			if($form_state['values']['pay_in'] < 8000 || $form_state['values']['pay_in'] > 12499) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 3) {
+			if($form_state['values']['pay_in'] < 12500 || $form_state['values']['pay_in'] > 15999) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 4) {
+			if($form_state['values']['pay_in'] < 16000) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+			else {
+				if($form_state['values']['grade_pay'] < 0 || $form_state['values']['grade_pay'] > 7599) {
+					form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+				}		
+			}
+		}
+		else if($form_state['values']['pay_band'] == 5) {
+			if($form_state['values']['pay_in'] < 16000) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+			else {
+				if($form_state['values']['grade_pay'] < 7600) {
+					form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+				}		
+			}
+		}
+		
+		$file_payslip = file_load($form_state['values']['file']);
+		if($file_payslip->filesize > 1048576) {
+			form_set_error('payslip_file_size', 'The file '.$file_payslip->filename.' could not be uploaded, because it exceeds 1 MB, the maximum allowed size for uploads.');	
+		}
+	}
+	
+	function vs_licence_element_process($element, &$form_state, $form) {
+		$element = file_managed_file_process($element, $form_state, $form);
+		$element['upload_button']['#access'] = FALSE;
+		return $element;
+	}
+	
+  	function vs_licence_submit($form, &$form_state) {
+		$action = 'draft';
+		if($form_state['input']['op'] == 'Apply'){
+			$action = 'applied';
+		}
+		
+		$online_application_id = trim($form_state['values']['online_vs_licence_id']);
+		
+		//die($online_application_id);
+		
+		$a_no = trim($form_state['values']['allotment_no']);
+		if($a_no != '') {
+			if($online_application_id == 0) {
+			
+				$online_application_id = add_online_application($action,'VSL',$form,$form_state);
+				add_vs_licence_application($form,$form_state,$online_application_id);
+			}
+			else {
+				
+				update_online_application($action,$form,$form_state,$online_application_id);
+				update_vs_licence_application($form,$form_state,$online_application_id);
+				
+			}
+		}
+		else {
+			drupal_set_message(t('Your allotment under process. Please apply for vs licence after getting allotment!!!'), 'error');
+		}
+		
+		if($action == 'draft') {
+			drupal_set_message('Application save as draft.');
+		}
+		else if($action == 'applied') {
+			drupal_set_message('You have successfully applied.');
+		}
+		
+	
+   }
+	function vs_licence_permission() {
+		return array(
+			'administer Application for VS Licence' => array(
+			'title' => t('Administer Application for VS Licence'),
+			'description' => t('Perform administer Application for VS Licence.'),
+		),
+	  );
+	}
+require_once('include/vs_licence_schema.inc');
+require_once('include/vs_licence_fetch_data.form.inc');
+require_once('include/vs_licence_add_update_data.form.inc');

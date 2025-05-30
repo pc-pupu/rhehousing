@@ -13,7 +13,7 @@
             <!-- <p class="lead">
                 Search for a flat in any <b>Housing Estates</b>
             </p> -->
-            <?php print render($page['content']); ?>
+            <?php  print render($page['content']); ?>
         </div>
     </div>
 </section>

@@ -1,18 +1,124 @@
 <?php
 	//debolina start
+<<<<<<< HEAD
+	function application_form_upload1($form, &$form_state, $online_application_id, $status_new = '', $status = '', $entity = '' , $comp_serial_no = '') {
+		
+		global $user,$user_role;
+		//echo $entity;die;
+=======
 	function application_form_upload1($form, &$form_state, $online_application_id, $status_new = '', $status = '', $entity = '') {
 		// echo "ppp";die;
 		global $user,$user_role;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$online_application_id = decrypt_url($online_application_id);
 		$status_new = decrypt_url($status_new);
 		$status = decrypt_url($status);
 		$entity = decrypt_url($entity);
+<<<<<<< HEAD
+
+		if($entity == 'new-apply'){
+			$computer_serial_no = decrypt_url($comp_serial_no);
+		}else if($entity == 'vs' || $entity == 'cs'){
+			$computer_serial_no = $online_application_id;  // online_application_id as treat variable computerseial no name
+		}
+
+=======
 		// echo $online_application_id,$status_new,$status,$entity;die;
 		//print_r($user);die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$application_form_arr = array(
 			'status' => $status_new,
 			'date_of_verified' => date('Y-m-d H:i:s')
 		);
+<<<<<<< HEAD
+		
+		/* dg 19-05-2025 */
+		
+		$data_fetch = application_list_fetch($entity,$status);
+		
+		$min_serial_no = NULL;
+		if($entity == 'new-apply'){
+			while ($result_fetch = $data_fetch->fetchObject()) {
+				if ($min_serial_no === NULL || $result_fetch->computer_serial_no < $min_serial_no) {
+					$min_serial_no = $result_fetch->computer_serial_no;
+				}
+			}
+
+			$error_message = 'Approval must begin with the application that has the lowest computer serial number.';
+		}else if($entity == 'vs' || $entity == 'cs'){   //not used computer serial no for vs cs, used online_application_id
+			while ($result_fetch = $data_fetch->fetchObject()) {
+				if ($min_serial_no === NULL || $result_fetch->online_application_id < $min_serial_no) {
+					$min_serial_no = $result_fetch->online_application_id;
+				}
+			}
+
+			$error_message = 'Approval must begin with the application that has the lowest Application number.';
+		}
+		
+
+		if($min_serial_no < $computer_serial_no){
+			drupal_set_message(t($error_message), 'error');
+		}else{
+			$query = db_select('housing_allotment_status_master', 'hasm');
+			$query->addField('hasm', 'status_id');
+			$query->addField('hasm', 'short_code');
+			$query->condition('hasm.short_code',$status_new,'=');
+			$result = $query->execute();  
+			$data = $result->fetchObject();
+			
+			$short_code_status = $data->status_id; 
+			// echo $short_code_status;die;
+
+							
+			$process_flow_arr = array('online_application_id' => $online_application_id,
+									'status_id' => $short_code_status,
+									'created_at' => date('Y-m-d H:i:s'),
+									'uid' => $user->uid,
+									'short_code' =>$data->short_code
+									);
+
+			// echo "<pre>";print_r($process_flow_arr);die;
+			
+			if($online_application_id != 0) {
+
+				db_insert('housing_process_flow')->fields($process_flow_arr)->execute();
+
+				// turned off 11-09-2024 sd as per changed process flow this is handled in
+				//allotment_list_approve_form_submit() in allotment_list_approve_page.inc 
+				/*if($status == 'allotted')
+				{
+					// echo "pp";die;
+					$update_date = array(
+										'allotment_approve_or_reject_date' => date('Y-m-d H:i:s')
+									);
+					
+
+					db_update('housing_flat_occupant')
+					->fields($update_date)
+					->condition('online_application_id', $online_application_id, '=')
+					->execute();
+				}*/ 
+
+				
+				db_update('housing_online_application')
+				->fields($application_form_arr)
+				->condition('online_application_id', $online_application_id, '=')
+				->execute();
+
+
+			}
+			
+			drupal_set_message(' Application Approved successfully.');
+		}
+		// echo $status;echo $entity;die;
+		drupal_goto('view_application/'.encrypt_url($status).'/'.encrypt_url($entity).'/action-list');
+
+		/* end */
+
+		
+	}
+		//debolina end
+=======
 
 
 		// echo "<pre>";print_r($application_form_arr);die;
@@ -69,6 +175,7 @@
 		drupal_goto('view_application/'.$status_new.'/'.$entity);
 	}
 	//debolina end
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	function application_form_upload($form, &$form_state, $online_application_id, $status_new = '', $status = '', $entity = '') {
 		//echo "hui";die;
 		global $user_role;

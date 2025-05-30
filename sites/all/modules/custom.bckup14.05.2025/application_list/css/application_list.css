@@ -1,0 +1,10 @@
+.box{
+	background: scroll 15px 15px #DBE7ED;
+	border: 1px solid #9DACB5;
+	color: #000;
+	display: block;
+	font-size: 13px;
+	line-height: 24px;
+	margin-bottom: 20px;
+	padding: 25px;
+}

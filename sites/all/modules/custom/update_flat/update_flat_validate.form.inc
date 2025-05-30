@@ -47,7 +47,8 @@
 function validate_flat_no($element, &$form_state) {
 	// echo "<pre>";print_r($form_state['values']);die;
   	$flat_no = trim($element['#value']);
-	//$estate_id = trim($form_state['values']['rhe_name']);//10-06-2024
+	$estate_id = trim($form_state['values']['rhe_name']);//10-06-2024 reopen by debaleena 15-05-2025
+	$block_id = trim($form_state['values']['rhe_block']);// by debaleena 15-05-2025
 	
 	$value = trim($element['#value']);
 	if($value !== '' && !preg_match("/^[\w\/\-]+$/",$value)) {
@@ -60,7 +61,8 @@ function validate_flat_no($element, &$form_state) {
 			$query->addField('hf', 'flat_no','flat_no');
 			$db_and = db_and();
 			$db_and->condition('hf.flat_no', trim($flat_no), '=');
-			//$db_and->condition('hf.estate_id', $estate_id, '='); //10-06-2024
+			$db_and->condition('hf.estate_id', $estate_id, '='); //reopen 14-05-2025//10-06-2024
+			$db_and->condition('hf.block_id', $block_id, '='); // by debaleena 15-05-2025
 			$query->condition($db_and);
 			$result = $query->execute();
 			if($result->rowcount() > 0){
@@ -74,6 +76,7 @@ function edit_validate_flat_no($element, &$form_state) {
   	$flat_no = trim($element['#value']);
 	$flat_id = trim($form_state['values']['flat_id']);
 	$estate_id = trim($form_state['values']['rhe_name']);
+	$block_id = trim($form_state['values']['rhe_block']);// by debaleena 15-05-2025
 	
 	$value = trim($element['#value']);
 	
@@ -89,6 +92,7 @@ function edit_validate_flat_no($element, &$form_state) {
 			$db_and->condition('hf.flat_no', trim($flat_no), '=');
 			$db_and->condition('hf.estate_id', $estate_id, '=');
 			$db_and->condition('hf.flat_id', $flat_id, '!=');
+			$db_and->condition('hf.block_id', $block_id, '='); // by debaleena 15-05-2025
 			$query->condition($db_and);
 			$result = $query->execute();
 			if($result->rowcount() > 0){

@@ -56,7 +56,7 @@
 
 			 //debolina start
 			  $preference_data=$output[5];
-			  $status_description=$output[4]; 
+			  $status_description=$output[4]->status_description; 
 			 //debolina end
 			
 			if($common_data->status == 'allotted') {

@@ -64,7 +64,7 @@
 					<td align="center" style="border: 1px solid black; border-collapse: collapse;"><font size="4">'.$data->flat_no.'</font></td>'.
 			
 
-					'<td align="right" style="border: 1px solid black; border-collapse: collapse;"><font size="4">'.ucwords($data->flat_status).'<br>'.$data->remarks.'</font></td>
+					'<td align="right" style="border: 1px solid black; border-collapse: collapse;"><font size="4">'.ucwords($data->flat_status_code).'<br>'.$data->remarks.'</font></td>
 				</tr></tbody>';
 				
 				$i++;

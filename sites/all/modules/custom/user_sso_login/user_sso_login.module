@@ -203,7 +203,12 @@ function fetchHRMSUserAPIData($hrmsID= NULL)
 {
 	if (!empty($hrmsID)) {
 		$ch = curl_init();
+<<<<<<< HEAD
+		//$url="http://172.17.2.53/hrms-External/housing/fetchEmployeeDetails";
+		$url="https://uat.wbifms.gov.in/hrms-External/housing/fetchEmployeeDetails";
+=======
 		$url="http://172.17.2.53/hrms-External/housing/fetchEmployeeDetails";
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		// $url="https://www.google.co.in";
 		// echo 'hitting curl url';die;
 
@@ -227,6 +232,10 @@ function fetchHRMSUserAPIData($hrmsID= NULL)
 			//echo 'curl returns' . $curl_output;die;
 		}
 		curl_close($ch);
+<<<<<<< HEAD
+		// echo "<pre>";print_r($curl_output);die;
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		//save_sms_data($item,$curl_output);
 		return $curl_output;
 	}

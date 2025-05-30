@@ -45,6 +45,16 @@ function auto_updation_menu() {
     'access arguments' => array('access content'),
   );
 
+<<<<<<< HEAD
+  // $items['auto-updation-offer-final-cancel'] = array(
+  //   'title' => 'Auto Updation Exceed Offer Letter extended Date',
+  //   'page callback' => 'auto_updation_offer_final_cancel',
+  //   'page arguments' => array(),
+  //   'access arguments' => array('access content'),
+  // );
+
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
   return $items;
 }
 
@@ -567,6 +577,96 @@ function auto_transfer_checking(){
   }
 }
 
+<<<<<<< HEAD
+//not done//
+function auto_updation_offer_final_cancel(){
+  
+  $query = db_select('housing_online_application', 'hoa');
+  $query->innerjoin('housing_applicant_official_detail', 'haod', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+  $query->fields('hoa', array('date_of_verified','application_no','online_application_id','applicant_official_detail_id','status'));
+  $query->addField('haod', 'uid');
+  $query->condition('hoa.status','offer_letter_cancel','=');
+
+  $result = $query->execute();
+  $data_arr = $result->fetchAll();
+
+  echo "<pre>";print_r($data_arr);die;
+
+  foreach ($data_arr as $data) {
+    
+    $offer_letter_cancel_date = $data->date_of_verified;
+    $current_date = date('Y-m-d H:i:s');
+    //echo $offer_letter_generation_date.'<br>'.$current_date;
+    $dateDiff = dateDiffInDays($offer_letter_cancel_date, $current_date);
+    $uid = $data->uid;
+    $application_no = $data->application_no;
+    $online_application_id = $data->online_application_id;
+
+    
+    
+    if($dateDiff > 15){
+        
+        $status_updation_arr  = array();
+        $status_updation_arr['status']  =  'offer_letter_cancel';
+        $status_updation_arr['date_of_verified']  =  date('Y-m-d H:i:s');
+
+        db_update('housing_online_application')
+            ->fields($status_updation_arr)
+            ->condition('online_application_id', $online_application_id)
+            ->execute();
+
+        // is_active status will be updated if offer letter is cancelled, done by Subham 25-11-2024
+        $app_official_detail_status_update_arr['is_active']  =  0;
+        db_update('housing_applicant_official_detail')
+          ->fields($app_official_detail_status_update_arr)
+          ->condition('applicant_official_detail_id', $data->applicant_official_detail_id, '=')
+          ->execute();
+
+        $status_id = get_status_id('offer_letter_cancel'); // Done by Subham 25/11/2024
+
+        // Done by Subham 22/11/2024
+        $insert_housing_process_flow = array(
+                                      'online_application_id' => $online_application_id,
+                                      'status_id' => $status_id,
+                                      'created_at' => date('Y-m-d H:i:s'),
+                                      'uid' => NULL,
+                                      'short_code' => 'offer_letter_cancel'
+        );
+        db_insert('housing_process_flow')
+            ->fields($insert_housing_process_flow)
+            ->execute();
+        
+        $insert_housing_auto_cancellation = array(
+                                      'uid' => $uid,
+                                      'online_application_id' => $online_application_id,
+                                      'cancellation_type' => 'offer-letter'
+        );
+
+        db_insert('housing_auto_cancellation')
+            ->fields($insert_housing_auto_cancellation)
+            ->execute();
+
+
+        $update_flat_occupant_cancellation = array(
+                                        'cancellation_extension_status' => 'offer_letter_cancel',
+                                        'cancellation_extension_date' => date('Y-m-d H:i:s')
+                                      );
+
+        db_update('housing_flat_occupant')
+                        ->fields($update_flat_occupant_cancellation)
+                        ->condition('online_application_id', $online_application_id, '=')
+                        ->execute();                              
+        // End
+    }else{
+      echo 'continue';
+    }
+    }
+
+
+}
+
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 
 

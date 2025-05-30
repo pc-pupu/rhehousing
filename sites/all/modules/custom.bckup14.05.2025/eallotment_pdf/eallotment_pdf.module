@@ -1,0 +1,21 @@
+<?php
+
+function eallotment_pdf_menu() {
+	$items = array();
+	$items['eallotment-pdf/%/%'] = array(
+      'page callback' => 'eallotment_pdf_gen',
+	  'page arguments' => array(1,2),
+	  '#access arguments' => array('access content'),
+	  'access callback' => TRUE,
+    );
+    
+	return $items;  
+}
+
+
+function eallotment_pdf_gen($pdfcontent = '', $filename= '') {
+
+ob_end_clean();	
+return pdf_using_mpdf_api($conent, "mypdf1");
+	
+}

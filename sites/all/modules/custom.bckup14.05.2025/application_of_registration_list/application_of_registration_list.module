@@ -1,0 +1,93 @@
+<?php
+
+	function application_of_registration_list_menu() {
+		$items['application_registration_list'] = array(
+		  'title' => 'Application of Registration List',	
+		  'page callback' => 'application_registration_list',
+		  'file' => 'includes/application_registration_list_page.inc',
+		  'access arguments' => array('administer Application of Registration List'),
+		);
+		
+		$items['update_registration_status/%/%'] = array(
+		  'title' => 'Update Application of Registration',	
+		  'page callback' => 'update_application_registration',
+		  'page arguments' => array(1, 2),
+		  'access arguments' => array('administer Application of Registration List'),
+		);
+		
+		return $items;
+	}
+	
+	function application_of_registration_list_permission() {
+	  return array(
+		'administer Application of Registration List' => array(
+		  'title' => t('administer Application of Registration List'),
+		  'description' => t('Perform administer Application of Registration List.'),
+		),
+	  );
+	}
+	
+	
+	function update_application_registration($user_id = 0, $status = '') {
+		$uid = decrypt_url($user_id);
+		$status = decrypt_url($status);
+		
+		$query = db_select('users', 'u');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = u.uid');
+		$query->addField('u', 'name');
+		$query->addField('u', 'mail');
+		$query->addField('ha', 'mobile_no');
+		$query->condition('u.uid', $uid, '=');
+		$result = $query->execute();
+		if($result->rowcount() > 0){
+			if($data = $result->fetchObject()) {
+				$username = trim($data->name);
+				$receiver_mobile = trim($data->mobile_no);
+				$receiver_email = trim($data->mail);
+				
+				$ack_msg = '<html><body>Dear Applicant,<br><br>
+				Your Account has been activated. Please find below your login details. Please change your password after login.<br><br>
+				Username	-	'.$username.'<br><br>
+				Password	-	'.$username.'<br><br>
+				Please login using your username and password to apply.<br><br>
+				Regards,<br>
+				Housing Department<br>
+				Government of West Bengal
+				</html></body>';
+  
+  
+				$email_subject = 'Applicant Registration Approve';
+					
+			}
+		}
+		
+		if($status == 'activate') {
+			db_update('users')
+			->fields(array(
+				'status' => 1,
+				)
+			)
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			//send_sms($receiver_mobile, $ack_msg);
+			sendmail_registration($receiver_email, $email_subject, $ack_msg);
+			
+			
+			drupal_set_message('Account has been activated.');
+			drupal_goto('application_registration_list');
+		}
+		elseif($status == 'reject') {
+			db_delete('users')
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			db_delete('users_roles')
+			->condition('uid',$uid, '=')
+			->execute();
+			
+			drupal_set_message('Account has been deleted.');
+			drupal_goto('application_registration_list');
+		}
+	}
+	

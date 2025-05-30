@@ -1,0 +1,7 @@
+name = View Application List
+decsription = View Application List Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/view_application_list.css
+scripts[] = js/view_application_list.js
+dependencies[] =common_application

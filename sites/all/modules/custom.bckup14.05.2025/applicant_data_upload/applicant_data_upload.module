@@ -1,0 +1,61 @@
+<?php
+
+	function applicant_data_upload_init() {
+		
+	}
+	
+	function applicant_data_upload_menu() {
+		
+		$items = array();
+		
+		$items['applicant_data_upload'] = array(
+			'title' => 'Applicant Data Upload',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('applicant_data_upload_form'),
+			'file' => 'include/applicant_data_upload_page.inc',
+			'access arguments' => array('administer Applicant Data Upload'),
+		);
+		
+		return $items;
+	}
+	
+	function applicant_data_upload_permission() {
+		return array(
+			'administer Applicant Data Upload' => array(
+				'title' => t('administer Applicant Data Upload'),
+				'description' => t('perform administer Applicant Data Upload.'),
+			),
+		);	
+	}
+	
+	function read_excel($filename, $fileroot) {
+		$excel_data = array();
+		module_load_include('php', 'applicant_data_upload', 'excel_read_write/PHPExcel/IOFactory');
+		$ext = pathinfo($filename, PATHINFO_EXTENSION);
+		if($ext == "xls" || $ext == "xlsx"){
+				$inputFileName = $fileroot;
+	
+			//  Read your Excel workbook
+			try {
+				$inputFileType = PHPExcel_IOFactory::identify($inputFileName);
+				$objReader = PHPExcel_IOFactory::createReader($inputFileType);
+				$objPHPExcel = $objReader->load($inputFileName);
+			} catch (Exception $e) {
+				die('Error loading file "' . pathinfo($inputFileName, PATHINFO_BASENAME) 
+				. '": ' . $e->getMessage());
+			}
+			
+			//  Get worksheet dimensions
+			$sheet = $objPHPExcel->getSheet(0);
+			$highestRow = $sheet->getHighestRow();
+			$highestColumn = $sheet->getHighestColumn();
+			
+			//  Loop through each row of the worksheet in turn
+			for ($row = 1; $row <= $highestRow; $row++) {
+				//  Read a row of data into an array
+				$rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, NULL, TRUE, FALSE);
+				$excel_data[] = $rowData[0];			
+			}		
+		}
+		return $excel_data;
+	}

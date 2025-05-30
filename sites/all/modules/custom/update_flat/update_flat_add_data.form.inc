@@ -51,6 +51,7 @@
 		$flat_arr['floor'] 	=   trim($form_state['values']['flat_floor']);
 		$flat_arr['flat_no'] 			=  trim($form_state['values']['flat_no']);
 		$flat_arr['flat_status_id'] 	=   trim($form_state['values']['flat_status']);
+		$flat_arr['remarks'] 	=   trim($form_state['values']['remarks_edit_textbox']);  // by debaleena 16-05-2025
 		
 		db_update('housing_flat')
 		->fields($flat_arr)

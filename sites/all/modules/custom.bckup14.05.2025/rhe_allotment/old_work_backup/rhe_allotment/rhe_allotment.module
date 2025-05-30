@@ -1,0 +1,28 @@
+<?php
+
+	function rhe_allotment_menu() {
+	
+		$items['rhe_allotment'] = array(
+		  'title' => 'RHE Allotment',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('rhe_allotment_form'),
+		  'file' => 'rhe_allotment_page.inc',
+		  'access arguments' => array('administer rhe allotment'),
+		);
+		
+		return $items;
+		
+	}
+		
+		
+function rhe_allotment_permission() {
+	return array(
+		'administer rhe allotment' => array(
+		  'title' => t('Administer rhe allotment'),
+		  'description' => t('Perform administer rhe allotment.'),
+		),
+		
+	);
+  
+}		
+		

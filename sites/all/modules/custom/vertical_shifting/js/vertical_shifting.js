@@ -1,14 +1,14 @@
-jQuery(document).ready(function(){
-		jQuery("#dop_vs").datepicker({
-		dateFormat: "dd/mm/yy",
-		//minDate: minDoj,
-		maxDate: "0",
-		changeMonth: true,
-		changeYear: true,
-		yearRange: "-50:+0",
-		autoSize: true
-	});	
-});
+// jQuery(document).ready(function(){
+// 		jQuery("#dop_vs").datepicker({
+// 		dateFormat: "dd/mm/yy",
+// 		//minDate: minDoj,
+// 		maxDate: "0",
+// 		changeMonth: true,
+// 		changeYear: true,
+// 		yearRange: "-50:+0",
+// 		autoSize: true
+// 	});	
+// });
 
 	
 	

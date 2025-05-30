@@ -37,10 +37,17 @@
 	  'access callback' => TRUE,
     );
 	
+<<<<<<< HEAD
+	$items['update_status/%/%/%/%/%'] = array(
+	  'title' => 'Update Application',	
+      'page callback' => 'update_page',
+	  'page arguments' => array(1, 2, 3, 4, 5),
+=======
 	$items['update_status/%/%/%/%'] = array(
 	  'title' => 'Update Application',	
       'page callback' => 'update_page',
 	  'page arguments' => array(1, 2, 3, 4),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	  'access arguments' => array('administer View Application List'),
 	);
 	
@@ -48,10 +55,17 @@
 
 	//applicant application form upload
 	//debolina start
+<<<<<<< HEAD
+	$items['application-approve/%/%/%/%/%'] = array(   //added one argument by dg 19-05-2025
+		'title' => 'Approve Application',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('application_form_upload1', 1, 2, 3, 4, 5),
+=======
 	$items['application-approve/%/%/%/%'] = array(
 		'title' => 'Approve Application',
 		'page callback' => 'drupal_get_form',
 		'page arguments' => array('application_form_upload1', 1, 2, 3, 4),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		'file' => 'new_application_approve_form.inc',
 		'access arguments' => array('administer approve applicaion'),
 	);
@@ -59,7 +73,11 @@
 	$items['reject-application'] = array(
 		'title' => 'Reject Application',
 		'page callback' => 'reject_application',
+<<<<<<< HEAD
+		'page arguments' => array(1,2,3,4,5),
+=======
 		'page arguments' => array(1,2),
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		'access arguments' => array('administer approve applicaion'),
 	);
 
@@ -284,8 +302,14 @@
 			}else{
 				
 				$app_details = fetch_application_detail($app_id);
+<<<<<<< HEAD
+				
+				$application_details_arr = $app_details->fetchObject();
+				//echo "<pre>";print_r($application_details_arr);die;
+=======
 				// echo $app_details;die;
 				$application_details_arr = $app_details->fetchObject();
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				$current_application_status_description=fetch_application_status_description($application_details_arr->status);	
 			}
 
@@ -360,18 +384,70 @@
 		// print($status);die;
 		return theme('view_application_detail_template', array('output' => $output,'page_status'=>$page_status));
 	}
+<<<<<<< HEAD
+	function update_page($app_id = 0, $status_new = '', $status = '', $entity = '', $comp_serial_no = '') {
+		$app_id = decrypt_url($app_id);
+		$status_new = decrypt_url($status_new);
+		$status = decrypt_url($status);
+		$entity = decrypt_url($entity);
+		
+		//echo $status_new.'/'.$app_id.'/'.$status.'/'.$entity; die;
+
+		/* dg 20-05-2025  */
+		if($entity == 'new-apply'){
+			$computer_serial_no = decrypt_url($comp_serial_no);
+		}else if($entity == 'vs' || $entity == 'cs'){
+			$computer_serial_no = $app_id;  // app_id as treat variable computerseial no name
+		}
+
+		$data_fetch = application_list_fetch($entity,$status);
+		
+		$min_serial_no = NULL;
+		if($entity == 'new-apply'){
+			while ($result_fetch = $data_fetch->fetchObject()) {
+				if ($min_serial_no === NULL || $result_fetch->computer_serial_no < $min_serial_no) {
+					$min_serial_no = $result_fetch->computer_serial_no;
+				}
+			}
+
+			$error_message = 'Approval or Rejection must begin with the application that has the lowest computer serial number.';
+		}else if($entity == 'vs' || $entity == 'cs'){   //not used computer serial no for vs cs, used online_application_id
+			while ($result_fetch = $data_fetch->fetchObject()) {
+				if ($min_serial_no === NULL || $result_fetch->online_application_id < $min_serial_no) {
+					$min_serial_no = $result_fetch->online_application_id;
+				}
+			}
+
+			$error_message = 'Approval or Rejection must begin with the application that has the lowest Application number.';
+		}
+		
+
+		if($min_serial_no < $computer_serial_no){
+			drupal_set_message(t($error_message), 'error');
+		}else{
+			
+			update_status($app_id, $status_new);
+			
+		}
+		/* end */
+=======
 	function update_page($app_id = 0, $status_new = '', $status = '', $entity = '') {
 		$app_id = decrypt_url($app_id);
 		$status_new = decrypt_url($status_new);
 		//echo $status_new.'/'.$app_id.'/'.$status.'/'.$entity; die;
 		
 		update_status($app_id, $status_new);
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		unset($_SESSION['application_list']);
 		unset($_SESSION['new_application_list']);
 		unset($_SESSION['verified_application_list']);
 		unset($_SESSION['reject_application_list']);
 		//drupal_goto('application_detail/'.encrypt_url($app_id));
+<<<<<<< HEAD
+		drupal_goto('view_application/'.encrypt_url($status).'/'.encrypt_url($entity).'/action-list');
+=======
 		drupal_goto('view_application/'.$status.'/'.$entity);
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 	}
 
@@ -857,6 +933,24 @@ function fetch_all_application_detail1($entity = '',$status = ''){
    }
 /*URL Encryption*/
 function encrypt_url($string) {
+<<<<<<< HEAD
+	if(!empty($string)){   // added by dg 19-05-2025
+		$key = "MAL_979805"; //key to encrypt and decrypts.
+		$result = '';
+		$test = array();
+		for($i=0; $i<strlen($string); $i++) {
+			$char = substr($string, $i, 1);
+			$keychar = substr($key, ($i % strlen($key))-1, 1);
+			$char = chr(ord($char)+ord($keychar));
+
+			$test[$char]= ord($char)+ord($keychar);
+			$result.=$char;
+		}
+
+		return urlencode(base64_encode($result));
+	}
+  
+=======
   $key = "MAL_979805"; //key to encrypt and decrypts.
   $result = '';
   $test = array();
@@ -870,6 +964,7 @@ function encrypt_url($string) {
    }
 
    return urlencode(base64_encode($result));
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 }
 /*URL Decryption*/
 function decrypt_url($string) {
@@ -911,7 +1006,11 @@ function decrypt_url($string) {
 }
 
 function application_list_fetch($entity = '',$status = ''){
+<<<<<<< HEAD
+	// echo $entity;echo $status;die;
+=======
 	//echo $entity;echo $status;die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	global $user, $user_role;
 		$query = db_select('housing_applicant_official_detail', 'haod');
 		//$query->innerJoin('housing_applicant', 'ha','ha.uid = haod.uid'); turned off by debaleena 05-12-2024
@@ -1389,17 +1488,131 @@ function fetch_application_status_description($status_shortcode=''){
 	$result = $query->execute();  
 	$result = $result->fetchObject();
 	//echo "<pre>";print_r($result);die;	
+<<<<<<< HEAD
+	//return $result->status_description;  //off by dg 26-05-2025
+	return $result; //by dg
+=======
 	return $result->status_description; 
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 }
 
 /*    added by debaleena 02-08-2024 */
 
+<<<<<<< HEAD
+function reject_application($online_application_id = '', $rejected_status = '', $computer_serial_no = '', $entity = '', $status = ''){
+=======
 function reject_application($online_application_id = '', $rejected_status = ''){
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	global $user;
 	 
 	$online_application_id = decrypt_url($online_application_id);
 	$reject_status = decrypt_url($rejected_status);
+<<<<<<< HEAD
+	$status = decrypt_url($status);
+	$entity = decrypt_url($entity);
+	//echo $reject_status;die;
+	//echo $reject_status;
+	 //die;
+
+	if($entity == 'NA'){
+		$entity = 'new-apply';
+		$computer_serial_no = decrypt_url($computer_serial_no);
+	}else if($entity == 'CS'){
+		$entity = 'cs';
+		$computer_serial_no = $online_application_id;  // online_application_id as treat variable computerseial no name
+	}else if($entity == 'VS'){
+		$entity = 'vs';
+		$computer_serial_no = $online_application_id;  // online_application_id as treat variable computerseial no name
+	}
+
+	$data_fetch = application_list_fetch($entity,$status);
+	// $result_fetch = $data_fetch->fetchAll()	;
+	// echo "<pre>";print_r($result_fetch);die;
+	$min_serial_no = NULL;
+	if($entity == 'new-apply'){
+		while ($result_fetch = $data_fetch->fetchObject()) {
+			if ($min_serial_no === NULL || $result_fetch->computer_serial_no < $min_serial_no) {
+				$min_serial_no = $result_fetch->computer_serial_no;
+			}
+		}
+
+		$error_message = 'Approval or Rejection must begin with the application that has the lowest computer serial number.';
+	}else if($entity == 'vs' || $entity == 'cs'){   //not used computer serial no for vs cs, used online_application_id
+		while ($result_fetch = $data_fetch->fetchObject()) {
+			if ($min_serial_no === NULL || $result_fetch->online_application_id < $min_serial_no) {
+				$min_serial_no = $result_fetch->online_application_id;
+			}
+		}
+
+		$error_message = 'Approval or Rejection begin with the application that has the lowest Application number.';
+	}
+		
+	
+	if($min_serial_no < $computer_serial_no){
+		drupal_set_message(t($error_message), 'error');
+	}else{
+		db_update('housing_online_application')
+			->fields(array(
+				'status' => $reject_status,
+				'date_of_verified' => date('Y-m-d H:i:s'),
+				)
+			)
+			->condition('online_application_id',$online_application_id, '=')
+			->execute();
+
+		$remarks = $_POST['reject_remarks'];
+		$status_id = get_status_id($reject_status); 
+
+		$ins_arr = array(
+			'online_application_id'=>$online_application_id,
+			'status_id' => $status_id,
+			'created_at' => date('Y-m-d H:i:s'),
+			'uid' => $user->uid,
+			'short_code' => $reject_status,
+			'remarks' => $remarks
+		);
+
+		db_insert('housing_process_flow')->fields($ins_arr)->execute();
+
+		////addded by dg 13-12-2024///
+		$query = db_select('housing_applicant_official_detail','haod');
+		$query->innerjoin('housing_online_application ', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->leftjoin('housing_flat_occupant ', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+		$query->addField('haod', 'applicant_official_detail_id');
+		$query->addField('hfo', 'flat_id');
+		$query->condition('hoa.online_application_id', $online_application_id, '=');
+		$result = $query->execute();
+		$data = $result->fetchObject();
+		// print_r($data);die;
+
+		db_update('housing_applicant_official_detail')
+		->fields(array(
+			'is_active' => 0,
+			)
+		)
+		->condition('applicant_official_detail_id',$data->applicant_official_detail_id, '=')
+		->execute();
+
+		if(isset($data->flat_id)){
+			db_update('housing_flat')
+				->fields(array(
+					'flat_status_id' => 1,
+					)
+				)
+		->condition('flat_id',$data->flat_id, '=')
+		->execute();
+		}
+		///end///
+		
+
+		drupal_set_message(t('Application Rejected successfully.'));
+		//drupal_goto('dashboard');
+		
+	}
+	// echo $status;echo $entity;echo $reject_status;die;
+	drupal_goto('view_application/'.encrypt_url($status).'/'.encrypt_url($entity).'/action-list');
+=======
 	// echo $online_application_id;
 	//echo $reject_status;
 	 //die;
@@ -1461,6 +1674,7 @@ function reject_application($online_application_id = '', $rejected_status = ''){
 	drupal_set_message(t('Application Rejected successfully.'));
     drupal_goto('dashboard');
 	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	// redirect to link with proper parameter
 
 	//drupal_got_to('update_status/'.encrypt_url($data->online_application_id).'/'.encrypt_url($reject_status).'/'.encrypt_url($status).'/'.encrypt_url($entity));

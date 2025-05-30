@@ -1,0 +1,6 @@
+name = Flat Roaster Details
+decsription = Flat Roaster Details Module
+core = 7.x
+package = eallotment RHE Allotment Module
+stylesheets[all][] = css/flat_roaster_details.css
+scripts[] = js/flat_roaster_details.js

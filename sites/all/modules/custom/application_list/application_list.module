@@ -321,6 +321,7 @@
 		$query->addField('fm_vs', 'uri', 'uri_vs');
 		$query->addField('fm_cs', 'uri', 'uri_cs');
 		$query->addField('fm_licence', 'uri', 'uri_licence');
+		$query->addField('hoa', 'computer_serial_no');  //added by dg 22/05/2025
 		$query->orderBy('hoa.online_application_id', 'ASC');
 		$query->condition('haod.is_active', '1', '='); // Done by Subham 25-11-2024
 		if($online_application_id == 0){

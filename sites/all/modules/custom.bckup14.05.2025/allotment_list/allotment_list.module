@@ -1,0 +1,470 @@
+<?php
+
+	function allotment_list_init() {
+		
+	}
+	
+	function allotment_list_menu() {
+		
+		$items = array();
+		
+		$items['allotment_list'] = array(
+			'title' => 'List of Allottees',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('allotment_list_form'),
+			'file' => 'include/allotment_list_page.inc',
+			'access arguments' => array('administer Allotment List'),
+		);
+		
+		$items['allottee_list_pdf/%/%/%/%']=array(
+			'title' => 'List of Allottees for Allotment PDF',
+			'page callback' => 'allottee_list_page_pdf',
+			'page arguments' => array(1, 2, 3, 4),
+			'file' => 'include/allottee_list_page_pdf.inc',
+			'access arguments' => array('administer List of Allottees for New Allotment PDF'),
+		);
+		
+		$items['allotment_details/%'] = array(
+	  		'title' => 'Allotment Detail',	
+			'page callback' => 'allotment_detail_page',
+			'page arguments' => array(1),
+			'access arguments' => array('administer View Allotment'),
+    	);
+		
+		$items['allotment_list_approve'] = array(
+			'title' => 'List of Allottees for Approval',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('allotment_list_approve_form'),
+			'file' => 'include/allotment_list_approve_page.inc',
+			'access arguments' => array('administer Allotment List Approve'),
+		);
+		
+		return $items;
+	}
+	
+	function allotment_list_permission() {
+		return array(
+			'administer Allotment List' => array(
+				'title' => t('administer Allotment List'),
+				'description' => t('perform administer Allotment List.'),
+			),
+			
+			'administer List of Allottees for New Allotment PDF' => array(
+				'title' => t('administer List of Allottees for New Allotment PDF'),
+				'description' => t('perform administer List of Allottees for New Allotment PDF.'),
+			),
+			
+			'administer View Allotment' => array(
+				'title' => t('administer View Allotment'),
+				'description' => t('perform administer View Allotment.'),
+			),
+			
+			'administer Allotment List Approve' => array(
+				'title' => t('administer Allotment List Approve'),
+				'description' => t('perform administer Allotment List Approve.'),
+			),
+		);	
+	}
+	
+	function allotment_detail_page($app_id = '') {
+		$app_id = decrypt_url($app_id);
+		//echo $app_id;
+		if(is_numeric($app_id) && $app_id > 0) {
+			$app_details = fetch_allottee_detail($app_id);
+			$output = array();
+			
+			/*if ($app_id !== '' && (!is_numeric($app_id) || $app_id <= 0)) {
+				$output[] = false;
+			}
+			else*/ 
+			
+			if($app_details->rowCount() == 0){
+				$output[] = false;
+			}
+			else{	
+				$output[] = true;
+				$output[] = $app_details->fetchObject();
+			}
+		}
+		
+		return theme('view_allotment_detail_template', array('output' => $output));
+	}
+	
+	function allotment_list_theme() {
+	
+		return array(
+			'view_allotment_detail_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be custom-page.tpl.php
+				'template' => 'view_allotment_detail',
+			),		
+		);
+	}
+	
+	//before approval
+		function fetch_all_allottee_details_for_approve($allotment_process_date = '', $allotment_process_no = '', $allotment_process_type = '', $shifting_estate_id = '') {
+		
+			$query = db_select('housing_applicant_official_detail', 'haod');
+			$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+			$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+			$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+			if($allotment_process_type == 'NAL') {
+				$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hnaa.online_application_id = hoa.online_application_id');
+				$query->innerJoin('housing_allotment_roaster_details', 'hard', 'hard.flat_occupant_id = hfo.flat_occupant_id');
+			} else if($allotment_process_type == 'VSAL') {
+				$query->innerJoin('housing_vs_application', 'hva', 'hva.online_application_id = hoa.online_application_id');
+				$query->innerJoin('housing_flat', 'hf1', 'hf1.flat_id = hva.occupation_flat');	
+			} else if($allotment_process_type == 'CSAL') {
+				$query->innerJoin('housing_cs_application', 'hca', 'hca.online_application_id = hoa.online_application_id');
+				$query->innerJoin('housing_flat', 'hf2', 'hf2.flat_id = hca.occupation_flat');	
+			}
+			
+			//$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+			$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
+			$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
+			$query->innerJoin('housing_district', 'hd', 'he.district_code = hd.district_code');
+			
+			$query->fields('ha', array());
+			$query->fields('haod', array());
+			
+			if($allotment_process_type == 'NAL') {
+				$query->fields('hnaa', array());
+				$query->addField('hard', 'roaster_vacancy_position');
+				$query->addField('hard', 'allotment_reason');
+			} else if($allotment_process_type == 'VSAL') {
+				$query->fields('hva', array());
+				$query->addField('hf1', 'flat_no', 'occupied_flat_vs');
+				$query->addField('hf1', 'flat_type_id', 'flat_type_id_vs');
+			} else if($allotment_process_type == 'CSAL') {
+				$query->fields('hca', array());
+				$query->addField('hf2', 'flat_no', 'occupied_flat_cs');
+				$query->addField('hf2', 'flat_type_id', 'flat_type_id_cs');
+			}
+			
+			$query->addField('hoa', 'online_application_id');
+			$query->addField('hoa', 'date_of_application');
+			$query->addField('hoa', 'application_no');
+			$query->addField('hfo', 'allotment_no');
+			$query->addField('hfo', 'allotment_date');
+			//$query->addField('hfo', 'roaster_vacancy_position');  turned off 11-11-2024
+			$query->addField('hfo', 'allotment_reason');
+			$query->addField('hfo', 'allowed_for_floor_shifting');
+			$query->addField('hf', 'flat_no');
+			$query->addField('hf', 'floor');
+			$query->addField('hft', 'flat_type');
+			$query->addField('he', 'estate_name');
+			$query->addField('he', 'estate_address');
+			$query->addField('hd', 'district_name');
+			
+			
+			/*$db_or = db_or();
+			$db_or->condition('hoa.status', 'allotted', '=');
+			$db_or->condition('hoa.status', 'reject_offer', '=');
+			$query->condition($db_or);*/
+			
+			$db_and = db_and();
+			$db_and->condition('hoa.status', 'allotted', '=');
+			$db_and->condition('hfo.online_application_id', NULL, 'IS NOT');
+			$db_and->condition('hfo.allotment_date', $allotment_process_date, '=');
+			$db_and->condition('hfo.allotment_process_no', $allotment_process_no, '=');
+			
+			if($shifting_estate_id != '') {
+				$db_and->condition('he.estate_id', $shifting_estate_id, '=');	
+			}
+			
+			$db_and->where('substring(hfo.allotment_no, \'\w+\') = :alot_no', array(':alot_no' => $allotment_process_type));
+			$query->condition($db_and);
+			
+			$query->orderBy('hfo.flat_occupant_id', 'ASC');
+			
+			//echo $query;die();
+			//$query = $query->extend('PagerDefault')->limit(10);
+			return $query->execute();	
+		}
+	//end
+	
+	function fetch_all_allottee_details($allotment_process_date = '', $allotment_process_no = '', $allotment_process_type = '', $shifting_estate_id = '') {
+		
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		//$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid'); //off by dg 06-12-2024
+		$query->innerJoin('housing_applicant', 'ha','ha.housing_applicant_id = haod.housing_applicant_id'); //added by debaleena 05-12-2024
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_allotment_status_master', 'hsm','hsm.short_code = hoa.status'); // Done by Subham 16-12-2024
+		
+		
+		if($allotment_process_type == 'NAL') {
+			$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hnaa.online_application_id = hoa.online_application_id');
+		} else if($allotment_process_type == 'VSAL') {
+			$query->innerJoin('housing_vs_application', 'hva', 'hva.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat', 'hf1', 'hf1.flat_id = hva.occupation_flat');	
+		} else if($allotment_process_type == 'CSAL') {
+			$query->innerJoin('housing_cs_application', 'hca', 'hca.online_application_id = hoa.online_application_id');
+			$query->innerJoin('housing_flat', 'hf2', 'hf2.flat_id = hca.occupation_flat');	
+		}
+		
+		$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 'he.district_code = hd.district_code');
+		
+		$query->fields('ha', array());
+		$query->fields('haod', array());
+		
+		if($allotment_process_type == 'NAL') {
+			$query->fields('hnaa', array());
+		} else if($allotment_process_type == 'VSAL') {
+			$query->fields('hva', array());
+			$query->addField('hf1', 'flat_no', 'occupied_flat_vs');
+			$query->addField('hf1', 'flat_type_id', 'flat_type_id_vs');
+		} else if($allotment_process_type == 'CSAL') {
+			$query->fields('hca', array());
+			$query->addField('hf2', 'flat_no', 'occupied_flat_cs');
+			$query->addField('hf2', 'flat_type_id', 'flat_type_id_cs');
+		}
+		
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'application_no');
+		$query->addField('hfo', 'allotment_no');
+		$query->addField('hfo', 'allotment_date');
+		$query->addField('hfo', 'roaster_vacancy_position');
+		$query->addField('hfo', 'allotment_reason');
+		$query->addField('hfo', 'allowed_for_floor_shifting');
+		$query->addField('hf', 'flat_no');
+		$query->addField('hf', 'floor');
+		$query->addField('hft', 'flat_type');
+		$query->addField('he', 'estate_name');
+		$query->addField('he', 'estate_address');
+		$query->addField('hd', 'district_name');
+		$query->addField('hoa', 'status');
+		$query->addField('hsm','status_description'); // Done by Subham 16-12-2024
+
+		$db_and = db_and();
+		$db_or = db_or();
+		
+		$db_or->condition('hoa.status', 'allotted', '=');
+
+
+		////debaleena start//////////
+		$db_or->condition('hoa.status', 'housing_sup_approved_1', '=');
+		$db_or->condition('hoa.status', 'housing_sup_reject_1', '=');
+		$db_or->condition('hoa.status', 'applicant_acceptance', '=');
+		$db_or->condition('hoa.status', 'applicant_reject', '=');
+		$db_or->condition('hoa.status', 'ddo_verified_2', '=');
+		$db_or->condition('hoa.status', 'ddo_reject_2', '=');
+		$db_or->condition('hoa.status', 'housing_sup_approved_2', '=');
+		$db_or->condition('hoa.status', 'housing_sup_reject_2', '=');
+		$db_or->condition('hoa.status', 'offer_letter_cancel', '=');
+		$db_or->condition('hoa.status', 'offer_letter_extended', '='); // Added by Subham 16-12-2024
+		$db_or->condition('hoa.status', 'license_generate', '='); // Added by Subham 16-12-2024
+		$db_or->condition('hoa.status', 'license_cancel', '=');
+		$db_or->condition('hoa.status', 'flat_possession_taken', '=');
+		$db_or->condition('hoa.status', 'housingapprover_approved_1', '=');
+		$db_or->condition('hoa.status', 'housing_approver_reject_1', '=');
+		$db_or->condition('hoa.status', 'housing_official_approved', '=');
+		$db_or->condition('hoa.status', 'housing_official_reject', '=');
+		$db_or->condition('hoa.status', 'housingapprover_approved_2', '=');
+		$db_or->condition('hoa.status', 'housing_approver_reject_2', '=');
+		$db_or->condition('hoa.status', 'license_extended', '=');
+		$db_or->condition('hoa.status', 'flat_released', '='); // Added by Subham 16-12-2024
+
+		///$query->condition('hoa.status','array(allotted,housing_official_approved,housing_official_reject,applicant_acceptance,applicant_reject,ddo_verified_2,ddo_reject_2,housing_sup_approved_2,housing_sup_reject_2)','in');
+		
+
+		/////end///
+		
+		$db_and->condition($db_or);
+		$db_and->condition('hfo.online_application_id', NULL, 'IS NOT');
+		$db_and->condition('hfo.allotment_date', $allotment_process_date, '=');
+		$db_and->condition('hfo.allotment_process_no', $allotment_process_no, '=');
+		
+		if($shifting_estate_id != '') {
+			$db_and->condition('he.estate_id', $shifting_estate_id, '=');	
+		}
+		
+		$db_and->where('substring(hfo.allotment_no, \'\w+\') = :alot_no', array(':alot_no' => $allotment_process_type));
+		
+		$query->condition($db_and);
+		
+		$query->orderBy('hfo.flat_occupant_id', 'ASC');
+		
+		//echo $query;die();
+		//$query = $query->extend('PagerDefault')->limit(10);
+
+
+		return $query->execute();	
+		// $result =  $query->execute();
+		// $data = $result->fetchObject();
+		// print_r($data);die;
+	}
+	
+	//particular allottee details
+	function fetch_allottee_detail($online_application_id = '') {
+		global $user;
+		
+		$query = db_select('housing_applicant_official_detail', 'haod');
+		$query->innerJoin('housing_applicant', 'ha', 'ha.uid = haod.uid');
+		$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+		$query->innerJoin('housing_new_allotment_application', 'hnaa', 'hnaa.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_flat_occupant', 'hfo', 
+		'hfo.online_application_id = hoa.online_application_id');
+		$query->innerJoin('housing_flat', 'hf', 
+		'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 
+		'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 
+		'hf.flat_type_id = hft.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 
+		'he.district_code = hd.district_code');
+		$query->fields('ha', array());
+		$query->fields('hnaa', array());
+		$query->addField('hoa', 'online_application_id');
+		$query->addField('hoa', 'date_of_application');
+		$query->addField('hoa', 'application_no');
+		$query->addField('hfo', 'allotment_no');
+		$query->addField('hfo', 'allotment_date');
+		$query->addField('hf', 'flat_no');
+		$query->addField('hft', 'flat_type');
+		$query->addField('he', 'estate_name');
+		$query->addField('he', 'estate_address');
+		$query->addField('hd', 'district_name');
+		
+		$db_and = db_and();
+		$db_and->condition('hoa.status', 'allotted', '=');
+		$db_and->condition('hoa.online_application_id', $online_application_id, '=');
+		$query->condition($db_and);
+		
+		return $query->execute();
+		
+	}
+	
+	/*function allotment_process_date() {
+		$allotment_process_date = array('' => '--- Select Allotment Process Date ---');
+		$result = db_query("select allotment_date from {housing_flat_occupant} group by allotment_date 
+							having allotment_date in (select allotment_date from {housing_flat_occupant} 
+							where online_application_id is not null and substring(allotment_no,1,3) = 'NAL'
+							order by allotment_date asc) order by allotment_date asc");
+		foreach($result as $val) {
+			$allotment_process_date[$val->allotment_date] = implode('/', array_reverse(explode('-', $val->allotment_date)));
+		}
+	
+		return $allotment_process_date;
+	}*/
+	
+	function allotment_process_date() {
+		$allotment_process_date = array('' => 'Select Allotment Process Date');
+		$result = db_query("select allotment_date from {housing_allotment_process} 
+							where allotment_process_type = :allotment_process_type
+							order by allotment_date asc", array(':allotment_process_type' => 'ALOT'));
+		foreach($result as $val) {
+			$allotment_process_date[$val->allotment_date] = implode('/', array_reverse(explode('-', $val->allotment_date)));
+		}
+	
+		return $allotment_process_date;
+	}
+	
+	function allotment_process_no($allotment_process_date = '') {
+		$allotment_process_no = array('' => 'Select Allotment Process No.');
+		if(!empty($allotment_process_date)) {
+			$query=db_select('housing_allotment_process','hap');
+			$query->fields('hap',array('allotment_process_id','allotment_process_no'));
+			$query->condition('allotment_date', $allotment_process_date, '=');
+			$query->condition('allotment_process_type', 'ALOT', '=');
+			$query->orderBy('allotment_process_no', 'ASC');
+			$result=$query->execute();
+			
+			foreach($result as $val) {
+				$allotment_process_no[$val->allotment_process_no] = $val->allotment_process_no;
+			}
+		}
+	
+		return $allotment_process_no;
+	}
+	
+	//allotment process details
+	function fetch_allotment_process_detail($allotment_process_no = '') {
+		global $user;
+		
+		$query = db_select('housing_allotment_process', 'hap');
+		$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hap.allotment_flat_type');
+		
+		$query->fields('hap', array());
+		$query->fields('hft', array());
+		$query->condition('hap.allotment_process_no', $allotment_process_no, '=');
+		
+		return $query->execute();
+		
+	}
+	
+	
+	//shifting allotment allotted rhe details
+	function fetch_shifting_allotment_rhe_detail($allotment_process_date = '', $allotment_process_no = '', $allotment_process_type = '') {
+		$query = db_select('housing_flat_occupant', 'hfo');
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+		$query->innerJoin('housing_estate', 'he', 'hf.estate_id = he.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hf.flat_type_id = hft.flat_type_id');
+		
+		if($allotment_process_type == 'VSAL') {
+			$query->innerJoin('housing_vs_application', 'hva', 'hva.online_application_id = hfo.online_application_id');
+			$query->innerJoin('housing_flat', 'hf1', 'hf1.flat_id = hva.occupation_flat');
+			$query->innerJoin('housing_flat_type', 'hft1', 'hf1.flat_type_id = hft1.flat_type_id');
+		} else if($allotment_process_type == 'CSAL') {
+			$query->innerJoin('housing_cs_application', 'hca', 'hca.online_application_id = hfo.online_application_id');
+			$query->innerJoin('housing_flat', 'hf1', 'hf1.flat_id = hca.occupation_flat');
+			$query->innerJoin('housing_flat_type', 'hft1', 'hf1.flat_type_id = hft1.flat_type_id');	
+		}
+		
+		$query->addField('he', 'estate_id');
+		$query->addField('he', 'estate_name');
+		$query->addField('hft1', 'flat_type', 'from_flat_type');
+		$query->addField('hft', 'flat_type', 'to_flat_type');
+		
+		$db_and = db_and();
+		$db_and->condition('hfo.allotment_date', $allotment_process_date, '=');
+		$db_and->condition('hfo.allotment_process_no', $allotment_process_no, '=');
+		$db_and->where('substring(hfo.allotment_no, \'\w+\') = :alot_no', array(':alot_no' => $allotment_process_type));
+		$query->condition($db_and);
+		
+		$query->groupBy('he.estate_id');
+		$query->groupBy('hf1.flat_type_id');
+		$query->groupBy('hft1.flat_type');
+		$query->groupBy('hf.flat_type_id');
+		$query->groupBy('hft.flat_type');
+		
+		$query->orderBy('he.estate_id', 'ASC');
+		
+		return $query->execute();
+		
+
+	
+	}
+
+	//sd 11-09-2024
+	function fetchAllotmentStatus($online_application_id = ''){
+		global $user;
+
+		$query = db_select('housing_process_flow', 'hpf');
+		$query->innerJoin('housing_allotment_status_master', 'hasm', 'hasm.short_code = hpf.short_code');
+		$query->condition('hpf.uid', $user->uid, '=');
+		$query->condition('hpf.online_application_id', $online_application_id, '=');
+		$query->addField('hpf', 'short_code');
+		$query->addField('hpf', 'online_application_id');
+		$query->addField('hasm', 'status_description');//echo $query;die;
+		$datas = $query->execute();
+		
+
+		$allotment_status='Pending';
+		while($data = $datas->fetchObject()) {
+			if($data->short_code == "housing_official_approved"){
+				$allotment_status = $data->status_description;
+			}elseif($data->short_code == "housing_official_reject"){
+				$allotment_status = $data->status_description;
+			}
+		}
+		
+		return $allotment_status;
+	}
+	
+	

@@ -1,0 +1,51 @@
+<?php
+/**
+ * Implementation of hook_block_info().
+ */
+function view_application_sidebar_block_info() {
+  $blocks['my-block-id'] = array(
+    'info' => t('View Application Sidebar'),
+  );
+  return $blocks;
+}
+ 
+/**
+ * Implementation of hook_block_view().
+ */
+function view_application_sidebar_block_view($delta='') {	
+  $block = array();
+  switch ($delta) {
+    case 'my-block-id':
+	  $block['title'] =  'Online Application';
+      $block['content'] = view_application_sidebar_contents();
+      break;
+  }
+  return $block;
+}
+
+
+
+function view_application_sidebar_contents() {
+	
+	 return theme('view_application_sidebar_template');
+
+
+}
+
+
+function view_application_sidebar_theme(){
+    return array(
+        'view_application_sidebar_template' => array(
+            'template' => 'view_application_sidebar',
+   			//'variables' => array('param1' => NULL),
+
+        ),
+    );
+}
+
+
+
+
+
+
+

@@ -1,0 +1,200 @@
+<?php
+
+	function existing_applicant_init() {
+		drupal_add_library('system','ui.datepicker');
+		
+		drupal_add_css(drupal_get_path('module', 'common_application') . '/css/select2.min.css');
+		drupal_add_js(drupal_get_path('module', 'common_application') . '/js/select2.min.js');
+	}
+	
+	function existing_applicant_menu() {
+		$items = array();
+		$items['existing_applicant_entry'] = array(
+			'title'=>'Existing Applicant(Waiting List Applicant) Data Entry',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('existing_applicant_form'),
+			'file' => 'include/existing_applicant_form.inc',
+			'access arguments' => array('administer Existing Applicant Form'),
+			//'access callback'=>TRUE
+		);
+
+		/*Done by Subham*/
+		$items['view-legacy-applicant-list'] = array(
+			'title' => 'Legacy Applicant List',
+			'page callback' => 'view_legacy_applicant_list_form',
+			'page arguments' => array(),
+			'access arguments' => array('access content')
+		);
+		return $items;	
+		
+	}
+	
+	function existing_applicant_permission() {
+		return array(
+			'administer Existing Applicant Form' => array(
+				'title' => t('administer Existing Applicant Form'),
+				'description' => t('Perform administer Existing Applicant Form.'),
+			),
+		);	
+	}
+
+	/*Done by Subham*/
+	function view_legacy_applicant_list_form() {
+		global $base_root, $base_path;
+		$output = '';
+
+		if (db_table_exists('housing_applicant')) {
+			$query = db_select('housing_applicant', 'ha');
+
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'ha.uid = haod.uid');
+			$query->innerJoin('housing_online_application', 'hoa', 'hoa.applicant_official_detail_id = haod.applicant_official_detail_id');
+			//$query->innerJoin('housing_flat_occupant', 'hfo', 'hfo.online_application_id = hoa.online_application_id');
+			//$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = hfo.flat_id');
+			//$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+			//$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
+
+			$query->condition('hoa.is_backlog_applicant', '1', '=');
+
+			$query->addField('ha', 'applicant_name');
+			$query->addField('ha', 'guardian_name');
+			$query->addField('ha', 'mobile_no');
+			$query->addField('ha', 'gender');
+			
+			$query->addField('ha', 'present_street');
+			$query->addField('ha', 'present_city_town_village');
+			$query->addField('ha', 'present_post_office');
+			$query->addField('ha', 'present_pincode');
+			$query->addField('ha', 'present_district');
+
+			$query->addField('ha', 'permanent_street');
+			$query->addField('ha', 'permanent_city_town_village');
+			$query->addField('ha', 'permanent_post_office');
+			$query->addField('ha', 'permanent_pincode');
+			$query->addField('ha', 'permanent_district');
+			
+			$query->addField('hoa', 'application_no');
+			$query->addField('hoa', 'date_of_application');
+			$query->addField('hoa', 'computer_serial_no');
+			//$query->addField('he', 'estate_name');
+			//$query->addField('hft', 'flat_type');
+
+			$result =$query->execute();
+
+			///////////////////debaleena 23-09-2024////////////////////////
+			$header['application_no'] = array('data' => 'Application No');
+			$header['applicant_name'] = array('data' => 'Applicant Name');
+			$header['date_of_application'] = array('data' => 'Date of Application');
+			$header['computer_serial_no'] = array('data' => 'Computer Serial No');
+			$header['mobile_no'] = array('data' => 'Mobile No.');
+			$header['gender'] = array('data' => 'Gender');
+			$header['present_address'] = array('data' => 'Present Address');
+			$header['parmanent_address'] = array('data' => 'Permanent Address');
+			
+			$rows =array();
+		   	$output = '';
+		   
+		   	while($data = $result->fetchObject()) {
+			   $fields = array();
+		
+			   $fields[] = $data->application_no;
+			   $fields[] = $data->applicant_name;
+			   $fields[] = $data->date_of_application;
+			   $fields[] = $data->computer_serial_no;
+			   $fields[] = $data->mobile_no;
+			   $fields[] = $data->gender;
+			   $fields[] = $data->present_street .','. $data->present_city_town_village .','.$data->present_post_office .','
+			   				.$data->present_district .','. $data->present_pincode;
+			   $fields[] = $data->permanent_street .','. $data->permanent_city_town_village .','.$data->permanent_post_office .','.
+			   				$data->permanent_district .','. $data->permanent_pincode;
+		
+			   
+			  
+			   $rows[] = $fields;
+		  	}
+		
+				
+		
+				$variables = array(
+					'attributes' => array('class'=>array('table table-list table-striped')),
+					'header' => $header,
+					'rows' => $rows,
+					'sticky' => true,
+					'empty' => t("No data found!") // The message to be displayed if table is empty
+					);
+					//end
+				//sd turned off 21-06-2024
+				if(count($rows) > 0) {
+					// Render using Drupal's render API.
+					$build['datatable'] = array(
+						'#theme' => 'datatable',
+						'#header' => $header,
+						'#rows' => $rows,
+						'#attributes' => array(),
+					);
+					
+					// Or, render using a theme function.
+					$variables = array(
+						'attributes' => array('class'=>array('table table-list table-striped')),
+						'header' => $header,
+						'rows' => $rows,
+					);
+					
+					$output = theme('datatable', $variables);
+				}
+				else {
+					$output = '<div>
+									<table class="datatable_no_data_found table table-list">
+										<tr class="tr_no_data_found">
+											<th class="th_no_data_found"></th>
+										</tr>
+										<tr class="tr_no_data_found">
+											<td class="td_no_data_found">No data found!</td>
+										</tr>
+									</table>
+								</div>';
+				}
+		
+		   return $output;
+		}
+
+		////////////////////////////////////subham/////////////////////////////
+		// 	$result = $result->fetchAll();
+
+		// 	if(!empty($result)){
+		// 	$output .= '<table class="table table-list">';
+		// 	$output .= '<tr>
+		// 				<th>Serial No.</th>
+		// 				<th>Application No</th>
+		// 				<th>Applicant Name</th>
+		// 				<th>Date of Application</th>
+		// 				<th>Computer Serial No</th>
+		// 				<th>Mobile No</th>
+		// 				<th>Gender</th>
+		// 				<th>Present Address</th>
+		// 				<th>Permanent Address</th>
+		// 				</tr>';
+		// 	$serialNumber = 1;
+		// 	foreach ($result as $row) {
+		// 		$output .= '<tr>';
+		// 		$output .= '<td>' . $serialNumber . '</td>';
+		// 		$output .= '<td>' . $row->application_no . '</td>';
+		// 		$output .= '<td>' . $row->applicant_name . '</td>';
+		// 		$output .= '<td>' . $row->date_of_application . '</td>';
+		// 		$output .= '<td>' . $row->computer_serial_no . '</td>';
+		// 		$output .= '<td>' . $row->mobile_no . '</td>';
+		// 		$output .= '<td>' . $row->gender . '</td>';
+		// 		$output .= '<td>' . $row->present_street .','. $row->present_city_town_village .','.$row->present_post_office .','.$row->present_district .','. $row->present_pincode.'</td>';
+		// 		$output .= '<td>' . $row->permanent_street .','. $row->permanent_city_town_village .','.$row->permanent_post_office .','.$row->permanent_district .','. $row->permanent_pincode.'</td>';
+		// 		$output .= '</tr>';
+		// 		$serialNumber++;
+		// 	}
+		// 	$output .= '</table>';
+		// 	} else {
+		// 	$output .= '<p>No data found!</p>';
+		// 	}
+		// } else {
+		// 	$output .= '<p>The table housing_treasury_estate_mapping does not exist!</p>';
+		// }
+
+		// return $output;
+	}

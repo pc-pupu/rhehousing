@@ -1,0 +1,6 @@
+name = Generate VS Licence
+decsription = Generate VS Licence Module
+core = 7.x
+package = eallotment RHE License Module
+stylesheets[all][] = css/generate_vs_licence.css
+scripts[] = js/generate_vs_licence.js

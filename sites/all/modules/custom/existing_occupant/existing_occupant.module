@@ -19,6 +19,21 @@
 	  		'file' => 'include/rhewise_flatlist_page.inc',
 	  		'access arguments' => array('administer Existing Occupant'),
 		);
+<<<<<<< HEAD
+
+			/*    dg 07-05-2025   */
+
+		$items['rhewise_flatlist_draft'] = array(
+			'title' => 'Data Entry For Existing Occupant Without HRMS ID',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('rhewise_flatlist_draft_form'),
+			'file' => 'include/rhewise_flatlist_page_draft.inc',
+			'access arguments' => array('administer Existing Occupant'),
+	  	);
+
+	  		/* end */
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		
 		/*$items['rhewise_occupant_data_entry/%/%'] = array(
 			'title'=>'Flatwise Occupant Data Entry',
@@ -37,8 +52,33 @@
 			'access arguments' => array('administer Existing Occupant'),
 			//'access callback'=>TRUE
 		);
+<<<<<<< HEAD
+
+		/* dg 08-05-2025 */
+		$items['rhewise_occupant_draft_data_entry/%'] = array(
+			'title'=>'Existing Occupant Data Entry without HRMS ID',
+			'page callback'=>'drupal_get_form',
+			'page arguments'=>array('existing_occupant_draft_form',1),
+			'file' => 'include/existing_occupant_draft_form.inc',
+			'access arguments' => array('administer Existing Occupant'),
+			//'access callback'=>TRUE
+		);
+		/* end */
+
+		$items['rhewise_occupant_draft_list'] = array(
+			'title' => 'Existing Occupant List Without HRMS ID',
+			'page callback'=>'rhewise_occupant_draft_list',
+			//'page arguments'=> array('rhewise_occupant_draft_list_form'),
+			'file' => 'include/rhewise_occupant_draft_list.inc',
+			'access arguments' => array('administer Existing Occupant Draft List')
+			// 'access arguments' => array('administer Existing Occupant List')
+		);
+
+		//menu for division user
+=======
 		
 	//menu for division user
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$items['rhewise_occupantlist'] = array(
 	  		'title' => 'Occupant List',
 			'page callback' => 'drupal_get_form',
@@ -71,7 +111,11 @@
 		);
 
 		$items['view-unauthorised-occupants'] = array(
+<<<<<<< HEAD
+			'title' => 'System-Flagged Unauthorised Occupant List',
+=======
 			'title' => 'Unauthorised Occupant List',
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			'page callback' => 'view_unauthorised_occupants_list',
 			'file' => 'include/view_unauthorised_occupants_list.inc',
 			'access arguments' => array('administer Unauthorised Occupant List')
@@ -91,6 +135,25 @@
 			//'file' => 'include/view_unauthorised_occupants_list.inc',
 			'access arguments' => array('access content')
 		);
+<<<<<<< HEAD
+		$items['existing-occupant-view-det-draft/%'] = array(
+			'title' => 'View Existing Occupant Details without HRMS ID',	
+			'page callback' => 'existing_occupant_view_details_draft',
+			'page arguments' => array(1),
+			//'file' => 'include/view_unauthorised_occupants_list.inc',
+			'access arguments' => array('access content')
+		);
+
+		// added on 21-05-2025 by moumita
+		$items['rhe-wise-flat-occupant-delete'] = array(
+			'title' => 'RHE Wise Flat List',
+			'page callback' => 'rhe_wise_flat_occupant_delete',
+			'page arguments' => array(1,2,3),
+			// 'file' => 'include/rhewise_occupant_draft_list.inc',
+			'access arguments' => array('administer RHE wise flat list Master'),
+		);
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 		return $items;
 	}
@@ -135,6 +198,14 @@
 				'title' => t('Administer Unauthorised Occupant List'),
 				'description' => t('Perform Administer to see unauthorised occupant list.'),
 			),
+<<<<<<< HEAD
+
+			'administer Existing Occupant Draft List' => array(
+				'title' => t('Administer Existing Occupant Draft List View'),
+				'description' => t('Perform Administer to see existing occupant draft list.'),
+			),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		);	
 	}
 	
@@ -147,6 +218,19 @@
 			return $query->execute();		
 		}
 	}
+<<<<<<< HEAD
+
+	function occupant_entry_check_draft($flat_id = ''){
+		if($flat_id != 0) {
+			$query = db_select('housing_existing_occupant_draft', 'heod');
+			$query->addField('heod', 'flat_id');
+			$query->addField('heod', 'applicant_name');
+			$query->condition('heod.flat_id', $flat_id, '=');
+			return $query->execute();		
+		}
+	}
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	
 	function get_occupant_rhe_details($flat_id = '') {
 		if($flat_id !== '' && is_numeric($flat_id)) {	
@@ -488,7 +572,11 @@
 
 	/*Done by Subham*/
 	function view_occupant_list_form() {  
+<<<<<<< HEAD
+		global $base_root, $base_path,$user, $user_role;
+=======
 		global $base_root, $base_path,$user;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$output = '';
 
 			/* Done by Subham 30-12-2024*/
@@ -511,6 +599,10 @@
 					$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
 					$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
 					$query->innerJoin('users', 'u', 'u.uid = haod.uid');
+<<<<<<< HEAD
+					// $query->leftJoin('users', 'u', 'u.uid = haod.uid');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$query->condition('hoa.status', 'existing_occupant', '=');
 					// $query->condition('haod.is_active', 1, '=');
@@ -521,6 +613,10 @@
 					$query->addField('haod', 'hrms_id');
 					$query->addField('u', 'status');
 					$query->addField('haod', 'uid');
+<<<<<<< HEAD
+					$query->addField('hf', 'flat_id');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$db_and = db_and();														// Added by Subham 30-12-2024
 					$db_and->condition('he.division_id', $data_fetch->division_id, '=');	// Added by Subham 30-12-2024
@@ -550,6 +646,10 @@
 					$query->addField('haod', 'hrms_id');
 					$query->addField('u', 'status');
 					$query->addField('haod', 'uid');
+<<<<<<< HEAD
+					$query->addField('hf', 'flat_id');
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 					$query->condition('he.division_id', $data_fetch->division_id, '=');		// Added by Subham 30-12-2024
 					$result =$query->execute();
@@ -564,6 +664,13 @@
 			$header['Flat Type'] = array('data' => 'Flat Type');
 			$header['Approval Status'] = array('data' => 'Approval Status');
 			$header['Details'] = array('data' => 'Details');
+<<<<<<< HEAD
+			// Added 22-05-2025
+			if($user_role == 8){
+				$header['Action'] = array('data' => 'Action');
+			}
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 			$rows =array();
 			$output = '';
@@ -589,6 +696,17 @@
                 'html'=>TRUE,
                 'attributes'=> array('class'=>array('btn bg-success btn-sm px-4 rounded-pill text-white fw-bolder')),
             ));	
+<<<<<<< HEAD
+			
+			// Added 22-05-2025
+			if($user_role == 8){
+			/*Added by Moumita 21-05-2025  ~~~~~~ Flat id added in link by Subham dt.22-05-2025*/
+			$fields[] = l('<i class="fa fa-trash"></i> Delete', 'rhe-wise-flat-occupant-delete/draft/'.encrypt_url($data->housing_existing_occupant_draft_id).'/'.encrypt_url($data->flat_id), array('html' => true, 'attributes' => array('class' => array('btn btn-sm bg-primary px-3 rounded-pill text-white fw-bolder'))));	
+			/*end*/	
+			}
+
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			$serialNumber++;
 
 			$rows[] = $fields;
@@ -686,6 +804,39 @@
 		$data = $result->fetchObject();
 		//print_r($data);die;
 
+<<<<<<< HEAD
+		$present_address_parts = array_filter([
+			$data->present_street ?? '',
+			$data->present_city_town_village ?? '',
+			$data->present_post_office ? 'P.O- ' . $data->present_post_office : '',
+			$data->present_district_name ?? '',
+			$data->present_pincode ? '-' . $data->present_pincode : '',
+		]);
+
+		$present_address = !empty($present_address_parts) ? implode(', ', $present_address_parts) : 'Not Available';
+
+		$permanent_address_parts = array_filter([
+			$data->permanent_street ?? '',
+			$data->permanent_city_town_village ?? '',
+			$data->permanent_post_office ? 'P.O- ' . $data->permanent_post_office : '',
+			$data->permanent_district_name ?? '',
+			$data->permanent_pincode ? '-' . $data->permanent_pincode : '',
+		]);
+		
+		$permanent_address = !empty($permanent_address_parts) ? implode(', ', $permanent_address_parts) : 'Not Available';
+		
+		$office_address_parts = array_filter([
+			$data->office_street ?? '',
+			$data->office_city_town_village ?? '',
+			$data->office_post_office ? 'P.O- ' . $data->office_post_office : '',
+			$data->office_district_name ?? '',
+			$data->office_pin_code ? '-' . $data->office_pin_code : '',
+		]);
+		
+		$office_address = !empty($office_address_parts) ? implode(', ', $office_address_parts) : 'Not Available';
+
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 
 		$display_output1 = '
 		    <div class="table-bottom">
@@ -718,11 +869,19 @@
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Present Address</th>
+<<<<<<< HEAD
+		            <td>'.$present_address.'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Parmanent Address</th>
+		            <td>'.$permanent_address.'</td>
+=======
 		            <td>'.$data->present_street.', '.$data->present_city_town_village.', P.O- '.$data->present_post_office.', '.$data->present_district_name.'-'.$data->present_pincode.'</td>
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Parmanent Address</th>
 		            <td>'.$data->permanent_street.', '.$data->permanent_city_town_village.', P.O- '.$data->permanent_post_office.', '.$data->permanent_district_name.'-'.$data->permanent_pincode.'</td>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Gender:</th>
@@ -782,7 +941,11 @@
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Office Address:</th>
+<<<<<<< HEAD
+		            <td>'.$office_address.'</td>
+=======
 		            <td>'.$data->office_street.', '.$data->office_city_town_village.', P.O- '.$data->office_post_office.', '.$data->office_district_name.'-'.$data->office_pin_code.'</td>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		          </tr>
 		          <tr>
 		            <th style="background-color:#00000000">Office Phone No.:</th>
@@ -852,4 +1015,271 @@
 
     return $display_output1;
 
+<<<<<<< HEAD
 	}
+
+
+
+	function existing_occupant_view_details_draft($housing_existing_occupant_draft_id = '')
+	{
+		$housing_existing_occupant_draft_id = decrypt_url($housing_existing_occupant_draft_id);
+
+		$query = db_select('housing_existing_occupant_draft', 'heod');
+                    
+		$query->innerJoin('housing_flat', 'hf', 'hf.flat_id = heod.flat_id');
+		$query->innerJoin('housing_block', 'hb', 'hb.block_id = hf.block_id');
+		$query->innerJoin('housing_estate', 'he', 'he.estate_id = hf.estate_id');
+		$query->innerJoin('housing_flat_type', 'hft', 'hft.flat_type_id = hf.flat_type_id');
+		$query->innerJoin('housing_district', 'hd', 'he.district_code = hd.district_code');
+
+		$query->fields('heod', array('applicant_name','guardian_name','date_of_birth','mobile_no','gender','permanent_street','permanent_city_town_village','permanent_post_office','permanent_pincode','permanent_district','permanent_present_same','present_street','present_city_town_village','present_post_office','present_pincode','present_district','ddo_id','applicant_designation','applicant_headquarter','applicant_posting_place','pay_band_id','pay_in_the_pay_band','date_of_joining','date_of_retirement','office_name','office_street','office_city_town_village','office_post_office','office_pin_code','office_district','office_phone_no','license_no','license_issue_date','authorised_or_not'));
+		$query->fields('he', array('estate_name', 'estate_address'));
+		$query->addField('hft', 'flat_type');
+		$query->fields('hf', array('floor', 'flat_no'));
+		$query->addField('hd', 'district_name');
+		$query->addField('hb', 'block_name');
+		$query->addField('heod', 'housing_existing_occupant_draft_id');
+
+		$query->condition('heod.housing_existing_occupant_draft_id', $housing_existing_occupant_draft_id);
+
+		// $db_and = db_and();							
+		// $db_and->condition('he.division_id', $data_fetch->division_id, '=');	
+		// $db_and->condition('he.subdiv_id', $data_fetch->subdiv_id, '=');		
+		// $query->condition($db_and);
+
+		$result =$query->execute();
+		$data = $result->fetchObject();
+
+		// print_r($data);die;
+
+		$present_address_parts = array_filter([
+			$data->present_street ?? '',
+			$data->present_city_town_village ?? '',
+			$data->present_post_office ? 'P.O- ' . $data->present_post_office : '',
+			$data->present_district_name ?? '',
+			$data->present_pincode ? '-' . $data->present_pincode : '',
+		]);
+
+		$present_address = !empty($present_address_parts) ? implode(', ', $present_address_parts) : 'Not Available';
+
+		$permanent_address_parts = array_filter([
+			$data->permanent_street ?? '',
+			$data->permanent_city_town_village ?? '',
+			$data->permanent_post_office ? 'P.O- ' . $data->permanent_post_office : '',
+			$data->permanent_district_name ?? '',
+			$data->permanent_pincode ? '-' . $data->permanent_pincode : '',
+		]);
+		
+		$permanent_address = !empty($permanent_address_parts) ? implode(', ', $permanent_address_parts) : 'Not Available';
+		
+		$office_address_parts = array_filter([
+			$data->office_street ?? '',
+			$data->office_city_town_village ?? '',
+			$data->office_post_office ? 'P.O- ' . $data->office_post_office : '',
+			$data->office_district_name ?? '',
+			$data->office_pin_code ? '-' . $data->office_pin_code : '',
+		]);
+		
+		$office_address = !empty($office_address_parts) ? implode(', ', $office_address_parts) : 'Not Available';
+
+		$display_output1 = '
+		    <div class="table-bottom">
+		        <table class="table table-list">
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Application Information</th>
+		          </tr>
+		           <tr>
+		            <th style="background-color:#00000000" width="50%">Application Number:</th>
+		            <td width="50%">Application for Existing Occupant Without HRMS ID</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000" width="50%">Application Number:</th>
+		            <td width="50%">'.(isset($data->application_no) ? $data->application_no : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Date of Application:</th>
+		            <td>'.(isset($data->date_of_application) ? $data->date_of_application : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Personal Information (According to Service Book)</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Applicant\'s Name:</th>
+		            <td>'.(isset($data->applicant_name) ? $data->applicant_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Father'.'s/ Husband'.'s Name:</th>
+		            <td>'.(isset($data->guardian_name) ? $data->guardian_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Present Address</th>
+		            <td>'.$present_address.'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Parmanent Address</th>
+		            <td>'.$permanent_address.'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Gender:</th>
+		            <td>'.(isset($data->gender) ? $data->gender : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Date of Birth(According to Service Book):</th>
+		            <td>'.(isset($data->date_of_birth) ? $data->date_of_birth : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Mobile No:</th>
+		            <td>'.(isset($data->mobile_no) ? $data->mobile_no : 'Not Avalaible').'</td>
+		          </tr><tr>
+		            <th style="background-color:#00000000">Email ID:</th>
+		            <td>'.(isset($data->mail) ? $data->mail : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Official Information</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Employee HRMS ID:</th>
+		            <td>'.(isset($data->hrms_id) ? $data->hrms_id : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Designation:</th>
+		            <td>'.(isset($data->applicant_designation) ? $data->applicant_designation : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Office Headquarter:</th>
+		            <td>'.(isset($data->applicant_headquarter) ? $data->applicant_headquarter : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Place of Posting:</th>
+		            <td>'.(isset($data->applicant_posting_place) ? $data->applicant_posting_place : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Basic Pay:</th>
+		            <td>'.(isset($data->pay_in_the_pay_band) ? $data->pay_in_the_pay_band : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Date of Joining:</th>
+		            <td>'.(isset($data->date_of_joining) ? $data->date_of_joining : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Date of Retirement(According to Service Book):</th>
+		            <td>'.(isset($data->date_of_retirement) ? $data->date_of_retirement : 'Not Avalaible').'</td>
+		          </tr>
+
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Office Name and Address</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Name of the Office:</th>
+		            <td>'.(isset($data->office_name) ? $data->office_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Office Address:</th>
+		            <td>'.$office_address.'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Office Phone No.:</th>
+		            <td>'.(isset($data->office_phone_no) ? $data->office_phone_no : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Applicant Office Name and Address</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">DDO District.:</th>
+		            <td>'.(isset($data->district_name) ? $data->district_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">DDO Designation:</th>
+		            <td>'.(isset($data->ddo_designation) ? $data->ddo_designation : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">DDO Address :</th>
+		            <td>'.(isset($data->ddo_address) ? $data->ddo_address : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Information for Allotment</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Estate Name:</th>
+		            <td>'.(isset($data->estate_name) ? $data->estate_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Bloack Name:</th>
+		            <td>'.(isset($data->block_name) ? $data->block_name : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Flat Type:</th>
+		            <td>'.(isset($data->flat_type) ? $data->flat_type : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Flat No.:</th>
+		            <td>'.(isset($data->flat_no) ? $data->flat_no : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Floor:</th>
+		            <td>'.(isset($data->floor) ? $data->floor : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th colspan="2" style="background: none repeat scroll 0 0 #473a39;color:white;text-align: center;font-size: 18px;line-height: 24px; font-weight: normal;font-family: "Dosis",Arial,Verdana,serif;" class="first">Information for License</th>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">License No :</th>
+		            <td>'.(isset($data->existing_occupant_license_no) ? $data->existing_occupant_license_no : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">License Issue Date :</th>
+		            <td>'.(isset($data->license_issue_date) ? $data->license_issue_date : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">License Expiry Date :</th>
+		            <td>'.(isset($data->license_expiry_date) ? $data->license_expiry_date : 'Not Avalaible').'</td>
+		          </tr>
+		          <tr>
+		            <th style="background-color:#00000000">Occupant Status :</th>
+		            <td>'.(isset($data->authorised_or_not) ? $data->authorised_or_not : 'Not Avalaible').'</td>
+		          </tr>
+
+		          
+		        </table>
+		    </div>';
+
+    	return $display_output1;
+
+}
+
+// Done by Moumita 21-05-2025
+function rhe_wise_flat_occupant_delete($val = '', $occupant_id_enc = '', $flat_id_enc = ''){
+	$occupant_id = decrypt_url($occupant_id_enc);
+	$flat_id = decrypt_url($flat_id_enc);
+
+	if($val == 'draft'){
+		// delete from draft table
+		$table_name = 'housing_existing_occupant_draft';
+		$field_name = 'housing_existing_occupant_draft_id';
+		$row_id = $occupant_id;
+
+		delete_info_from_table($table_name, $field_name, $row_id); // function from update_flat.module
+		// Added by Subham dt.22-05-2025
+		db_update('housing_flat')->fields(array('flat_status_id' => 1))->condition('flat_id', $flat_id)->execute();
+		// End
+		drupal_set_message('Occupant Data Removed Successfully');
+		drupal_goto('rhewise_occupant_draft_list');
+
+	}else{
+		// delete from multiple table
+		$user_id = $occupant_id; 
+
+		delete_info_from_table('housing_applicant', 'uid', $user_id); // function from update_flat.module
+		delete_info_from_table('housing_applicant_official_detail', 'uid', $user_id); // function from update_flat.module
+		delete_info_from_table('users_roles', 'uid', $user_id); // function from update_flat.module
+		delete_info_from_table('users', 'uid', $user_id); // function from update_flat.module
+		// Added by Subham dt.22-05-2025
+		db_update('housing_flat')->fields(array('flat_status_id' => 1))->condition('flat_id', $flat_id)->execute();
+		//End
+		drupal_set_message('Occupant Data Removed Successfully');
+		drupal_goto('view-occupant-list');
+	}
+}
+=======
+	}
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92

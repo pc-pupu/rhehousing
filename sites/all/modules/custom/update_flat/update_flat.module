@@ -98,6 +98,16 @@
 	        'type' => MENU_CALLBACK
 	    );
 	    /*DDO Estate Mapping End*/
+
+		// delete flat entry on 21-05-2025 by Moumita
+		$items['rhe-wise-flat-list-delete/%'] = array(
+			'title' => 'RHE Wise Flat List',
+			'page callback' => 'rhe_wise_flat_list_delete',
+			'page arguments' => array(1),
+			'file' => 'rhe_wise_flat_list_page.inc',
+			'access arguments' => array('administer RHE wise flat list Master for Division'),
+		);
+
 		
 		return $items;
 	}
@@ -749,6 +759,14 @@
 				'title' => t('Administer DDO Estate Mapping Home'),
 				'description' => t('Perform administration tasks for DDO Estate Mapping Home.'),
 			),
+<<<<<<< HEAD
+
+			'administer RHE wise flat list Master for Division' => array(
+				'title' => t('Administer Flat List Master Delete For Division'),
+				'description' => t('Perform administration tasks for deletion flat master for division.'),
+			),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		);
 	}
 	
@@ -777,8 +795,34 @@
 		return array('#type' => 'ajax', '#commands' => $commands);
 	}
 
+<<<<<<< HEAD
+	function delete_flat_info($flat_id_en = ''){
+		
+		$flat_id = decrypt_url($flat_id_en);
+
+		if($flat_id !='' || $flat_id !=0){
+			// delete flat info
+			
+			$return = db_delete('housing_flat')->condition('flat_id', $flat_id)->execute();
+			drupal_set_message('Flat info deleted successfully!!');
+		}else{
+			drupal_set_message('Flat ID invalid','error');
+		}
+	}
+	
+	function delete_info_from_table($table_name = '', $field_name = '', $row_id = 0){
+		if($table_name!='' && $row_id !=0 && $field_name !=''){
+			$return = db_delete($table_name)->condition($field_name, $row_id)->execute();
+			return $return;
+		}else{
+			drupal_set_message('Invalid Information','error');
+		}
+	}
+
+=======
 	
 	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	require_once("update_flat_fetch_data.form.inc");
 	require_once("update_flat_validate.form.inc");
 	require_once("update_flat_add_data.form.inc");

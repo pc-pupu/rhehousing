@@ -1,0 +1,6 @@
+name = Application of Registration List
+decsription = Application of Registration List Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/application_of_registration_list.css
+scripts[] = js/application_of_registration_list.js

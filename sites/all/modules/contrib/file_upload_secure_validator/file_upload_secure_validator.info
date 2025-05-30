@@ -1,0 +1,10 @@
+name = File Upload Secure Validator
+description = Secure Mime Detect
+core = 7.x
+
+files[] = tests/file_upload_secure_validator.test
+; Information added by Drupal.org packaging script on 2022-09-28
+version = "7.x-2.2"
+core = "7.x"
+project = "file_upload_secure_validator"
+datestamp = "1664399577"

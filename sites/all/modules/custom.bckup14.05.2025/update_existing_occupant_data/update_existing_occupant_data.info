@@ -1,0 +1,6 @@
+name = Update Existing Occupant's Master Data
+decsription = Update Existing Occupant's Master Data Module
+core = 7.x
+package = eallotment Update Master Data Module
+stylesheets[all][] = css/update_existing_occupant_data.css
+scripts[] = js/update_existing_occupant_data.js

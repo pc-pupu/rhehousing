@@ -16,7 +16,7 @@ if($isVal){
 
   //debolina start
   $preference_data=$output[5];
-  $status_description=$output[4]; 
+  $status_description=$output[4]->status_description; 
   //debolina end
 ?>
 <div class="table-bottom row">

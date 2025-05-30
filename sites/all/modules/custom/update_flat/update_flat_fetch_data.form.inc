@@ -207,12 +207,32 @@
 		$query->addField('he', 'estate_name');
 		$query->addField('he', 'estate_address');
 		$query->addField('hd', 'district_name');
-		$query->addField('hb', 'block_name');	
+		$query->addField('hb', 'block_name');
 		$query->addField('hfs', 'flat_status');
 		$query->addField('hfs', 'flat_status_code');
 		$query->addField('hfs', 'is_occupied');
 		$query->addField('hft', 'flat_type');
 		$query->addField('hf', 'remarks');
+			
+
+		// $floor_order_alias = "CASE 
+		// 	WHEN hf.floor = 'Ground' THEN 0
+		// 	WHEN hf.floor = 'First' THEN 1
+		// 	WHEN hf.floor = 'Second' THEN 2
+		// 	WHEN hf.floor = 'Third' THEN 3
+		// 	WHEN hf.floor = 'Fourth' THEN 4
+		// 	WHEN hf.floor = 'Fifth' THEN 5
+		// 	WHEN hf.floor = 'Sixth' THEN 6
+		// 	WHEN hf.floor = 'Seventh' THEN 7
+		// 	WHEN hf.floor = 'Eighth' THEN 8
+		// 	WHEN hf.floor = 'Top' THEN 9
+		// 	ELSE 10
+		// END";
+
+		$query->orderBy('flat_no', 'ASC');
+		// $query->orderBy($floor_order_alias, 'ASC');
+		
+
 		
 		if($rhe_name != 0){
 			$db_and = db_and();
@@ -220,9 +240,7 @@
 			$query->condition($db_and);
 		}
 		
-		$query->orderBy('flat_id', 'ASC');
-		
-		//echo $query;
+		// echo $query;
 		return $query->execute();	
 		
 	}

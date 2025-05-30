@@ -1,0 +1,4 @@
+name = EALLOTMENT SEND SMS
+description = THIS IS EALLOTMENT SEND SMS MODULE
+core = 7.x
+package = EALLOTMENT SEND SMS

@@ -114,6 +114,20 @@
 		}
 		
 		$form['submit_approve'] = array(
+<<<<<<< HEAD
+			'#prefix' => '<div id="submit_approve_allotteelist" class="col-md-4 text-start" >',
+			'#suffix' => '</div>',
+  		);
+		$form['submit_reject'] = array(
+			'#prefix' => '<div id="submit_reject_allotteelist"  class="col-md-4 text-center">',
+			'#suffix' => '</div>',
+  		);
+		$form['submit_hold'] = array(
+			'#prefix' => '<div id="submit_hold_allotteelist"  class="col-md-4 text-end">',
+			'#suffix' => '</div></div>',
+  		);
+		
+=======
 			'#prefix' => '<div id="submit_approve_allotteelist">',
 			'#suffix' => '</div>',
   		);
@@ -121,6 +135,7 @@
 			'#prefix' => '<div id="submit_reject_allotteelist">',
 			'#suffix' => '</div>',
   		);
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$form['allottee_info'] = array(
 			'#prefix' => '<div id="allottee_info">',
 			'#suffix' => '</div>',
@@ -142,6 +157,10 @@
 					'rhe_name' => array('data' => 'Name of R.H.E.'),
 					'dor' => array('data' => 'Date of Retirement'),
 					'remarks' => array('data' => 'Remarks'),
+<<<<<<< HEAD
+					'status' => array('data' => 'Status'),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				);
 			} else if($allotment_process_type == 'VSAL' || $allotment_process_type == 'CSAL') {
 				$header = array(
@@ -154,12 +173,61 @@
 					'from_flat_no' => array('data' => 'From Flat No.'),
 					'to_flat_no' => array('data' => 'To Flat No.'),
 					'remarks' => array('data' => 'Remarks'),
+<<<<<<< HEAD
+					'status' => array('data' => 'Status'),
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 				);
 			}
 			
 			$i = 1;
 			$onclick="return confirm('Are you sure you want to Approve?')";
 			$onclick1="return confirm('Are you sure you want to Reject?')";
+<<<<<<< HEAD
+			$onclick2="return confirm('Are you sure you want to Hold?')";
+			
+			if($result->rowCount() > 0) {
+				
+
+				// Approve Button - Left
+				$form['submit_approve'] = array(
+				'#type' => 'submit',
+				'#value' => t('Click to Approve Allotment'),
+				'#attributes' => array(
+					'onclick' => $onclick,
+					'class' => array('btn', 'bg-success', 'btn-sm', 'px-5', 'rounded-pill', 'text-white', 'mb-4', 'fw-bolder', 'w-100'),
+				),
+				'#prefix' => '<div class="col-md-4"><div id="submit_approve_allotteelist">',
+				'#suffix' => '</div></div>',
+				);
+
+				// Reject Button - Center
+				$form['submit_reject'] = array(
+				'#type' => 'submit',
+				'#value' => t('Click to Reject Allotment'),
+				'#attributes' => array(
+					'onclick' => $onclick1,
+					'class' => array('btn', 'bg-danger', 'btn-sm', 'px-5', 'rounded-pill', 'text-white', 'mb-4', 'fw-bolder', 'w-100'),
+				),
+				'#submit' => array('allottee_list_reject'),
+				'#prefix' => '<div class="col-md-4"><div id="submit_reject_allotteelist">',
+				'#suffix' => '</div></div>',
+				);
+
+				// Hold Button - Right
+				$form['submit_hold'] = array(
+				'#type' => 'submit',
+				'#value' => t('Click to Hold Allotment'),
+				'#attributes' => array(
+					'onclick' => $onclick2,
+					'class' => array('btn', 'bg-warning', 'btn-sm', 'px-5', 'rounded-pill', 'text-white', 'mb-4', 'fw-bolder', 'w-100'),
+				),
+				'#submit' => array('allottee_list_hold'),
+				'#prefix' => '<div class="col-md-4"><div id="submit_hold_allotteelist">',
+				'#suffix' => '</div></div>', // Closes the .row div
+				);
+
+=======
 			
 			if($result->rowCount() > 0) {
 				$form['submit_approve'] = array(
@@ -181,6 +249,7 @@
 					'#prefix' => '<div class="col-md-6" id="submit_reject_allotteelist">',
 					'#suffix' => '</div></div>',
 				);
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 			}
 			
 			$options = array();
@@ -227,6 +296,10 @@
 						'rhe_name' => $record->estate_name,
 						'dor' => implode('/', array_reverse(explode('-', $record->date_of_retirement))),
 						'remarks' => $remarks,
+<<<<<<< HEAD
+						'status' => $record->status_description,  //added dg 23-05-2025
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 					);
 					
 				} else if($allotment_process_type == 'VSAL' || $allotment_process_type == 'CSAL') {
@@ -248,6 +321,10 @@
 						'from_flat_no' => $occupied_flat,
 						'to_flat_no' => $record->flat_no,
 						'remarks' => $remarks,
+<<<<<<< HEAD
+						'status' => $record->status_description,  //added dg 23-05-2025
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 					);	
 					
 				}
@@ -374,7 +451,11 @@
 				db_update('housing_flat_occupant')
 				->fields(array(
 					// 'accept_reject_status' => 'Cancel',// turned off sd 10-09-2024
+<<<<<<< HEAD
+					// 'accept_reject_status' => 'housing_official_reject',//added sd 10-09-2024
+=======
 					//'accept_reject_status' => 'housing_official_reject',//added sd 10-09-2024
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 					'allotment_approve_or_reject_date' => date('Y-m-d'),
 					)
 				)
@@ -429,12 +510,58 @@
 		// drupal_set_message(t('Occupants are successfully rejected.')); //10-09-2024
 		drupal_set_message(t('Allotments are Cancelled.'));
 	}
+<<<<<<< HEAD
+
+	/* dg 23-05-2025 */
+
+	function allottee_list_hold($form, &$form_state){
+		global $user;
+		$all_allottee = $form_state['values']['allottee_info'];
+
+		foreach($all_allottee as $allottee_app_id => $selected_allottee) {
+			if($selected_allottee != 0) {
+				db_update('housing_online_application')
+				->fields(array(
+					'status' => 'allotment_on_hold',
+					'date_of_verified' => date('Y-m-d H:i:s')  
+					)
+				)
+				->condition('online_application_id', $allottee_app_id, '=')
+				->execute();
+
+				$status_id = get_status_id('allotment_on_hold');  
+
+				$process_flow_arr = array(
+					'online_application_id' => $allottee_app_id,
+					'status_id' => $status_id,
+					'created_at' => date('Y-m-d H:i:s'),
+					'uid' => $user->uid,
+					'short_code' =>'allotment_on_hold'
+				);
+				
+				db_insert('housing_process_flow')->fields($process_flow_arr)->execute();
+				drupal_set_message('Aolltment Kept on Hold Successfully.');
+				
+			}
+		}
+
+
+	}
+
+
+	/* end */
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	
 	function _reload_allotment_process_no($form, &$form_state) {
 		$commands[] = ajax_command_replace('#allotment_process_no_replace', drupal_render($form['allotment_process_no']));
 		$commands[] = ajax_command_replace('#allotment_process_type_replace', drupal_render($form['allotment_process_type']));
 		$commands[] = ajax_command_replace("#submit_approve_allotteelist", drupal_render($form['submit_approve']));
 		$commands[] = ajax_command_replace("#submit_reject_allotteelist", drupal_render($form['submit_reject']));
+<<<<<<< HEAD
+		$commands[] = ajax_command_replace("#submit_hold_allotteelist", drupal_render($form['submit_hold']));
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$commands[] = ajax_command_replace("#allottee_info", drupal_render($form['allottee_info']));
 		return array('#type' => 'ajax', '#commands' => $commands);
  
@@ -444,6 +571,10 @@
 		$commands[] = ajax_command_replace('#allotment_process_type_replace', drupal_render($form['allotment_process_type']));
 		$commands[] = ajax_command_replace("#submit_approve_allotteelist", drupal_render($form['submit_approve']));
 		$commands[] = ajax_command_replace("#submit_reject_allotteelist", drupal_render($form['submit_reject']));
+<<<<<<< HEAD
+		$commands[] = ajax_command_replace("#submit_hold_allotteelist", drupal_render($form['submit_hold']));
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$commands[] = ajax_command_replace("#allottee_info", drupal_render($form['allottee_info']));
 		return array('#type' => 'ajax', '#commands' => $commands);
  
@@ -453,6 +584,10 @@
 		$commands = array();
 		$commands[] = ajax_command_replace("#submit_approve_allotteelist", drupal_render($form['submit_approve']));
 		$commands[] = ajax_command_replace("#submit_reject_allotteelist", drupal_render($form['submit_reject']));
+<<<<<<< HEAD
+		$commands[] = ajax_command_replace("#submit_hold_allotteelist", drupal_render($form['submit_hold']));
+=======
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 		$commands[] = ajax_command_replace("#allottee_info", drupal_render($form['allottee_info']));
 		return array('#type' => 'ajax', '#commands' => $commands);
   

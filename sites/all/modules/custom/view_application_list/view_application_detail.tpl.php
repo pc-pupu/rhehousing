@@ -2,7 +2,11 @@
 
 global $base_root, $base_path, $user_role;
 $isVal = $output[0];
+<<<<<<< HEAD
+// echo "<pre>";print_r($output);die;
+=======
 //echo "<pre>";print_r($page_status);die;
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 if($isVal){
 	$application_arr = $output[2];
 	$entityList = $application_arr[0];
@@ -19,7 +23,13 @@ if($isVal){
   
 
   if(isset($output[4]))
+<<<<<<< HEAD
+  // $status_description=$output[4];  //off by dg 26-05-2025
+  $status_description=$output[4]->status_description; //by dg	 
+  $status_shortcode=$output[4]->short_code; // by dg
+=======
   $status_description=$output[4];	
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
 	
 	#krumo($applicant_data);
 	/*if($common_data->status == 'applied'){
@@ -566,7 +576,15 @@ if($isVal){
       $page_status = $uriArray[4];
       // print_r($uriArray);die;
      if($rejected_status == 'housing_sup_reject_1' || $rejected_status == 'housing_official_reject' || $rejected_status == 'housing_sup_reject_2' || $rejected_status == 'housingapprover_reject1' || $rejected_status == 'housingapprover_reject2') {
+<<<<<<< HEAD
+      if($page_status == 'action-list'){
+        $string = $common_data->application_no;
+        $parts = explode('-', $string);
+        $entity = $parts[0];
+        ?>
+=======
       if($page_status == 'action-list'){?>
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
   </table>
   <table class="table table-list">
   <tr class="">
@@ -574,7 +592,11 @@ if($isVal){
       </tr>
       <tr colspan="2">
         <td class="row text-center">
+<<<<<<< HEAD
+          <form action="<?php echo $base_root.$base_path.'reject-application'.'/'.encrypt_url($common_data->online_application_id).'/'.$reject_uri.'/'.encrypt_url($common_data->computer_serial_no).'/'.encrypt_url($entity).'/'.encrypt_url($status_shortcode);?>" class="" method="post">
+=======
           <form action="<?php echo $base_root.$base_path.'reject-application'.'/'.encrypt_url($common_data->online_application_id).'/'.$reject_uri;?>" class="" method="post">
+>>>>>>> 86ae7a235b5018d2593e749b74c6433f5efd7e92
             <textarea name="reject_remarks" id="reject_remarks" class="col-md-12" rows="4" required></textarea>
             <button type="submit" class="btn bg-success btn-sm px-5 mt-4 rounded-pill text-white fw-bolder" value="Submit" onclick="return confirm('Are you sure you want to reject?')">Reject</button>
          

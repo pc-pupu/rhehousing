@@ -1,0 +1,4 @@
+name = Rest API Service Module
+decsription = Rest API Service Module
+core = 7.x
+package = Rest API Service Module
