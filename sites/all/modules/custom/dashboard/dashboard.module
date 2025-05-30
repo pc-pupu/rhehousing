@@ -406,5 +406,6 @@ function fetch_special_recommendation_list_data() {
 function fetch_info_by_id($id = 0){
 
   echo 'check'; echo $id;
+  return 0;
 
 }
