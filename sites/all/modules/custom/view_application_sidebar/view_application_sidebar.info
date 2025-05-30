@@ -1,0 +1,5 @@
+name = View Application Sidebar
+description = View Application Sidebar
+core = 7.x
+stylesheets[all][] = css/view_application_sidebar.css
+scripts[] = js/view_application_sidebar.js

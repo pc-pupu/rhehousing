@@ -1,0 +1,67 @@
+<?php
+	function online_application_menu() {
+	
+		$items['online_application'] = array(
+		  'title' => 'Online Application',	
+		  'page callback' => 'online_application_page',
+		  'access arguments' => array('Administer Online Application'),
+		);
+		
+		return $items;
+	}
+  
+  	
+	function online_application_page($url = '') {
+		
+		if($url == ''){
+			$url = encrypt_url('new-apply');
+		}
+		
+		return theme('online_application_template', array('output' => $url));
+	}
+
+	function online_application_theme() {
+		return array(
+			'online_application_template' => array(
+				'variables' => array('output' => NULL),
+				// file name will be online_application.tpl.php
+				'template' => 'online_application',
+			),
+		);
+	}
+	
+	function online_application_permission() {
+		return array(
+			'Administer Online Application' => array(
+			  'title' => t('Administer Online Application'),
+			  'description' => t('Perform Administer Online Application.'),
+			),
+		);
+	}
+
+
+
+	function online_application_status($uid = '', $type_of_app = '') {
+		$query = db_select('users', 'u');
+		$query->innerJoin('housing_applicant', 'ha', 'u.uid = ha.uid');
+		$query->fields('u');
+		$query->fields('ha');
+		
+		if($type_of_app == '') {
+			$query->condition('u.uid', $uid, '=');
+		} else {
+			$query->innerJoin('housing_applicant_official_detail', 'haod', 'u.uid = haod.uid');
+			$query->innerJoin('housing_online_application', 'hoa', 'haod.applicant_official_detail_id = hoa.applicant_official_detail_id');
+			$query->fields('haod');
+			$query->fields('hoa');
+			$query->addField('hoa', 'status', 'app_status');
+			$query->addExpression('substring(hoa.application_no, \'\w+\')', 'app_type');
+			
+			$db_and = db_and();
+			$query->condition('u.uid', $uid, '=');
+			$db_and->where('substring(hoa.application_no, \'\w+\') = :app_type', array(':app_type' => $type_of_app));
+			$query->condition($db_and);
+		}
+		
+		return $query->execute();
+	}

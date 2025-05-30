@@ -1,0 +1,6 @@
+name = Generate Allotment Letter
+decsription = Generate Allotment Letter Module
+core = 7.x
+package = eallotment RHE Allotment Module
+stylesheets[all][] = css/generate_allotment_letter.css
+scripts[] = js/generate_allotment_letter.js

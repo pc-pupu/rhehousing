@@ -1,0 +1,4 @@
+name = Special Recommendation form
+description = Selection form of Special Recommendation
+core = 7.x
+package = Special Recommendation Selection

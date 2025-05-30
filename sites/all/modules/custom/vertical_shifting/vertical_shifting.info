@@ -1,0 +1,7 @@
+name = Application for Vertical Shifting
+decsription = Vertical Shifting Application Module
+core = 7.x
+package = eallotment Online Application Module
+stylesheets[all][] = css/vertical_shifting.css
+scripts[] = js/vertical_shifting.js
+dependencies[] = common_application

@@ -1,0 +1,33 @@
+<?php
+
+include("simple-php-captcha.php");
+
+function nicaptcha_form_rhe_allotment_form_alter(&$form, &$form_state, $form_id) {
+     session_start();
+	 $_SESSION = array();
+     $_SESSION['captcha'] = simple_php_captcha();
+	 
+	 $form['captcha_img'] = array(
+	  '#type' => 'markup',
+	  '#markup' => '<img id="secureimage" src=".'.$_SESSION['captcha']['image_src'].'" alt="Secutity Image" /> ',
+	  );
+	$form['security_code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('What code is in the image? :'),
+	'#size' => 22,
+	'#max_length' => 5,
+    '#required' => TRUE, 
+  );
+ $form['#validate'][] = 'nicaptcha_validate';
+	
+}
+function nicaptcha_validate(&$form, &$form_state) {
+	
+	if($form_state['values']['security_code'] != $_SESSION['captcha']['code'])
+	{
+	form_set_error('security_code', 'Invalid Captcha!!');
+	}
+
+}
+
+

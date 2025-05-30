@@ -1,0 +1,595 @@
+<?php
+function _form_example_steps() {
+  return array(
+    1 => array(
+      'form' => 'user_hrms_validation_form',
+    ),
+    2 => array(
+      'form' => 'user_registration_form',
+    ),
+    /*3 => array(
+      'form' => 'form_example_wizard_other_info',
+    ),*/
+  );
+}
+
+function form_example_wizard($form, &$form_state) {
+
+  // Initialize a description of the steps for the wizard.
+  if (empty($form_state['step'])) {
+    $form_state['step'] = 1;
+
+    // This array contains the function to be called at each step to get the
+    // relevant form elements. It will also store state information for each
+    // step.
+    $form_state['step_information'] = _form_example_steps();
+  }
+  $step = &$form_state['step'];
+  drupal_set_title(t('User Registration: Step @step', array('@step' => $step)));
+
+  // Call the function named in $form_state['step_information'] to get the
+  // form elements to display for this step.
+  $form = $form_state['step_information'][$step]['form']($form, $form_state);
+
+  // Show the 'previous' button if appropriate. Note that #submit is set to
+  // a special submit handler, and that we use #limit_validation_errors to
+  // skip all complaints about validation when using the back button. The
+  // values entered will be discarded, but they will not be validated, which
+  // would be annoying in a "back" button.
+  if ($step > 1) {
+    $form['prev'] = array(
+      '#type' => 'submit',
+      '#value' => t('Previous'),
+      '#name' => 'prev',
+      '#submit' => array('form_example_wizard_previous_submit'),
+      '#limit_validation_errors' => array(),
+    );
+  }
+
+  // Show the Next button only if there are more steps defined.
+  if ($step < count($form_state['step_information'])) {
+    // The Next button should be included on every step.
+    $form['next'] = array(
+      '#type' => 'submit',
+      '#value' => t('Next'),
+      '#name' => 'next',
+      '#submit' => array('form_example_wizard_next_submit'),
+    );
+  }
+  else {
+    // Just in case there are no more steps, we use the default submit handler
+    // of the form wizard. Call this button Finish, Submit, or whatever you
+    // want to show. When this button is clicked, the
+    // form_example_wizard_submit handler will be called.
+    $form['finish'] = array(
+      '#type' => 'submit',
+      //'#value' => t('Finish'),
+      '#value' => t('Register'),
+    );
+  }
+
+  // Include each validation function defined for the different steps.
+  if (function_exists($form_state['step_information'][$step]['form'] . '_validate')) {
+    $form['next']['#validate'] = array($form_state['step_information'][$step]['form'] . '_validate');
+  }
+
+  return $form;
+}
+/**
+ * Submit handler for the "previous" button.
+ *
+ * This function:
+ * - Stores away $form_state['values']
+ * - Decrements the step counter
+ * - Replaces $form_state['values'] with the values from the previous state.
+ * - Forces form rebuild.
+ *
+ * You are not required to change this function.
+ *
+ * @ingroup form_example
+ */
+function form_example_wizard_previous_submit($form, &$form_state) {
+  $current_step = &$form_state['step'];
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['input'];
+  if ($current_step > 1) {
+    $current_step--;
+    $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+  }
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Submit handler for the 'next' button.
+ *
+ * This function:
+ * - Saves away $form_state['values']
+ * - Increments the step count.
+ * - Replace $form_state['values'] from the last time we were at this page
+ *   or with array() if we haven't been here before.
+ * - Force form rebuild.
+ *
+ * You are not required to change this function.
+ *
+ * @ingroup form_example
+ */
+function form_example_wizard_next_submit($form, &$form_state) {
+  $current_step = &$form_state['step'];
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+
+  if ($current_step < count($form_state['step_information'])) {
+    $current_step++;
+    if (!empty($form_state['step_information'][$current_step]['stored_values'])) {
+      $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+    }
+    else {
+      $form_state['values'] = array();
+    }
+    // Force rebuild with next step.
+    $form_state['rebuild'] = TRUE;
+    return;
+  }
+}
+	function user_hrms_validation_form($form, &$form_state) {
+	  
+		// drupal_add_library('system','ui.datepicker');
+		//personal information
+		$form['form_begin'] = array(
+			'#type' => 'markup',
+			'#markup' => '<div class="user_reg">',
+		);
+		
+		$form['username'] = array(
+			'#title' => t('HRMS Username'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#attributes' => array('placeholder' => 'Enter HRMS Username'),
+			'#required' => TRUE,
+			'#prefix' => '<div class="four ">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_username'), 
+		);
+
+		$form['password'] = array(
+			'#title' => t('HRMS Password'),
+			'#type' => 'password',
+			'#default_value' => '',
+			'#attributes' => array('placeholder' => 'Enter HRMS Password'),
+			'#required' => TRUE,
+			'#prefix' => '<div class="four ">',
+			'#suffix' => '</div>',
+			//'#element_validate' => array('element_validate_username'), 
+		);
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_applicant_regform()');
+		
+		/*$form['submit'] = array(
+			'#value' => t('Register'),
+			'#type' => 'submit',
+		);*/
+		
+		$form['form_end'] = array(
+			'#type' => 'markup',
+			'#markup' => '</div>',
+		);
+		
+		return $form;
+	}
+
+	function user_hrms_validation_form_validate($form, &$form_state) {
+		form_clear_error();
+		// validation code
+		if(!empty($form_state['values']['username'])) {
+		   
+			 $username = trim($form_state['values']['username']);
+			 
+			 $query = db_select('users','u');
+			 $query->addExpression('name','name');
+			 $query->condition('name', $username);
+			 $result =$query->execute();
+			 
+			 
+			 if($result->rowCount() > 0){
+			 	form_set_error('username', 'This HRMS-ID already exist. Please login to continue.');
+			 }else{
+			 	$userData = verifyHRMSRegiser($form_state['values']['username'], $form_state['values']['password']);
+			 	if ($userData && !empty($userData)) {
+			 		if (is_string($userData) &&  is_array(json_decode($userData, true))) {
+			 			$resData = json_decode($userData, true);
+			 			//$form_state['hrms_Resdata']= $resData;
+			 			$form_state['hrms_Resdata']= array(
+			 				'name' => 'Test User',
+			 				'dob' => '1980-11-10',
+			 				'gender' => 'M',
+			 				'mobile_no' => rand(9900000000,9999999999),
+			 				'email' => 'test'.rand(11,99).'@test.com',
+			 				'employeeHRMS_ID' => rand(1111111111,9999999999),
+			 				'designation' => 'Constable',
+			 				'officeName' => 'Lalbazar',
+			 				///psw:Test@2014
+			 			);
+			 			$form['applicant_name']['#default_value'] = "500";
+			 			print_r($resData);
+			 		} else {
+			 			form_set_error('username', 'Error: HRMS Invalid Data.');
+			 		}
+			 	}else{
+			 		form_set_error('username', 'Error: HRMS NO Response.');
+			 	}
+			 }
+		}
+		
+	}
+
+    function verifyHRMSRegiser($username= NULL, $password= NULL)
+    {
+        if (!empty($username) && !empty($password)) {
+            if (empty($dltTemplateID)) {
+                $dltTemplateID = '1107160767219696427';
+            }
+            /*$uid = "epgbsbs.auth";
+            $pass="Yd%26@83j%24";
+            //$send="PBGSBS";
+            $send="GSBSWB";
+            $dest=$senderMobile;
+            $msg=$msg;*/
+            $url="https://jsonplaceholder.typicode.com/posts";
+            //$url="https://smsgw.sms.gov.in/failsafe/HttpLink?";
+            $data = "username=$username&pin=$password";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,2);
+            //curl_setopt($ch, CURLOPT_CAINFO,'/etc/pki/tls/certs/ca-bundle.crt');
+            if (curl_errno($ch)) {
+                echo 'Curl error: ' . curl_error($ch);
+                return false;
+            }
+            else {
+                $curl_output =curl_exec($ch);
+            }
+            curl_close($ch);
+            //save_sms_data($item,$curl_output);
+            return $curl_output;
+        }
+    }
+
+	function user_registration_form($form, &$form_state) {
+	  
+		// drupal_add_library('system','ui.datepicker');
+		//personal information
+		$form['form_begin'] = array(
+			'#type' => 'markup',
+			'#markup' => '<div class="user_reg">',
+		);
+		
+		$form['applicant_name'] = array(
+			'#title' => t('Name of the Applicant'),
+			'#type' => 'textfield',
+			'#default_value' => $form_state['hrms_Resdata']['name'],
+			'#attributes' => array('placeholder' => 'Enter Name', 'oninput' => "this.value=this.value.toUpperCase()"),
+			'#element_validate' => array('element_validate_alphabatic_fullstop'), 
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+		);
+		$form['dob'] = array(
+			'#title' => t('Date of Birth'),
+			'#type' => 'textfield',
+			'#attributes' => array('readonly' => 'readonly', 'id' => 'edit-dob', 'placeholder' => 'Enter Date of Birth'),
+			'#default_value' => date('d/m/Y', strtotime($form_state['hrms_Resdata']['dob'])),
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_date'),
+		);
+		$form['gender'] = array(
+			'#title' => t('Gender'),
+			'#type' => 'radios',
+			'#options' => array('M' => 'Male', 'F' => 'Female'),
+			'#attributes' => array('class' => array('gender')),
+			'#default_value' => $form_state['hrms_Resdata']['gender'],
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#required' => TRUE,
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+		);
+		
+		/*$form['username'] = array(
+			'#title' => t('Username'),
+			'#type' => 'textfield',
+			'#default_value' => '',
+			'#attributes' => array('placeholder' => 'Enter unique username'),
+			'#required' => TRUE,
+			'#prefix' => '<div class="four ">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_username'), 
+		);*/
+		
+		$form['mobile'] = array(
+			'#title' => t('Mobile no'),
+			'#type' => 'textfield',
+			'#maxlength' => 10,
+			'#default_value' => $form_state['hrms_Resdata']['mobile_no'],
+			'#required' => TRUE,
+			'#disabled' => (isset($form_state['hrms_Resdata']['mobile_no']) && !empty($form_state['hrms_Resdata']['mobile_no'])) ? TRUE: FALSE,
+			'#attributes' => array('placeholder' => 'Enter Mobile No', 'id' => 'mobile_no'),
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_mobile'),
+		);
+		$form['email'] = array(
+			'#title' => t('Email ID'),
+			'#type' => 'textfield',
+			'#attributes' => array('placeholder' => 'Enter Email ID', 'oninput' => "this.value=this.value.toLowerCase()"),
+			'#default_value' => $form_state['hrms_Resdata']['email'],
+			'#required' => TRUE,
+			'#disabled' => (isset($form_state['hrms_Resdata']['email']) && !empty($form_state['hrms_Resdata']['email'])) ? TRUE: FALSE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_email'),
+		);
+		$form['hrms_id'] = array(
+			'#title' => t('Employee HRMS ID'),
+			'#type' => 'textfield',
+			'#maxlength' => 10,
+			'#default_value' => $form_state['hrms_Resdata']['employeeHRMS_ID'],
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#attributes' => array('placeholder' => 'Enter Employee HRMS ID', 'class' => array('numeric_positive')),
+			'#prefix' => '<div class="four">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_hrms_id'),
+		);
+		$form['app_designation'] = array(
+			'#title' => t('Designation'),
+			'#type' => 'textfield',
+			'#default_value' => $form_state['hrms_Resdata']['designation'],
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_textarea'),
+			'#attributes' => array('placeholder' => 'Enter Designation', 'oninput'=>"this.value=this.value.toUpperCase()"),
+		);
+		$form['office_add']['office_name'] = array(
+			'#title' => t('Name of the Office'),
+			'#type' => 'textfield',
+			'#default_value' => $form_state['hrms_Resdata']['officeName'],
+			'#required' => TRUE,
+			'#disabled' => TRUE,
+			'#prefix' => '<div class="two">',
+			'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_textarea'), 
+			'#attributes' => array('placeholder' => 'Enter Office Name', 'oninput'=>"this.value=this.value.toUpperCase()"),
+		);
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_applicant_regform()');
+		
+		/*$form['submit'] = array(
+			'#value' => t('Register'),
+			'#type' => 'submit',
+		);*/
+		
+		$form['form_end'] = array(
+			'#type' => 'markup',
+			'#markup' => '</div>',
+		);
+		
+		return $form;
+	}
+  
+	function user_registration_form_validate($form, &$form_state) {
+		// validation code
+		/*if(!empty($form_state['values']['gender'])) {
+			$gender = $form_state['values']['gender'];
+			if($gender != 'M' || $gender != 'F') {
+				form_set_error('[gender]', t('Invalid input.'));		
+			}
+		}*/
+		
+		
+		/*if(!empty($form_state['values']['username'])) {
+		   
+			 $username = trim($form_state['values']['username']);
+			 
+			 $query = db_select('users','u');
+			 $query->addExpression('name','name');
+			 $query->condition('name', $username);
+			 $result =$query->execute();
+			 
+			 
+			 if($result->rowCount() > 0)
+			 	form_set_error('username', 'This username already exist.');
+		
+		}*/
+		
+		if(!empty($form_state['values']['dob'])) {
+		   
+			 $dob = trim($form_state['values']['dob']);
+			 if (!empty($dob)) {
+			 	$date = DateTime::createFromFormat('d/m/Y', $dob);
+				$dob= $date->format('Y-m-d');
+				if(!validateAge($dob)){
+					form_set_error('dob', 'Check Date of Birth. Minimum age should be 18 Years.');
+				}
+			 }else{
+			 	form_set_error('dob', 'Date of Birth Can\'t be empty.');
+			 }
+		}		
+		
+		if(!empty($form_state['values']['mobile']) && is_numeric($form_state['values']['mobile'])) {
+		   
+			 $mobile = trim($form_state['values']['mobile']);
+			 
+			 $query = db_select('housing_applicant','applicant');
+			 $query->addExpression('mobile_no','mobile');
+			 $query->condition('mobile_no', $mobile);
+			 $result =$query->execute();
+			 
+			 
+			 if($result->rowCount() > 0)
+			 	form_set_error('mobile', 'This Mobile No. already exist.');
+		
+		}
+		
+		if(!empty($form_state['values']['email'])) {
+		   
+			$email = strtolower(trim($form_state['values']['email']));
+			
+			$query = db_select('users','u');
+			$query->addExpression('mail','email');
+			$query->condition('mail', $email);
+			$result =$query->execute();
+			
+			
+			if($result->rowCount() > 0)
+				form_set_error('email', 'This Email ID already exist.');
+		
+		}
+		
+		if(!empty($form_state['values']['hrms_id']) && is_numeric($form_state['values']['hrms_id'])) {
+		   
+			 $hrms_id = trim($form_state['values']['hrms_id']);
+			 
+			 $query = db_select('housing_applicant_official_detail','haod');
+			 $query->fields('haod');
+			 $query->condition('hrms_id', $hrms_id);
+			 $result =$query->execute();
+			 
+			 
+			 if($result->rowCount() > 0)
+			 	form_set_error('hrms_id', 'This Employee HRMS ID already exist.');
+		
+		}
+	}
+    
+	//function user_registration_form_submit($form, &$form_state) {
+	function form_example_wizard_submit($form, &$form_state) {
+
+	  
+		/*echo "<pre>";
+		print_r($form_state['values']);
+		die();*/
+		
+		//$password = getToken(8);
+		
+		$word_c = str_word_count(trim($form_state['values']['applicant_name']));
+		$splitter = " ";
+		$pieces = explode($splitter, trim($form_state['values']['applicant_name']));
+		
+		if($word_c < 2) {
+			$name = strtolower(substr($pieces[0], 0, 3));
+		}
+		else if($word_c == 2) {
+			if($pieces[0] == 'Dr.' || $pieces[0] == 'Dr' || $pieces[0] == 'dr.' || $pieces[0] == 'dr' || $pieces[0] == 'DR.' || $pieces[0] == 'DR') {
+				$name = strtolower(substr($pieces[1], 0, 3));
+			}
+			else {
+				$name = strtolower(substr($pieces[0], 0, 3)).strtolower(substr($pieces[1], 0, 3));
+			}
+		}
+		else {
+			if($pieces[0] == 'Dr.' || $pieces[0] == 'Dr' || $pieces[0] == 'dr.' || $pieces[0] == 'dr' || $pieces[0] == 'DR.' || $pieces[0] == 'DR') {
+				$name = strtolower(substr($pieces[1], 0, 3)).strtolower(substr($pieces[2], 0, 3));
+			}
+			else {
+				$name = strtolower(substr($pieces[0], 0, 3)).strtolower(substr($pieces[1], 0, 3));
+			}
+		}
+		
+		//$username = str_replace(".","",$name).rand(1, 100000);
+		$username = $form_state['values']['hrms_id'];
+		
+		$newUser	   	   = array();
+		//$newUser['name']   = trim($form_state['values']['username']);
+		$newUser['name'] = $username;
+		$newUser['pass'] = $username;
+		/*$str[0].$str[1].trim($form_state['values']['username']).'@'.$dob_t.strrev($str1[0].$str1[1]);*/																																																						
+		$newUser['mail']   = strtolower(trim($form_state['values']['email']));
+		$newUser['status'] = 1;
+		
+		$data = user_save(null, $newUser);
+		
+		/*get last inserted uid*/
+		
+		/*$query = db_select('users','u');
+		$query->addExpression('MAX(uid)','max_uid');
+		$result = $query->execute();
+		$data = $result->fetchObject();*/
+		
+		/*insert into housing_applicant table*/
+		
+		$user_reg_arr = array();
+		$user_reg_arr['uid'] 				=  $data->uid;
+		$user_reg_arr['applicant_name'] 	=  strtoupper(trim($form_state['values']['applicant_name']));
+		$user_reg_arr['gender'] 			=  trim($form_state['values']['gender']);
+		$user_reg_arr['date_of_birth'] 	=  date('Y-m-d', strtotime($form_state['values']['dob']));
+		$user_reg_arr['mobile_no'] 		=  trim($form_state['values']['mobile']);
+		
+		db_insert('housing_applicant')
+		->fields($user_reg_arr)
+		->execute();
+		
+		/*insert into housing_applicant_official_detail table*/
+		
+		$app_off_detail_arr = array();
+		$app_off_detail_arr['uid'] = $data->uid;
+		$app_off_detail_arr['hrms_id']  =  trim($form_state['values']['hrms_id']);
+		$app_off_detail_arr['applicant_designation']  =  strtoupper(trim($form_state['values']['app_designation']));
+		$app_off_detail_arr['office_name']  =  strtoupper(trim($form_state['values']['office_name']));
+		
+		db_insert('housing_applicant_official_detail')
+  	  	->fields($app_off_detail_arr)
+  	  	->execute();
+		
+		/*assign user roles*/
+		
+		$arr_user_roles = array();
+		$arr_user_roles['uid'] = $user_reg_arr['uid'];
+		$arr_user_roles['rid'] = 4;
+		
+		db_insert('users_roles')
+		->fields($arr_user_roles)
+		->execute();
+		
+	//For mail username and password.
+		/*$receiver_mobile = trim($form_state['values']['mobile']);
+		$receiver_email = strtolower(trim($form_state['values']['email']));
+		
+		$ack_msg = '<html><body>Dear Applicant,<br><br>
+		You have Successfully Registered. Please find below your login details. Please change your password after login.<br><br>
+		Username	-	'.$username.'<br><br>
+		Password	-	'.$username.'<br><br>
+		Please login using your username and password to apply.<br><br>
+		Regards,<br>
+		Housing Department<br>
+		Government of West Bengal
+		</html></body>';
+
+		$email_subject = 'Applicant Login Details';
+		
+		//send_sms($receiver_mobile, $ack_msg);
+		sendmail_registration($receiver_email, $email_subject, $ack_msg);*/
+		
+	//End
+		
+		$uid = encrypt_url($data->uid);
+		drupal_set_message(t('You have Successfully Registered!!! You should receive an email from us soon containing your login details!!!'));
+		drupal_goto('application_registration/'.$uid);
+		/*after login*/
+		
+		/*$username = $form_state['values']['username'];
+		$pass = 'housing';
+		$userRecord = user_authenticate($username, $pass);
+		$form_state['uid'] = $userRecord;
+		user_login_submit(array(), $form_state);*/
+		
+		
+	}

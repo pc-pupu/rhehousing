@@ -1,0 +1,981 @@
+<?php
+
+	function users_info_init() {
+		//drupal_add_js(drupal_get_path('module', 'users_info') .'/js/validation.js', 'file');
+		
+		drupal_add_js('(function($) {
+    		Drupal.behaviors.ajaxUserMobileNo = {
+      		attach: function (context, settings) {
+        	//code starts
+				$( "#user_mobile_no" ).keypress(function (e)  
+				{ 
+				  if( e.which!=8 && e.which!=0 && (e.which<48 || e.which>57))
+				  {
+					return false;
+				  }	
+				});
+				
+				$( "#office_phone_no" ).keypress(function (e)  
+				{ 
+				  if( e.which!=8 && e.which!=0 && (e.which<48 || e.which>57))
+				  {
+					return false;
+				  }	
+				});
+			//code ends
+      		}
+    		};
+    	})(jQuery);', 'inline');
+		
+		if(arg(0) == 'admin' && arg(1) == 'people' && arg(2) == 'create') {
+			drupal_add_js('(function($) {
+				Drupal.behaviors.ajaxRolesCheck = {
+				attach: function (context, settings) {
+				//code starts
+				
+					$("#edit-roles-3").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-6").hide();
+							$(".form-item-roles-7").hide();
+							$(".form-item-roles-8").hide();
+							$(".form-item-roles-9").hide();
+							$(".form-item-roles-10").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-6").show();
+							$(".form-item-roles-7").show();
+							$(".form-item-roles-8").show();
+							$(".form-item-roles-9").show();
+							$(".form-item-roles-10").show();
+						}
+					});
+					
+					$("#edit-roles-6").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-3").hide();
+							$(".form-item-roles-7").hide();
+							$(".form-item-roles-8").hide();
+							$(".form-item-roles-9").hide();
+							$(".form-item-roles-10").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-3").show();
+							$(".form-item-roles-7").show();
+							$(".form-item-roles-8").show();
+							$(".form-item-roles-9").show();
+							$(".form-item-roles-10").show();
+						}
+					});
+					
+					$("#edit-roles-8").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-3").hide();
+							$(".form-item-roles-6").hide();
+							$(".form-item-roles-7").hide();
+							$(".form-item-roles-9").hide();
+							$(".form-item-roles-10").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-3").show();
+							$(".form-item-roles-6").show();
+							$(".form-item-roles-7").show();
+							$(".form-item-roles-9").show();
+							$(".form-item-roles-10").show();
+						}
+					});
+					
+					$("#edit-roles-7").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-3").hide();
+							$(".form-item-roles-6").hide();
+							$(".form-item-roles-8").hide();
+							$(".form-item-roles-9").hide();
+							$(".form-item-roles-10").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-3").show();
+							$(".form-item-roles-6").show();
+							$(".form-item-roles-8").show();
+							$(".form-item-roles-9").show();
+							$(".form-item-roles-10").show();
+						}
+					});
+					
+					$("#edit-roles-9").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-3").hide();
+							$(".form-item-roles-6").hide();
+							$(".form-item-roles-8").hide();
+							$(".form-item-roles-7").hide();
+							$(".form-item-roles-10").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-3").show();
+							$(".form-item-roles-6").show();
+							$(".form-item-roles-8").show();
+							$(".form-item-roles-7").show();
+							$(".form-item-roles-10").show();
+						}
+					});
+					
+					$("#edit-roles-10").click(function () {
+						if ($(this).is(":checked")) {
+							$(".form-item-roles-3").hide();
+							$(".form-item-roles-6").hide();
+							$(".form-item-roles-8").hide();
+							$(".form-item-roles-7").hide();
+							$(".form-item-roles-9").hide();
+						} else if ($(this).not(":checked")) {
+							$(".form-item-roles-3").show();
+							$(".form-item-roles-6").show();
+							$(".form-item-roles-8").show();
+							$(".form-item-roles-7").show();
+							$(".form-item-roles-9").show();
+						}
+					});
+					
+				//code ends
+				}
+				};
+			})(jQuery);', 'inline');
+		}
+		
+		
+		global $user;
+		
+		$query = db_select('users_details', 'ud');
+		$query->fields('ud', array('full_name'));
+		$query->condition('ud.uid', $user->uid, '=');
+		$result = $query->execute();
+		$row_count = $result->rowCount();
+		//echo $user->uid;die;
+		if($row_count > 0) {
+			$data = $result->fetchObject();
+			global $housing_user_info;
+			// echo "<pre";print_r($data);die;
+			$housing_user_info = $data->full_name;
+		}
+	}
+	
+	function users_info_menu() {
+		$items['user_profile_edit/%'] = array(
+			'title' => 'Edit Your Profile',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('user_profile_edit_form', 1),
+			'file' => 'user_profile_edit_form.inc',
+			'access arguments' => array('Administer User Profile Edit'),
+		);
+		
+		return $items;
+	}
+	
+	function users_info_permission() {
+		return array(
+			'Administer User Profile Edit' => array(
+			  'title' => t('Administer User Profile Edit'),
+			  'description' => t('Perform Administer User Profile Edit.'),
+			),
+		);
+	}
+	
+	
+	function users_info_form_alter(&$form, &$form_state, $form_id) {
+		
+		//echo $form_id;
+		//die(print_r(arg()));
+		
+		#krumo($form);
+		
+		
+	}
+	
+	//users info edit
+	function users_info_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
+		global $user_role;
+		global $user;
+		//print_r($form);die;
+		$id = arg(1);
+		
+		$role = !empty($form['account']['roles']['#default_value'][1]) ? $form['account']['roles']['#default_value'][1] : '' ;  //by dg added empty checking
+		$uid = !empty($form['#user']->uid) ? $form['#user']->uid : '';
+		unset($form['autologout_user_'.$uid]);
+		unset($form['ckeditor']);
+		unset($form['rip']);
+		$form['account']['name']['#description']		 = '';
+		if($user_role == 3) {
+			$form['account']['password']['pass']['#description']		 = 'Password must be 6 - 20 characters and only contains at least one lowercase character, one uppercase character, one digit from 0-9 and one special symbols in this list ! @ # $ % ^ and &.';
+		} else {
+			$form['account']['pass']['#description']		 = 'Password must be 6 - 20 characters and only contains at least one lowercase character, one uppercase character, one digit from 0-9 and one special symbols in this list ! @ # $ % ^ and &.';
+		}
+		$form['account']['mail']['#description']		 = '';
+		
+		if($user_role != 3) {
+			if($user->mail != '') {
+				//$form['account']['mail']['#disabled'] = TRUE;			//this is used for only disabled the field
+				//unset($form['account']['mail']);					//if this is used then error occured
+				
+				$form['account']['mail']['#access'] = FALSE;
+			}
+		}
+		
+		$form['account']['name']['#disabled'] = TRUE;
+		$form['account']['roles']['#disabled'] = TRUE;
+		if($role == 3) {
+			unset($form['account']['status']);
+		}
+		
+		if($user_role == 3) {
+			if($role != 3) {
+				unset($form['account']['password']['pass']);
+			}
+			
+			if($role == 3) {
+				unset($form['account']['status']);	
+			}
+		}
+		
+		if(!empty($uid)) {
+			$user_info = get_user_details_by_uid($uid);
+		}
+
+		$division = isset($form_state['values']['division']) && !empty($form_state['values']['division']) ? $form_state['values']['division'] : 0;
+		$subdiv = isset($form_state['values']['subdiv']) && !empty($form_state['values']['subdiv']) ? $form_state['values']['subdiv'] : 0;
+		
+		$options_div = get_division_list();		
+		
+		$form['account']['subdiv'] = array(
+			'#prefix' => '<div id="subdiv_replace">',
+			'#suffix' => '</div>',
+		);
+		
+		$form['account']['uid'] = array(
+			'#type' => 'hidden',
+			'#value' => $uid,
+		);
+		
+		if($user_role == 3) {	
+			if($role == 8 || $role == 7 || $role == 6 || $role == 9 || $role == 10) {
+				$form['account']['full_name'] = array(
+					'#type' => 'textfield',
+					'#title' => 'Name',
+					'#default_value' => $user_info['full_name'],
+					'#required' => TRUE,
+					'#element_validate' => array('element_validate_alphabatic_text'),
+					'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+				);
+				
+				$form['account']['mobile_no'] = array(
+					'#type' => 'textfield',
+					'#title' => 'Mobile No',
+					'#default_value' => $user_info['mobile_no'],
+					'#maxlength' => 10,
+					'#attributes' => array('id' => 'user_mobile_no'),
+					'#required' => TRUE,
+					'#element_validate' => array('element_validate_mobile'), 
+				);
+				
+				$form['account']['office_phone_no'] = array(
+					'#type' => 'textfield',
+					'#title' => 'Telephone No.(With STD Code)',
+					'#default_value' => $user_info['office_phone_no'],
+					'#maxlength' => 15,
+					'#attributes' => array('id' => 'office_phone_no'),
+					'#required' => TRUE,
+					'#element_validate' => array('element_validate_telephoneno'),
+					'#prefix' => '<div id="office_phone_no_replace">',
+					'#suffix' => '</div>', 
+				);
+			}
+			
+			if($role == 8) {
+				$form['account']['division'] = array(
+					'#type' => 'select',
+					'#title' => 'Select Division',
+					'#options' => $options_div,
+					'#default_value' => $user_info['division_id'],
+					'#required' => TRUE,
+					'#prefix' => '<div id="divn_replace">',
+					'#suffix' => '</div>',
+				);
+			}
+			
+			if($role == 7) {
+				$form['account']['division'] = array(
+					'#type' => 'select',
+					'#title' => 'Select Division',
+					'#options' => $options_div,
+					'#default_value' => $user_info['division_id'],
+					'#required' => TRUE,
+					'#ajax' => array(
+						'event' => 'change',
+						'callback' => '_reload_housing_subdivision',
+						'method' => 'replace',
+					),
+				);
+				
+				if($division != 0) {
+					$form['account']['subdiv'] = array(
+						'#type' => 'select',
+						'#title' => 'Select Sub-Division',
+						'#options' => get_subdiv_list($division),
+						'#default_value' => '',
+						'#required' => TRUE,
+						'#attributes' => array('id' => 'subdivision_entry'),
+						'#prefix' => '<div id="subdiv_replace">',
+						'#suffix' => '</div>',
+					);
+				} else {
+					$form['account']['subdiv'] = array(
+						'#type' => 'select',
+						'#title' => 'Select Sub-Division',
+						'#options' => get_subdiv_list($user_info['division_id']),
+						'#default_value' => $user_info['subdiv_id'],
+						'#required' => TRUE,
+						'#attributes' => array('id' => 'subdivision_entry'),
+						'#prefix' => '<div id="subdiv_replace">',
+						'#suffix' => '</div>',
+					);	
+				}
+			}
+		
+			$form['account']['roles']['#weight'] = 1;
+			
+			$form['account']['division']['#weight'] = 2;
+			$form['account']['subdiv']['#weight'] = 3;
+			$form['account']['full_name']['#weight'] = 4;
+			$form['account']['mobile_no']['#weight']	= 5;
+			$form['account']['office_phone_no']['#weight']	= 6;
+			
+			$form['account']['mail']['#weight'] = 7;
+			$form['account']['name']['#weight']	= 8;
+			$form['account']['current_pass']['#weight'] = 9;
+			$form['account']['password']['#weight'] = 10;
+			$form['account']['status']['#weight'] = 10;
+		
+		} else {
+			//$form['account']['mail']['#weight'] = 1;
+			
+			$form['account']['current_pass']['#weight'] = 1;
+			$form['account']['pass']['#weight'] = 2;
+			
+					
+		}
+		
+		if($user->uid == 1) { 
+			if(arg(0) == 'user' && arg(1) != 1 && arg(2) == 'edit') {
+				$form['actions']['submit']['#value'] = 'Edit User';
+			}
+			else if(arg(0) == 'user' && arg(1) == 1 && arg(2) == 'edit') {
+				$form['actions']['submit']['#value'] = 'Edit Your Profile';
+			}
+		}
+		else {
+			if(arg(0) == 'user' && arg(1) == $user->uid && arg(2) == 'edit') {
+				$form['actions']['submit']['#value'] = 'Change Your Password';	
+			}	
+		}
+		
+		$form['#validate'][] = 'users_info_edit_validate';
+		$form['#submit'][] = 'users_info_edit_submit';
+		
+		$form['#attributes'] = array('onsubmit' => 'return validate_user_editform()');
+	}
+	
+	function users_info_edit_validate(&$form, &$form_state) {
+
+		global $user_role;
+		$uid = $form['#user']->uid;
+		$role = $form['account']['roles']['#default_value'][1];
+			
+		$query = db_select('users', 'u');
+		$query->innerJoin('users_details', 'ud', 'u.uid = ud.uid');
+		$query->fields('u', array());
+		$query->fields('ud', array());
+		$query->condition('u.uid', $uid, '=');
+		$result = $query->execute();
+		$row_count = $result->rowCount();
+		if($row_count > 0) {
+			$data = $result->fetchObject();
+		}
+		
+		$query1 = db_select('users', 'u');
+		$query1->fields('u', array());
+		$query1->condition('u.uid', $uid, '=');
+		$result1 = $query1->execute();
+		$row_count1 = $result1->rowCount();
+		if($row_count1 > 0) {
+			$data1 = $result1->fetchObject();
+		}
+		
+		//$value_fullname = strtoupper(trim($form_state['values']['full_name']));
+		$value_mail = strtolower(trim($form_state['values']['mail']));
+		//$value_mobile = trim($form_state['values']['mobile_no']);
+		//$value_office_phone_no = trim($form_state['values']['office_phone_no']);
+		$value = trim($form_state['values']['pass']);
+		
+		//$division = trim($form_state['values']['division']);
+		//$subdiv = trim($form_state['values']['subdiv']);
+		$status = trim($form_state['values']['status']);
+		
+		if($user_role == 3) {
+			if($role == 3) {
+				if($value_mail != ''){
+					if($value_mail == $data1->mail && $value == '') {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}	
+			}
+			/*elseif($role == 4 || $role == 5) {
+				if($value_mail != '' && $status != ''){
+					if($value_mail == $data1->mail && $status == $data1->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				} elseif($value_mail == '' && $status != '') {
+					if($value_mail == '' && $status == $data1->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}	
+				}
+			}*/
+			elseif($role == 6) {
+				if($value_fullname != '' && $value_mail != '' && $value_mobile != '' && $value_office_phone_no != '' && $status != ''){
+					if($value_fullname == $data->full_name && $value_mail == $data->mail && $value_mobile == $data->mobile_no && $value_office_phone_no == $data->office_phone_no && 
+					$status == $data1->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}	
+			}
+			elseif($role == 9) {
+				if($value_fullname != '' && $value_mail != '' && $value_mobile != '' && $value_office_phone_no != '' && $status != ''){
+					if($value_fullname == $data->full_name && $value_mail == $data->mail && $value_mobile == $data->mobile_no && $value_office_phone_no == $data->office_phone_no && 
+					$status == $data1->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}	
+			}
+			elseif($role == 10) {
+				if($value_fullname != '' && $value_mail != '' && $value_mobile != '' && $value_office_phone_no != '' && $status != ''){
+					if($value_fullname == $data->full_name && $value_mail == $data->mail && $value_mobile == $data->mobile_no && $value_office_phone_no == $data->office_phone_no && 
+					$status == $data1->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}	
+			}
+			elseif($role == 7) {
+				if($value_fullname != '' && $value_mail != '' && $value_mobile != '' && $value_office_phone_no != '' && $division != '' && $subdiv != '' && $status != ''){
+					if($value_fullname == $data->full_name && $value_mail == $data->mail && $value_mobile == $data->mobile_no && $value_office_phone_no == $data->office_phone_no && 
+					$value == '' && $division == $data->division_id && $subdiv == $data->subdiv_id && $status == $data->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}
+			}
+			elseif($role == 8) {
+				if($value_fullname != '' && $value_mail != '' && $value_mobile != '' && $value_office_phone_no != '' && $division != '' && $status != ''){
+					if($value_fullname == $data->full_name && $value_mail == $data->mail && $value_mobile == $data->mobile_no && $value_office_phone_no == $data->office_phone_no && 
+					$value == '' && $division == $data->division_id && $status == $data->status) {
+						form_set_error('', t('Data are same. No data changed.'));	
+					}
+				}
+			}	
+		} elseif($user_role == 4 || $user_role == 5 || $user_role == 6 || $user_role == 7 || $user_role == 8 || $user_role == 9|| $user_role == 10) {
+			if($value == '') {
+				form_set_error('', t('Password not changed!!!'));	
+			}
+		}
+		
+		if($value != '') {
+			if(strlen($value) < 6 || strlen($value) > 20) {
+				form_set_error('pass', t('Password must be between 6 to 20 characters.'));
+			}
+			else {
+				//if($value !== '' && !preg_match("/^[a-zA-Z0-9!@#$%^&*_-]+$/",$value)) {
+				if($value !== '' && !preg_match("/^(?=.*[A-z])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&])[0-9A-za-zA-Z!@#$%^&]{6,20}$/",$value)) {
+					form_set_error('pass', t('Password must contains at least one lowercase character, one uppercase character, one digit from 0-9 and one special symbols in this list ! @ # $ % ^ and &.'));
+				}	
+			}
+		}
+		
+		
+		//mobile no duplicate checking
+		if(!empty($value_mobile) && is_numeric($value_mobile)) {
+			 
+			 $query = db_select('users_details', 'ud');
+			 $query->addField('ud', 'mobile_no');
+			 $query->condition('ud.uid', $uid, '=');
+			 $result = $query->execute();
+			 while($data = $result->fetchObject()) {
+				if($data->mobile_no != $value_mobile) {
+					$query1 = db_select('users_details','ud');
+					$query1->addExpression('mobile_no','mobile');
+					$query1->condition('mobile_no', $value_mobile);
+					$result1 = $query1->execute();
+			 
+					if($result1->rowCount() > 0)
+						form_set_error('mobile_no', 'This mobile no. already exist.');
+				}
+			 }
+		
+		}
+		
+	}
+	
+	function users_info_edit_submit(&$form, &$form_state) {
+		/*echo '<pre>';
+		print_r($form_state['values']); die();*/
+
+		
+		global $user;
+		global $user_role;	
+		
+		$uid = $form_state['values']['uid'];
+		$role = $form['account']['roles']['#default_value'][1];
+		
+		if($user_role == 3) {
+			$arr_upd = array();
+			
+			if($form_state['values']['subdiv'] != '')
+				$arr_upd['subdiv_id'] = $form_state['values']['subdiv'];
+			
+			if($form_state['values']['division'] != '')
+				$arr_upd['division_id'] = $form_state['values']['division'];
+				
+			if($form_state['values']['full_name'] != '')
+				$arr_upd['full_name'] = strtoupper($form_state['values']['full_name']);
+				
+			if($form_state['values']['mobile_no'] != '')
+				$arr_upd['mobile_no'] = $form_state['values']['mobile_no'];
+			
+			if($form_state['values']['office_phone_no'] != '')
+				$arr_upd['office_phone_no'] = $form_state['values']['office_phone_no'];
+		
+			if($arr_upd['subdiv_id'] != '' || $arr_upd['division_id'] != '' || $arr_upd['full_name'] != '' || $arr_upd['mobile_no'] != '' || $arr_upd['office_phone_no'] != '') {
+				db_update('users_details')
+				->fields($arr_upd)
+				->condition('uid', $uid)
+				->execute();
+				
+			}
+		}
+		
+		if($user_role != 3) {
+			drupal_goto('user');
+		}
+	}
+	
+	//user registration
+	function users_info_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+		
+		#krumo($form);
+		global $user_role;
+		global $user;
+		
+		
+		$divn_role = isset($form_state['values']['roles'][8]) && !empty($form_state['values']['roles'][8]) ? $form_state['values']['roles'][8] : 0;
+		$subdivn_role = isset($form_state['values']['roles'][7]) && !empty($form_state['values']['roles'][7]) ? $form_state['values']['roles'][7] : 0;
+		$housing_official_role = isset($form_state['values']['roles'][6]) && !empty($form_state['values']['roles'][6]) ? $form_state['values']['roles'][6] : 0;
+		$dealing_assistant_role = isset($form_state['values']['roles'][9]) && !empty($form_state['values']['roles'][9]) ? $form_state['values']['roles'][9] : 0;
+		$housing_supervisor_role = isset($form_state['values']['roles'][10]) && !empty($form_state['values']['roles'][10]) ? $form_state['values']['roles'][10] : 0;
+		
+		$division = isset($form_state['values']['division']) && !empty($form_state['values']['division']) ? $form_state['values']['division'] : 0;
+		$subdiv = isset($form_state['values']['subdiv']) && !empty($form_state['values']['subdiv']) ? $form_state['values']['subdiv'] : 0;
+		
+		$options_div = get_division_list();
+		
+		unset($form['rip']);
+		unset($form['account']['notify']);
+		
+		if($user_role == 3) {
+			unset($form['account']['roles']['#options']['4']);
+			unset($form['account']['roles']['#options']['5']);
+			//unset($form['field_subuser_limit']);
+			
+		}
+		
+		$form['account']['roles']['#ajax'] = array(
+			'event' => 'change',
+			'callback' => '_reload_divn_subdivn',
+			'effect' => 'fade',
+			'progress' => array(
+				'type' => '',
+				'message' => '',
+			 ),
+		);		
+		
+		$form['account']['division'] = array(
+			'#prefix' => '<div id="divn_replace">',
+			'#suffix' => '</div>',
+		);
+		$form['account']['subdiv'] = array(
+			'#prefix' => '<div id="subdiv_replace">',
+			'#suffix' => '</div>',
+		);
+		$form['account']['full_name'] = array(
+			'#prefix' => '<div id="full_name_replace">',
+			'#suffix' => '</div>', 
+		);
+		$form['account']['mobile_no'] = array(
+			'#attributes' => array('id' => 'user_mobile_no'),
+			'#prefix' => '<div id="mobile_no_replace">',
+			'#suffix' => '</div>', 
+		);
+		$form['account']['office_phone_no'] = array(
+			'#attributes' => array('id' => 'user_mobile_no'),
+			'#prefix' => '<div id="office_phone_no_replace">',
+			'#suffix' => '</div>', 
+		);
+			
+		if($divn_role == 8 || $subdivn_role == 7 || $housing_official_role == 6 || $dealing_assistant_role == 9 || $housing_supervisor_role == 10) {
+			$form['account']['full_name'] = array(
+				'#type' => 'textfield',
+				'#title' => 'Name',
+				//'#default_value' => '',
+				'#required' => TRUE,
+				'#element_validate' => array('element_validate_alphabatic_text'), 
+				'#prefix' => '<div id="full_name_replace">',
+				'#suffix' => '</div>',
+				'#attributes' => array('oninput'=>"this.value=this.value.toUpperCase()"),
+			);
+			
+			$form['account']['mobile_no'] = array(
+				'#type' => 'textfield',
+				'#title' => 'Mobile No',
+				//'#default_value' => '',
+				'#maxlength' => 10,
+				'#attributes' => array('id' => 'user_mobile_no'),
+				'#required' => TRUE,
+				'#element_validate' => array('element_validate_mobile'),
+				'#prefix' => '<div id="mobile_no_replace">',
+				'#suffix' => '</div>', 
+			);
+			
+			$form['account']['office_phone_no'] = array(
+				'#type' => 'textfield',
+				'#title' => 'Telephone No.(With STD Code)',
+				//'#default_value' => '',
+				'#maxlength' => 15,
+				'#attributes' => array('id' => 'office_phone_no'),
+				'#required' => TRUE,
+				'#element_validate' => array('element_validate_telephoneno'),
+				'#prefix' => '<div id="office_phone_no_replace">',
+				'#suffix' => '</div>', 
+			);
+		}
+		
+		if($divn_role == 8) {
+			$form['account']['division'] = array(
+				'#type' => 'select',
+				'#title' => 'Select Division',
+				'#options' => $options_div,
+				//'#default_value' => $subdiv,
+				'#required' => TRUE,
+				'#prefix' => '<div id="divn_replace">',
+				'#suffix' => '</div>',
+			);
+		}
+		
+		if($subdivn_role == 7) {
+			$form['account']['division'] = array(
+				'#type' => 'select',
+				'#title' => 'Select Division',
+				'#options' => $options_div,
+				//'#default_value' => $subdiv,
+				'#required' => TRUE,
+				'#prefix' => '<div id="divn_replace">',
+				'#suffix' => '</div>',
+				'#ajax' => array(
+					'event' => 'change',
+					'callback' => '_reload_housing_subdivision',
+					'method' => 'replace',
+				),
+			);
+			
+			if($division != 0) {
+				$form['account']['subdiv'] = array(
+					'#type' => 'select',
+					'#title' => 'Select Sub-Division',
+					'#options' => get_subdiv_list($division),
+					//'#default_value' => $subdiv,
+					'#required' => TRUE,
+					'#attributes' => array('id' => 'subdivision_entry'),
+					'#prefix' => '<div id="subdiv_replace">',
+					'#suffix' => '</div>',
+				);
+			}
+		}
+		
+		$form['account']['name']['#element_validate'] = array('element_validate_username');
+		
+		
+		$form['account']['roles']['#weight'] = 1;
+		
+		$form['account']['division']['#weight'] = 2;
+		$form['account']['subdiv']['#weight'] = 3;
+		$form['account']['full_name']['#weight'] = 4;
+		$form['account']['mobile_no']['#weight']	= 5;
+		$form['account']['office_phone_no']['#weight']	= 6;
+		
+		$form['account']['mail']['#weight'] = 7;
+		$form['account']['name']['#weight']	= 8;
+		$form['account']['pass']['#weight'] = 9;
+		
+		$form['account']['notify']['#weight'] = 10;
+		$form['account']['status']['#weight'] = 11;
+		
+		
+		$form['account']['name']['#description'] = '';
+		$form['account']['pass']['#description'] = 'Password must be 6 - 20 characters and only contains at least one lowercase character, one uppercase character, one digit from 0-9 and one special symbols in this list ! @ # $ % ^ and &.';
+		$form['account']['mail']['#description'] = '';
+		
+		
+		//$form['actions']['submit']['#value'] = t('Add User');
+				
+		//krumo($form['account']);
+		
+		$form['#validate'][] = 'users_info_add_validate';
+		$form['#submit'][] = 'users_info_add_submit';
+	
+		$form['#attributes'] = array('onsubmit' => 'return validate_user_createform()');
+	
+	}
+	
+	function users_info_add_validate(&$form, &$form_state) {
+		
+		$value = trim($form_state['values']['pass']);
+		
+		$value_mobile = trim($form_state['values']['mobile_no']);
+		
+		if($value != '') {
+			if(strlen($value) < 6 || strlen($value) > 20) {
+				form_set_error('pass', t('Password must be between 6 to 20 characters.'));
+			}
+			else {
+				//if($value !== '' && !preg_match("/^[a-zA-Z0-9!@#$%^&*_-]+$/",$value)) {
+				if($value !== '' && !preg_match("/^(?=.*[A-z])(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&])[0-9A-za-zA-Z!@#$%^&]{6,20}$/",$value)) {
+					form_set_error('pass', t('Password must contains at least one lowercase character, one uppercase character, one digit from 0-9 and one special symbols in this list ! @ # $ % ^ and &.'));
+				}	
+			}
+		}
+		
+		//mobile no duplicate checking
+		if(!empty($value_mobile) && is_numeric($value_mobile)) {
+			 
+			 $query = db_select('users_details', 'ud');
+			 $query->addField('ud', 'mobile_no');
+			 $query->condition('mobile_no', $value_mobile, '=');
+			 $result = $query->execute();
+			 
+			 
+			 if($result->rowCount() > 0)
+			 	form_set_error('mobile_no', 'This mobile no. already exist.');
+		
+		}
+		
+	}
+	
+	function users_info_add_submit(&$form, &$form_state) {
+		
+		/*echo '<pre>';
+		print_r($form_state['values']); die();*/
+	
+		global $user;
+		global $user_role;
+		
+		if(($form_state['values']['roles'][8] == 8) || ($form_state['values']['roles'][7] == 7)) {
+			
+			/*echo '<pre>';
+			print_r($form_state['values']); die();*/
+			
+			$query = db_select('users','u');
+			$query->addExpression('MAX(uid)','max_uid');
+			$result =$query->execute();
+			$data = $result->fetchObject();
+			
+			/*$user_arr = array();
+			$user_arr['mail']  =  strtolower(trim($form_state['values']['mail']));
+			db_update('users')
+			->fields($user_arr)
+			->condition('uid', $data->max_uid, '=')
+			->execute();*/
+			
+			$usr_dtl_arr = array();
+			$usr_dtl_arr['uid'] = $data->max_uid;
+			if($form_state['values']['subdiv'] != '') {
+				$usr_dtl_arr['subdiv_id'] = $form_state['values']['subdiv'];
+			} else {
+				$usr_dtl_arr['subdiv_id'] = 0;	
+			}
+			if($form_state['values']['division'] != '') {
+				$usr_dtl_arr['division_id'] = $form_state['values']['division'];
+			}
+			if($form_state['values']['full_name'] != '') {
+				$usr_dtl_arr['full_name'] = strtoupper($form_state['values']['full_name']);
+			}
+			if($form_state['values']['mobile_no'] != '') {
+				$usr_dtl_arr['mobile_no'] = $form_state['values']['mobile_no'];
+			}
+			if($form_state['values']['office_phone_no'] != '') {
+				$usr_dtl_arr['office_phone_no'] = $form_state['values']['office_phone_no'];
+			}
+			
+			db_insert('users_details')
+			->fields($usr_dtl_arr)
+			->execute();
+	
+		} else if(($form_state['values']['roles'][6] == 6) || ($form_state['values']['roles'][9] == 9) || ($form_state['values']['roles'][10] == 10)) {
+			/*echo '<pre>';
+			print_r($form_state['values']); die();*/
+			
+			$query = db_select('users','u');
+			$query->addExpression('MAX(uid)','max_uid');
+			$result = $query->execute();
+			$data = $result->fetchObject();
+			
+			/*$user_arr = array();
+			$user_arr['mail']  =  strtolower(trim($form_state['values']['mail']));
+			db_update('users')
+			->fields($user_arr)
+			->condition('uid', $data->max_uid, '=')
+			->execute();*/
+			
+			$usr_dtl_arr = array();
+			$usr_dtl_arr['uid'] = $data->max_uid;
+			if($form_state['values']['full_name'] != '') {
+				$usr_dtl_arr['full_name'] = strtoupper($form_state['values']['full_name']);
+			}
+			if($form_state['values']['mobile_no'] != '') {
+				$usr_dtl_arr['mobile_no'] = $form_state['values']['mobile_no'];
+			}
+			if($form_state['values']['office_phone_no'] != '') {
+				$usr_dtl_arr['office_phone_no'] = $form_state['values']['office_phone_no'];
+			}
+			$usr_dtl_arr['subdiv_id'] = 0;
+			$usr_dtl_arr['division_id'] = 0;
+			
+			/*echo '<pre>';
+			print_r($usr_dtl_arr); die();*/
+			
+			db_insert('users_details')
+			->fields($usr_dtl_arr)
+			->execute();	
+			
+			
+		}
+	}
+	
+	
+	function get_division_list() {
+		$all_div = array("" => "- Select -");
+		$query = db_select('housing_division', 'hdv');
+		$query->fields('hdv');
+		$query->orderBy('division_name', 'ASC');
+		$result = $query->execute();
+		if($result->rowCount() > 0) {
+			foreach($result as $div) {
+				$all_div[$div->division_id] = $div->division_name;
+			}    
+		}
+		return $all_div;	
+		
+	}
+	
+	function get_subdiv_list($division = '') {
+	
+		$all_subdiv = array("" => "- Select -");
+		$query = db_select('housing_subdivision', 'hsd');
+		$query->fields('hsd');
+		$query->condition('hsd.division_id', $division, '=');
+		$query->orderBy('subdiv_name', 'ASC');
+		$result = $query->execute();
+		if($result->rowCount() > 0) {
+			foreach($result as $subdiv) {
+				$all_subdiv[$subdiv->subdiv_id] = $subdiv->subdiv_name;
+			}    
+		}
+		return $all_subdiv;
+	}
+	
+	function get_user_details_by_uid($uid = '') {
+		$query = db_select('users_details', 'ud');
+		$query->fields('ud');
+		$query->condition('uid', $uid, '=');
+		$result = $query->execute();
+		$data = $result->fetchAssoc();
+		return $data;	
+		
+	}
+	
+	function get_user_all_details_by_uid($uid = '') {
+		$query = db_select('users_details', 'ud');
+		$query->innerjoin('users', 'u', 'u.uid = ud.uid');
+		$query->fields('u');
+		$query->fields('ud');
+		$query->condition('u.uid', $uid, '=');
+		$result = $query->execute();
+		$data = $result->fetchAssoc();
+		return $data;	
+		
+	}
+	
+	function users_info_preprocess_page(&$variables) {
+		global $user;
+		
+		if (arg(0) == 'admin' && arg(1) == 'people' && arg(2) == 'create') {
+			drupal_set_title("Create User");
+		}
+		
+		if($user->uid == 1) { 
+			if(arg(0) == 'user' && arg(1) != 1 && arg(2) == 'edit') {
+				drupal_set_title("Edit User");
+			}
+			else if(arg(0) == 'user' && arg(1) == 1 && arg(2) == 'edit') {
+				drupal_set_title("Edit Your Profile");
+			}
+		}
+		else {
+			if(arg(0) == 'user' && arg(1) == $user->uid && arg(2) == 'edit') {
+				drupal_set_title("Change Your Password");	
+			}	
+		}
+	}
+
+
+	//multiple user delete
+	//start		
+	//function users_info_form_user_multiple_cancel_confirm_alter(&$form, &$form_state, $form_id) {
+		
+		/*echo '<pre>';
+		print_r($form_id);
+		die();*/
+		
+		/*$form['#submit'][] = 'users_info_user_multiple_cancel_confirm_submit';	
+	}
+	
+	function users_info_user_multiple_cancel_confirm_submit(&$form, &$form_state) {
+		
+		if($form_state['values']['user_cancel_method'] == 'user_cancel_delete') {
+			foreach($form_state['values']['accounts'] as $uid) {
+				$result = db_select('users_roles', 'ur')
+				->fields('ur')
+				->condition('uid', $uid,'=')
+				->execute();
+				
+				if($result->rowCount() > 0) {
+					db_delete('users_roles')
+					->condition('uid', $uid,'=')
+					->execute();	
+				}
+			}
+		}
+	}*/
+	//end
+
+	function _reload_divn_subdivn($form, &$form_state) {
+		
+		$commands = array();
+		$commands[] = ajax_command_replace("#divn_replace", drupal_render($form['account']['division']));
+		$commands[] = ajax_command_replace("#subdiv_replace", drupal_render($form['account']['subdiv']));
+		$commands[] = ajax_command_replace("#full_name_replace", drupal_render($form['account']['full_name']));
+		$commands[] = ajax_command_replace("#mobile_no_replace", drupal_render($form['account']['mobile_no']));
+		$commands[] = ajax_command_replace("#office_phone_no_replace", drupal_render($form['account']['office_phone_no']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}
+	
+	function _reload_housing_subdivision($form, &$form_state) {
+		$commands = array();
+		$commands[] = ajax_command_replace("#subdiv_replace", drupal_render($form['account']['subdiv']));
+		return array('#type' => 'ajax', '#commands' => $commands);
+	}

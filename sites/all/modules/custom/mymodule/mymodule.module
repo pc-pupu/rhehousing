@@ -1,0 +1,75 @@
+<?php
+
+	function mymodule_init() {
+		global $user, $user_role;
+		
+		$roles_arr = array_keys($user->roles);
+		if(sizeof($roles_arr) > 1)
+			$user_role =  $roles_arr[1];
+	}
+	function mymodule_form_alter(&$form, &$form_state, $form_id) {
+		global $user_role;
+		if($form_id == 'user_login_block') {		
+			$form['links']['#markup'] = '<div class="item-list">
+				<ul>
+					<li class="first">'.l('New Registration', 'user_registration').'</li>
+					<li class="last">'.l('Request New Password', 'user/password').'</li>
+				</ul>
+			</div>';
+		
+		}
+		
+		if($form_id == 'user_login_block') {
+			$form['name']['#attributes'] = array('autocomplete' => 'off');
+			$form['pass']['#attributes'] = array('autocomplete' => 'off');
+			
+			$form['#attributes'] = array('onsubmit' => 'return validate_user_login_form(this)');	
+		}
+		
+		if($form_id == 'user_login') {
+			$form['#prefix'] = '<div class="row gy-3 overflow-hidden">';
+  			$form['#suffix'] = '</div>';
+
+			$form['name'] = array(
+				'#type'			=> 'textfield',
+				'#prefix' 		=> '<div class="col-12"><div class="form-floating mb-2">',
+				'#attributes' 	=> array('autocomplete' => 'off', 'class'=>array('form-control')),
+				'#suffix'		=> '<label for="name" class="form-label">Username</label></div></div>'
+			);
+
+			$form['pass'] = array(
+				'#type'			=> 'password',
+				'#prefix' 		=> '<div class="col-12"><div class="form-floating mb-2">',
+				'#attributes' 	=> array('autocomplete' => 'off', 'class'=>array('form-control')),
+				'#suffix'		=> '<label for="password" class="form-label">Password</label></div></div>'
+			);
+			
+
+			$form['actions']['submit'] = array(
+				'#type' => 'submit', 
+				'#value' => t('Log in'), 
+				'#attributes' => array('class'=>array('btn admin-login btn-lg')),
+				'#prefix' => '<div class="col-12"><div class="d-grid">',
+				'#suffix'		=> '</div></div>'
+			);
+			
+			$form['#attributes'] = array('onsubmit' => 'return validate_user_login_form(this)');	
+		}
+		
+		if($form_id == 'user_pass') {
+			$form['#prefix'] = '<div class="pass-panel">';
+  			$form['#suffix'] = '</div>';
+			
+			drupal_set_title(t('Request New Password'));
+			
+			$form['name']['#title'] = 'E-mail Address';
+			$form['actions']['submit']['#value'] = 'E-mail New Password';
+			
+			$form['#attributes'] = array('onsubmit' => 'return validate_request_new_password()');	
+		}
+	}	
+	function mymodule_page_alter(&$page) {	    
+	}
+
+	function mymodule_menu_alter(&$items) {			
+	}

@@ -1,0 +1,5 @@
+name = Users Information
+descriprion = MODULE FOR USERS INFORMATION
+core = 7.x
+stylesheets[all][] = css/users_info.css
+scripts[] = js/users_info.js

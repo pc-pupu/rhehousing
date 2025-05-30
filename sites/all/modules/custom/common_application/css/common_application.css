@@ -1,0 +1,100 @@
+.user_reg .form-radios .form-item {
+float: left;
+width: 10%
+}
+
+.user_reg .form-item label.option {
+display: inline;
+}
+
+.user_reg .form-item-dob label {
+float: left;
+width: 100%;
+}
+ .four{
+	width:22% ;
+	float:left ;
+	margin-right:3% ;
+	height:70px;
+	margin-bottom: 10px;
+}
+ .five{
+	width:18% ;
+	float:left ;
+	margin-right:2% ;
+	height:70px;
+	margin-bottom: 10px;
+}
+ .three{
+	width:30% ;
+	float:left ;
+	margin-right:3% ;
+	height:70px;
+	margin-bottom: 10px;
+}
+ .two{
+	width:49% ;
+	float:left ;
+	margin-right:1% ;
+	height:70px;
+	margin-bottom: 10px;
+}
+.two-one{
+	width:64%;
+	float:left ;
+	height:70px;
+	margin-bottom: 10px;
+}
+#edit-gender{
+	background-color: #f8f8f8;
+	border: none; /*1px solid #e8e8e8;*/
+	height: 32px;
+	margin-top: 5px;
+	padding-left: 5px;
+	border-radius: 3px;
+}
+.form-type-radio{
+width:50% !important;
+float :left;
+}
+.form-type-radio label{
+float :left;
+}
+.form-type-radio input[type="radio"]{
+float :left;
+margin: 4px 2px 0 0;
+}
+
+.link-button{
+font-size: 100% !important;
+font-style: italic;
+}
+.breadcrumb_links{
+	margin-bottom:25px;
+}
+
+
+
+
+
+.datatable_no_data_found {
+	border-collapse: collapse;
+    width: 100%;
+}
+
+.tr_no_data_found {
+	text-align: center;
+    padding: 8px;	
+}
+
+.th_no_data_found {
+	background-color: #69C;
+    color: white;	
+}
+
+.td_no_data_found {
+	text-align: center;
+	font-size:18px
+}
+
+

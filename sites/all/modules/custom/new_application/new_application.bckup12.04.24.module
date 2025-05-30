@@ -1,0 +1,509 @@
+<?php
+
+	function new_application_init() {
+		 global $custom_url;	//comment off for live
+		 
+		 if($_SERVER['REQUEST_URI'] == $custom_url.'/new-apply'){	//delete $custom_url. for live
+			$result = fetch_new_app_status(array('draft'));
+			$row_count = $result->rowCount();
+			if($row_count > 0) {
+				$data = $result->fetchObject();
+				drupal_goto('view-application/'.encrypt_url($data->online_application_id));
+			}
+		}
+		
+	}
+	function new_application_menu() {	
+		$items['new-apply'] = array(
+		  'title' => 'Application for New Allotment',	
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('application_form'),
+		  'access arguments' => array('administer New Application'),
+		);
+		return $items;
+	}
+
+  function new_application_form_application_form_alter(&$form, &$form_state, $form_id) {
+	  
+	  global $custom_url;	//comment off for live
+	  $ddo_id = 7;
+	  
+	  $pay_band_id = isset($form_state['values']['pay_band']) && !empty($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : 0;
+	  $rhe_flat_type = rhe_flat_type_rst_pay_band_id($pay_band_id);
+	  $reason = isset($form_state['values']['reason']) ? $form_state['values']['reason'] : '';
+
+	  /*API Call to get HRMS API Data*/
+	  #sample HRMS ID
+	  #1999002754,1995002970,1981000029
+	  $userHRMSID = '1981000029';
+	  $userData = getHRMSUserData($userHRMSID);
+	  //print_r($userData);
+	 // exit();
+	  if (!empty($userData)) {
+ 			$form['ddo']['district']['#default_value'] = 18;
+		  	$form['ddo']['designation']['#options'] = ddo_desig_list(18);
+		  	$form['ddo']['designation']['#default_value'] = 7;
+		  	/**/
+		  	$form['prrsonal_info']['permanent_address']['permanent_street']['#default_value'] = $userData['permanentStreet'];
+			$form['prrsonal_info']['permanent_address']['permanent_city_town_village']['#default_value'] = $userData['permanentCityTownVillage'];
+			$form['prrsonal_info']['permanent_address']['permanent_post_office']['#default_value'] = $userData['permanentPostOffice'];
+			$form['prrsonal_info']['permanent_address']['permanent_district']['#default_value'] = $userData['permanentDistrictCode'];
+			$form['prrsonal_info']['permanent_address']['permanent_pincode']['#default_value'] = $userData['permanentPincode'];
+			//$form['prrsonal_info']['chk_permanent_address']['#default_value'] = 1;
+ 	}else{
+ 		form_set_error('username', 'Error: HRMS NO Response.');
+ 	}	  
+	  
+	  if($form['#action'] == $custom_url.'/new-apply'){		//delete $custom_url. for live
+			/* $form['prrsonal_info']['#markup'] = array(
+				'#markup' => '<img src="loading.gif" alt="Loading" />',
+				'#prefix' => '<div id="new-apply-overlay">',
+				'#suffix' => '</div>',
+			); */
+		
+			drupal_add_css('#overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.5; background-color: #000; z-index: 999;}', 'inline');
+			$loading_path = drupal_get_path('module', 'new_application') . '/loading.gif';
+			drupal_add_js('jQuery(document).ready(function(){jQuery( "#overlay" ).html("<img src=\"' . $loading_path . '\" style=\"position:fixed; top:43%; left:43%;\"/>");});', 'inline');
+		  
+			$form['prrsonal_info']['online_new_app_id'] = array(
+				'#type' => 'hidden',
+				'#default_value' => '0',
+				//'#validated' => TRUE,
+			);
+
+			$form['housing_preference'] = array(
+				'#type' => 'fieldset',
+				'#title' => t('Housing preference'),
+				'#collapsible' => TRUE, // Added
+				'#collapsed' => TRUE,  // Added
+				);
+
+			$result = db_query("select t2.estate_id, t2.estate_name from housing_ddo_estate_mappings as t1
+			inner join housing_estate as t2 on t1.estate_id = t2.estate_id
+			where t1.ddo_id = " . $ddo_id);
+
+			$rowCount = $result -> rowCount();
+			if($rowCount > 0) {
+				$form['housing_preference']['table_header'] = array(
+					'#markup' => '<table class="table table-bordered">
+									<tr>
+										<th>Housing name</th>
+										<th>Preference</th>
+									</tr>'
+				);
+				$pref_count = 1;
+				foreach($result as $record) {
+					
+					$estate_name = $record -> estate_name;
+					$estate_id = $record -> estate_id;
+
+					$form['housing_preference']['estate_' . $estate_id] = array(
+						'#markup' => '<tr><td>' . $estate_name . '</td>'
+					);
+					$form['housing_preference']['estate_preference[' . $estate_id . ']'] = array(
+						'#type' => 'select',
+						'#required' => TRUE,
+						'#options'	=>	array_combine(range(1, $rowCount),range(1, $rowCount)),
+						'#default_value' => $pref_count,
+						//'#value' => $pref_count,
+						'#title' => t('Preference'),
+						'#title_display'	=> 'invisible',
+						'#prefix' => '<td>',
+						'#suffix' => '</td></tr>',
+					);
+					$pref_count++;
+				}
+				$form['housing_preference']['table_footer'] = array(
+					'#markup' => '</table>',
+				);
+			}
+		  
+		 
+		  $form['allotment_reason'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Allotment Category'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+			);
+		
+		   $form['allotment_reason']['rhe_flat_type'] = array(
+			'#title' => t('Flat TYPE'),
+			'#type' => 'textfield',
+			'#attributes' => array('readonly' => 'readonly'),
+			'#default_value' => '',
+			'#required' => TRUE,
+			//'#prefix' => '<div class="two" id="replace_rhe_flat_type" >',
+			//'#suffix' => '</div>',
+			'#element_validate' => array('element_validate_flat_type'),
+		  );
+	     
+		 
+		  $form['allotment_reason']['reason'] = array(
+			'#title' => t('Allotment Reason'),
+			'#type' => 'select',
+			//'#options' => array(''=>'- Select -'),
+			'#options' => allotment_category_list(trim($rhe_flat_type)),
+			'#default_value' => $reason,
+			'#required' => TRUE,
+			'#validated' => TRUE,
+			'#prefix' => '<div id="replace_allotment_category" class="two">',
+			'#suffix' => '</div>',
+			'#attributes' => array('id' => 'check_allotment_reason'),
+		  );
+	  
+
+		$form['document_upload'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Upload Documents'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+		);
+		
+		$form['document_upload']['file'] = array(
+			'#title' => t('Upload Your Latest Payslip'),
+			'#type' => 'managed_file',
+			'#description' => t('<b>Allowed Extension: pdf<br>Maximum File Size: 1 MB</b>'),
+			'#progress_message' => t('Please wait...'),
+			'#progress_indicator' => 'bar',
+			'#default_value' => variable_get('Upload File', ''),
+			//'#theme' => 'common_application_thumb_upload',
+			'#upload_validators' => array(
+										 'file_validate_extensions' => array("pdf"),
+										 //'file_validated_size' => array(MAX_FILE_SIZE*1024*1024),
+			
+									),
+			'#upload_location' => 'public://doc/',
+			'#required' => TRUE,
+			'#process' => array('new_application_element_process'),
+		);
+		
+		$form['document_upload']['scaned_sign'] = array(
+			'#title' => t('Upload Your Scanned Signature'),
+			'#type' => 'managed_file',
+			'#description' => t('<b>Allowed Extensions: jpg jpeg<br>Dimensions: 140 pixels (Width) x 60 pixels (Height)<br>Maximum File Size: 50 KB</b>'),
+			'#progress_message' => t('Please wait...'),
+			'#progress_indicator' => 'bar',
+			'#default_value' => variable_get('Upload File', ''),
+			//'#theme' => 'common_application_thumb_upload',
+			'#upload_validators' => array(
+										 'file_validate_extensions' => array("jpg jpeg"),
+										 //'file_validated_size' => array(MAX_FILE_SIZE*1024*1024),
+			
+									),
+			'#upload_location' => 'public://doc/',
+			'#required' => TRUE,
+			'#process' => array('new_application_element_process'),
+		);
+		
+		
+		/*$form['document_upload']['chk_extra_doc'] = array(
+			'#type' => 'checkboxes',
+			'#title' => '',
+			'#options' => array(1 => t('Wheather Police Personal/Single Working Women/Physically Handicapped Or Serious Illness/Transfer')),
+			'#attributes' => array('id' => 'chk_extra_doc'),
+	    );*/
+		
+		$form['document_upload']['extra_doc'] = array(
+			'#title' => t('Upload Allotment Reason Supporting Document'),
+			'#type' => 'managed_file',
+			'#description' => t('<b>Allowed Extension: pdf<br>Maximum File Size: 1 MB</b>'),
+			'#progress_message' => t('Please wait...'),
+			'#progress_indicator' => 'bar',
+			'#default_value' => variable_get('Upload File', ''),
+			//'#theme' => 'common_application_thumb_upload',
+			'#upload_validators' => array(
+										 'file_validate_extensions' => array("pdf"),
+										 //'file_validated_size' => array(MAX_FILE_SIZE*1024*1024),
+			
+									),
+			'#upload_location' => 'public://doc/',
+			//'#required' => TRUE,
+			//'#validated' => TRUE,
+			'#prefix' => '<div id="extra_doc">',
+			'#suffix' => '</div>',
+			'#process' => array('new_application_element_process'),
+		
+		);
+	
+		 
+		 
+	  // define allotment
+		   /*$form['define_allotment'] = array(
+			'#type' => 'fieldset',
+			'#title' => t('Name of the housing Estates applied for in order of preference (Maximum four)'),
+			'#collapsible' => TRUE, // Added
+			'#collapsed' => TRUE,  // Added
+			);
+		  $form['define_allotment']['choice_1'] = array(
+			'#title' => t('Choice 1'),
+			'#type' => 'select',
+			//'#required' => TRUE,
+			'#validated' => TRUE,
+			'#options' => array(''=>'- Select -'),
+			'#prefix' => '<div id="replace_choice1" class="four">',
+			'#suffix' => '</div>',
+			'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_choice2',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						 ),
+			 ),
+			'#weight' => -10
+			
+		  );
+		   $form['define_allotment']['choice_2'] = array(
+			'#title' => t('Choice 2'),
+			'#type' => 'select',
+			//'#required' => TRUE,
+			'#validated' => TRUE,
+			'#options' => array(''=>'- Select -'),
+			'#prefix' => '<div id="replace_choice2" class="four">',
+			'#suffix' => '</div>',
+				'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_choice3',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						 ),
+			 ),
+			
+		  );
+		  $form['define_allotment']['choice_3'] = array(
+			'#title' => t('Choice 3'),
+			'#type' => 'select',
+			//'#required' => TRUE,
+			'#validated' => TRUE,
+			'#options' => array(''=>'- Select -'),
+			'#prefix' => '<div id="replace_choice3" class="four">',
+			'#suffix' => '</div>',
+				'#ajax' => array(
+					   'event' => 'change',
+					   'callback' => '_reload_choice4',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						 ),
+			 ),
+		  );
+		  $form['define_allotment']['choice_4'] = array(
+			'#title' => t('Choice 4'),
+			'#type' => 'select',
+			//'#required' => TRUE,
+			'#validated' => TRUE,
+			'#options' => array(''=>'- Select -'),
+			'#prefix' => '<div id="replace_choice4" class="four">',
+			'#suffix' => '</div>',
+		  );*/
+
+		$form['official_info']['pay_band']['#ajax'] = array(
+					   'event' => 'change',
+					   'callback' => '_reload_allotment_category',
+					   'effect' => 'fade',
+					   'progress' => array(
+						  'type' => '',
+						  'message' => '',
+						 )
+		);
+		
+		
+		//$form['#attributes'] = array('onsubmit' => 'return validate_new_application_form()');
+		 
+	  	fetch_application_data($form);
+		
+	  	$form['#attributes'] = array('onsubmit' => 'return validate_new_application_form()');
+	  	$form['#validate']= array('new_application_validate');
+	 	$form['#submit']= array('new_application_submit');
+	 
+	  } 
+	  
+	 $form['#clientside_validation_settings']['settings']['validate_options']['validate_before_ajax'] = 0 ;
+	 
+	 	if(isset($form['document_upload']['file']) > 0 && $form['document_upload']['file']["#type"] == "managed_file") {
+			$form['document_upload']['file']["#upload_validators"]["file_upload_validation"] = array($form['document_upload']['file']["#upload_validators"]["file_validate_extensions"][0]);
+		}
+		
+		if(isset($form['document_upload']['scaned_sign']) > 0 && $form['document_upload']['scaned_sign']["#type"] == "managed_file") {
+			$form['document_upload']['scaned_sign']["#upload_validators"]["file_upload_validation"] = array($form['document_upload']['scaned_sign']["#upload_validators"]["file_validate_extensions"][0]);
+		}
+		
+		if(isset($form['document_upload']['extra_doc']) > 0 && $form['document_upload']['extra_doc']["#type"] == "managed_file") {
+			$form['document_upload']['extra_doc']["#upload_validators"]["file_upload_validation"] = array($form['document_upload']['extra_doc']["#upload_validators"]["file_validate_extensions"][0]);
+		}	
+
+  }
+  
+  	/*function new_application_form_alter(&$form, &$form_state, $form_id){
+		krumo($form_id);
+	
+		//krumo($form);
+		if($form_id == 'application_form') die('ok');{
+			if (isset($form) > 0 && $form['file']["#type"] == "managed_file") {
+				$form['file']["#upload_validators"]["file_upload_validation"] = array($form['file']["#upload_validators"]["file_validate_extensions"][0]);
+			}
+		}
+	}*/
+  
+  
+
+ 	function new_application_validate(&$form, &$form_state) {
+		$file_payslip = file_load($form_state['values']['file']);
+		$file_scaned_sign = file_load($form_state['values']['scaned_sign']);
+		$file_extra_doc = file_load($form_state['values']['extra_doc']);
+
+
+		if (isset($form_state['values']['estate_preference']) && !empty($form_state['values']['estate_preference'])) {
+			//print_r($form_state['values']['estate_preference']);
+			//exit();
+		}
+		
+		
+		$reason = isset($form_state['values']['reason']) ? $form_state['values']['reason'] : '';
+		//$reason = $form_state['values']['reason'];
+		form_set_value($form['allotment_reason']['reason'], $reason, $form_state);
+		
+		/*$pay_band = isset($form_state['values']['pay_band']) ? $form_state['values']['pay_band'] : '';
+		//$pay_band = $form_state['values']['pay_band'];
+		form_set_value($form['official_info']['pay_band'], $pay_band, $form_state);*/
+		
+		if($form_state['values']['pay_band'] == '') {
+  			form_set_error('pay_band', t('Please select payband.'));
+		}
+		if($form_state['values']['district'] == '') {
+  			form_set_error('district', t('Please select ddo district.'));
+		}
+		if($form_state['values']['designation'] == '') {
+  			form_set_error('designation', t('Please select ddo designation.'));
+		}
+		if($form_state['values']['reason'] == '') {
+  			form_set_error('reason', t('Please select allotment reason.'));
+		}
+		
+		if($form_state['values']['pay_band'] == 1) {
+			if($form_state['values']['pay_in'] < 0 || $form_state['values']['pay_in'] > 7999) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 2) {
+			if($form_state['values']['pay_in'] < 8000 || $form_state['values']['pay_in'] > 12499) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 3) {
+			if($form_state['values']['pay_in'] < 12500 || $form_state['values']['pay_in'] > 15999) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+		}
+		else if($form_state['values']['pay_band'] == 4) {
+			if($form_state['values']['pay_in'] < 16000) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+			else {
+				if($form_state['values']['grade_pay'] < 0 || $form_state['values']['grade_pay'] > 7599) {
+					form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+				}		
+			}
+		}
+		else if($form_state['values']['pay_band'] == 5) {
+			if($form_state['values']['pay_in'] < 16000) {
+				form_set_error('pay_in', t('Please enter proper Pay in the Pay Band.'));	
+			}
+			else {
+				if($form_state['values']['grade_pay'] < 7600) {
+					form_set_error('grade_pay', t('Please enter proper Grade Pay.'));	
+				}		
+			}
+		}
+		
+		if(trim($reason) == 'Transfer' || trim($reason) == 'Physically Handicapped Or Serious Illness' || trim($reason) == 'Officer on Transfer having earmarked Bungalow or Quater in their immediate previous posting') {
+			if($form['document_upload']['extra_doc']['#value']['fid'] == 0) {
+				form_set_error('extra_doc', t('Please Upload Allotment Reason Supporting Document.'));
+			}
+		} else {
+			if($form['document_upload']['extra_doc']['#value']['fid'] != 0) {
+				form_set_error('extra_doc1', t('You have to choose Allotment Reason Transfer / Officer on Transfer having earmarked Bungalow or Quater in their immediate previous posting / Physically Handicapped Or Serious Illness.'));
+			}	
+		}
+		
+		/*if((trim($reason) != 'Transfer' && $form['document_upload']['extra_doc']['#value']['fid'] != 0) || (trim($reason) == 'Officer on Transfer having earmarked Bungalow or Quater in their immediate previous posting' && $form['document_upload']['extra_doc']['#value']['fid'] != 0) || (trim($reason) != 'Physically Handicapped Or Serious Illness' && $form['document_upload']['extra_doc']['#value']['fid'] != 0)) {
+			//if($form['document_upload']['extra_doc']['#value']['fid'] != 0) {
+				form_set_error('extra_doc1', t('You have to choose Allotment Reason Transfer / Officer on Transfer having earmarked Bungalow or Quater in their immediate previous posting / Physically Handicapped Or Serious Illness.'));
+			//}
+		}*/
+		
+		if($file_payslip->filesize > 1048576) {
+			form_set_error('payslip_file_size', 'The file '.$file_payslip->filename.' could not be uploaded, because it exceeds 1 MB, the maximum allowed size for uploads.');	
+		}
+		if($file_scaned_sign->filesize > 51200) {
+			form_set_error('sign_file_size', 'The file '.$file_scaned_sign->filename.' could not be uploaded, because it exceeds 50 KB, the maximum allowed size for uploads.');	
+		}
+		if($file_extra_doc->filesize > 1048576) {
+			form_set_error('extra_doc_file_size', 'The file '.$file_extra_doc->filename.' could not be uploaded, because it exceeds 1 MB, the maximum allowed size for uploads.');	
+		}
+		
+	}
+
+
+	function new_application_element_process($element, &$form_state, $form) {
+		$element = file_managed_file_process($element, $form_state, $form);
+		$element['upload_button']['#access'] = FALSE;
+		return $element;
+	}
+
+
+	function new_application_submit($form, &$form_state) {
+		//print_r($form_state['values']['estate_preference']);
+		//exit();
+		
+		/*echo '<pre>';
+		print_r($form_state);
+		die();*/
+		
+		$action = 'draft';
+		if($form_state['input']['op'] == 'Apply'){
+			$action = 'applied';
+		}
+		
+		$online_application_id = trim($form_state['values']['online_new_app_id']);
+		
+		//die($online_application_id);
+		
+		if($online_application_id == 0){
+			$online_application_id = add_online_application($action,'NA',$form, $form_state);
+			add_new_allotment_application($form, $form_state,$online_application_id);
+		}
+		else{
+			update_online_application($action,$form, $form_state,$online_application_id);
+			update_new_allotment_application($form, $form_state,$online_application_id);
+		}
+		
+		if($action == 'draft') {
+			drupal_set_message('Application save as draft.');
+		}
+		else if($action == 'applied') {
+			drupal_set_message('You have successfully applied.');
+		}
+		/*if (isset($form_state['values']['estate_preference']) && !empty($form_state['values']['estate_preference'])) {
+			print_r($form_state['values']['estate_preference']);
+		}*/
+		//$form_state['rebuild'] = TRUE;
+		
+	}
+   
+   
+function new_application_permission() {
+	return array(
+	'administer New Application' => array(
+		'title' => t('Administer New Application'),
+		'description' => t('Perform administer New Application.'),
+	),
+	);
+}
+require_once('new_application_schema.inc');
+require_once('new_application_fetch_data.form.inc');
+require_once('new_application_add_update_data.form.inc');
